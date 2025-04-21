@@ -6,3 +6,5 @@ pluginManagement {
     }
 }
 rootProject.name = 'backend'
+include 'eureka-server'
+include 'config-server'
