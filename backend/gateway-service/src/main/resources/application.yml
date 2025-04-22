@@ -1,0 +1,14 @@
+server:
+  port: 10003
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    config:
+      uri: http://localhost:10002
+
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:10002/}
+
