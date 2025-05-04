@@ -12,3 +12,6 @@ spring:
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:10002/}
 
+  main:
+    web-application-type: reactive
+
