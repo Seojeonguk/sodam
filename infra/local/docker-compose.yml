@@ -1,0 +1,24 @@
+version: '3.8'
+name: sodam
+services:
+  db:
+    image: mariadb:11.7.2
+    container_name: maria-db
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: s1o2d3a4m5
+      MYSQL_DATABASE: sodam
+      MYSQL_USER: sodam
+      MYSQL_PASSWORD: 1s2o3d4a5m
+    volumes:
+      - maria-db:/var/lib/mysql
+    networks:
+      - spring-network
+
+volumes:
+  maria-db: 
+
+networks:
+  spring=network:
+    driver: bridge
