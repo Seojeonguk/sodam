@@ -20,5 +20,5 @@ volumes:
   maria-db: 
 
 networks:
-  spring=network:
+  spring-network:
     driver: bridge
