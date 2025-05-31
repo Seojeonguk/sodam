@@ -25,6 +25,28 @@ services:
       - "8761:8761"
     networks:
       - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  transaction-service:
+    build:
+      context: ../../backend/transaction-service/
+      dockerfile: Dockerfile
+    container_name: transaction-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "10001:10001"
+    networks:
+      - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 10s
