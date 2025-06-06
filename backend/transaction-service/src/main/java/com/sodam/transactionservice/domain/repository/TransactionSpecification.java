@@ -1,0 +1,33 @@
+package com.sodam.transactionservice.domain.repository;
+
+import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
+import com.sodam.transactionservice.domain.model.Transaction;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class TransactionSpecification {
+
+    public static Specification<Transaction> searchByConditions(TransactionSearchRequest searchRequest) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            Optional.ofNullable(searchRequest.getAccountBookSeq()).ifPresent(accountBookSeq ->
+                    predicates.add(criteriaBuilder.equal(root.get("accountBookSeq"), accountBookSeq))
+            );
+
+            Optional.ofNullable(searchRequest.getStartDate()).ifPresent(sDate ->
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("transactionDate"), sDate))
+            );
+
+            Optional.ofNullable(searchRequest.getEndDate()).ifPresent(eDate ->
+                    predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("transactionDate"), eDate))
+            );
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+}
