@@ -18,7 +18,7 @@ COPY src src
 RUN gradle clean bootJar --no-daemon
 
 # 2단계: 최종 런타임 이미지 설정
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 # JAR 파일이 빌드된 위치를 기반으로 복사합니다.
 COPY --from=build /app/build/libs/*.jar /app/app.jar
