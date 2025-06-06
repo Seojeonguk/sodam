@@ -1,0 +1,10 @@
+# 빌드된 파일
+build
+dist
+out
+
+# 의존성
+node_modules
+
+# 로그 파일
+*.log
