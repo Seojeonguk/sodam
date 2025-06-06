@@ -1,4 +1,3 @@
-import * as React from "react";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 import "./App.css";
@@ -21,7 +20,7 @@ export const columns: GridColDef<TransactionRow>[] = [
     headerName: "거래 유형",
     sortable: false,
     width: 80,
-    valueGetter: (value, row) => `${row.type === "INCOME" ? "수입" : "지출"}`,
+    valueGetter: (_value, row) => `${row.type === "INCOME" ? "수입" : "지출"}`,
   },
   { field: "description", headerName: "설명", width: 300 },
   {
@@ -29,14 +28,14 @@ export const columns: GridColDef<TransactionRow>[] = [
     headerName: "금액",
     type: "number",
     width: 120,
-    valueFormatter: (value, row) =>
+    valueFormatter: (_value, row) =>
       `${(row.amount as number).toLocaleString("ko-KR")}원`,
   },
   {
     field: "transactionDate",
     headerName: "거래일",
     width: 200,
-    valueFormatter: (value, row) =>
+    valueFormatter: (_value, row) =>
       dayjs(row.transactionDate as string, "YYYYMMDDHHmmss").format(
         "YYYY.MM.DD HH:mm",
       ),
