@@ -1,9 +1,6 @@
-// tsconfig.eslint.json
 {
-  // "extends": "./tsconfig.json", // <-- 이 줄을 삭제합니다.
-  // 대신, 참조하는 모든 tsconfig 파일을 명시적으로 포함합니다.
   "compilerOptions": {
-    "composite": true, // ESLint용 tsconfig도 composite로 만들어서 참조할 수 있도록
+    "composite": true,
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -28,7 +25,7 @@
     "src/**/*.tsx",
     "src/**/*.d.ts",
     "vite.config.ts",
-    ".eslintrc.cjs" // 필요한 경우 ESLint 설정 파일도 포함
+    ".eslintrc.cjs"
   ],
   "exclude": ["node_modules", "dist"]
 }
