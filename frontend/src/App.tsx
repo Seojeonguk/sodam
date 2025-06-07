@@ -2,6 +2,7 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 import "./App.css";
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
+import { BarChart } from "@mui/x-charts/BarChart";
 import dayjs from "dayjs";
 
 export interface TransactionRow {
@@ -103,6 +104,31 @@ function App() {
 
   const paginationModel = { page: page, pageSize: pageSize };
 
+  const incomeData: Record<string, number> = {};
+  const expenseData: Record<string, number> = {};
+  const allDescriptions: Set<string> = new Set();
+
+  rows.forEach((row) => {
+    allDescriptions.add(row.description);
+
+    if (row.type === "INCOME") {
+      incomeData[row.description] =
+        (incomeData[row.description] ?? 0) + row.amount;
+    } else {
+      expenseData[row.description] =
+        (expenseData[row.description] ?? 0) + row.amount;
+    }
+  });
+
+  const chartLabels = Array.from(allDescriptions).sort();
+
+  const incomeAmounts = chartLabels.map(
+    (description) => incomeData[description] ?? 0,
+  );
+  const expenseAmounts = chartLabels.map(
+    (description) => expenseData[description] ?? 0,
+  );
+
   return (
     <Box
       sx={{
@@ -144,12 +170,22 @@ function App() {
               rows={rows}
               columns={columns}
               initialState={{ pagination: { paginationModel } }}
-              pageSizeOptions={[5, 10]}
+              pageSizeOptions={[10, 25, 50]}
               checkboxSelection
               sx={{ border: 0 }}
             />
           </Paper>
         </Paper>
+
+        <BarChart
+          xAxis={[{ scaleType: "band", data: chartLabels }]}
+          series={[
+            { data: incomeAmounts, label: "수입", color: "#4CAF50" },
+            { data: expenseAmounts, label: "지출", color: "#F44336" },
+          ]}
+          height={300}
+          margin={{ top: 40, bottom: 30, left: 60, right: 20 }}
+        />
       </Container>
       <Box
         component="footer"
