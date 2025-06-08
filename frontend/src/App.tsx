@@ -4,6 +4,8 @@ import "./App.css";
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export interface TransactionRow {
   id: number;
@@ -15,7 +17,48 @@ export interface TransactionRow {
 }
 
 export const columns: GridColDef<TransactionRow>[] = [
-  { field: "id", headerName: "번호", width: 70 },
+  { field: "id", 
+    headerName: "번호", 
+    width: 70
+   },
+  {
+    field: "type",
+    headerName: "거래 유형",
+    sortable: false,
+    width: 80,
+    valueGetter: (_value, row) => `${row.type === "INCOME" ? "수입" : "지출"}`,
+  },
+  { field: "description", headerName: "설명", width: 300 },
+  {
+    field: "amount",
+    headerName: "금액",
+    type: "number",
+    width: 120,
+    valueFormatter: (_value, row) =>
+      `${(row.amount as number).toLocaleString("ko-KR")}원`,
+  },
+  {
+    field: "transactionDate",
+    headerName: "거래일",
+    width: 200,
+    valueFormatter: (_value, row) =>
+      dayjs(row.transactionDate as string, "YYYYMMDDHHmmss").format(
+        "YYYY.MM.DD HH:mm",
+      ),
+  },
+  {
+    field: "satisfactionRating",
+    headerName: "만족도",
+    type: "number",
+    width: 90,
+  },
+];
+
+export const columns2: GridColDef<TransactionResponseDto>[] = [
+  { field: "id", 
+    headerName: "번호", 
+    width: 70
+   },
   {
     field: "type",
     headerName: "거래 유형",
@@ -96,6 +139,33 @@ export const generateRandomRows = (count: number): TransactionRow[] => {
   return generatedRows;
 };
 
+interface PageResponse<T> {
+  content: T[];
+  pageable: any; // 필요에 따라 상세 정의
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  sort: any; // 필요에 따라 상세 정의
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+interface TransactionResponseDto {
+  id?: number;
+  seq?: number;
+  accountBookSeq?: number;
+  userSeq?: number;
+  categorySeq?: number;
+  amount?: number;
+  type: "INCOME" | "EXPENSE";
+  description: string;
+  transactionDate: string;
+  satisfactionRating: number;
+}
+
 const rows = generateRandomRows(17);
 
 function App() {
@@ -107,6 +177,14 @@ function App() {
   const incomeData: Record<string, number> = {};
   const expenseData: Record<string, number> = {};
   const allDescriptions: Set<string> = new Set();
+  const [transactions, setTransactions] = useState<TransactionResponseDto[]>([]);
+
+  useEffect(()=> {
+    axios.get<PageResponse<TransactionResponseDto>>('/api/transactions?page=0&size=10&sort=transactionDate,desc')
+    .then(response => {
+      setTransactions(response.data.content);
+    });
+  },[]);
 
   rows.forEach((row) => {
     allDescriptions.add(row.description);
@@ -173,6 +251,18 @@ function App() {
               pageSizeOptions={[10, 25, 50]}
               checkboxSelection
               sx={{ border: 0 }}
+            />
+          </Paper>
+
+          <Paper sx={{ height: "100%", width: "100%" }}>
+            <DataGrid
+              rows={transactions}
+              columns={columns2}
+              initialState={{ pagination: { paginationModel } }}
+              pageSizeOptions={[10, 25, 50]}
+              checkboxSelection
+              sx={{ border: 0 }}
+              getRowId={(row) => row.seq || Math.random()}
             />
           </Paper>
         </Paper>
