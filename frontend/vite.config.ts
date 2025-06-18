@@ -9,12 +9,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        "/api": {
-          // /api로 시작하는 모든 요청을 프록시
-          target:
-            env.VITE_API_TARGET_URL && env.VITE_API_TRANSACTION_SERVICE_PORT
-              ? `${env.VITE_API_TARGET_URL}:${env.VITE_API_TRANSACTION_SERVICE_PORT}`
-              : "http://localhost:10001",
+        "/api/transactions": {
+          target: env.VITE_API_TRANSACTION_BASE_URL ?? "http://localhost:10001",
           changeOrigin: true,
           // rewrite: (path) => path.replace(/^\/api/, ''), // /api를 제거하고 백엔드로 전달
         },
