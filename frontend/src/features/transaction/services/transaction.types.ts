@@ -1,28 +1,27 @@
 export interface PageResponse<T> {
   content: T[];
-  pageable: any; // 필요에 따라 상세 정의
+  pageable: any;
   last: boolean;
   totalPages: number;
   totalElements: number;
   size: number;
   number: number;
-  sort: any; // 필요에 따라 상세 정의
+  sort: any;
   first: boolean;
   numberOfElements: number;
   empty: boolean;
 }
 
 export interface TransactionResponseDto {
-  id?: number;
-  seq?: number;
+  seq: number;
   accountBookSeq?: number;
   userSeq?: number;
   categorySeq?: number;
-  amount?: number;
-  type: "INCOME" | "EXPENSE";
+  amount: number;
   description: string;
   transactionDate: string;
+  type: "INCOME" | "EXPENSE";
   satisfactionRating: number;
 }
 
-export type TransactionListResponseDto = TransactionListResponseDto[];
+export type TransactionListResponseDto = PageResponse<TransactionResponseDto>;
