@@ -1,12 +1,7 @@
 import axios, { type AxiosInstance, AxiosError } from "axios";
 
-const baseURL =
-  typeof import.meta.env.VITE_API_BASE_URL === "string"
-    ? import.meta.env.VITE_API_BASE_URL
-    : "http://localhost:10001/api";
-
 const api: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: import.meta.env.VITE_API_TRANSACTION_BASE_URL ?? "http://localhost:10001/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
