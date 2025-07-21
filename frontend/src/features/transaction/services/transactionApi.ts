@@ -1,5 +1,9 @@
 import api from "../../../utils/api";
-import type { TransactionListResponseDto } from "./transaction.types";
+import type {
+  TransactionListResponseDto,
+  TransactionCreateRequestDto,
+  TransactionResponseDto,
+} from "./transaction.types";
 
 const TRANSACTION_BASE_URL = "/transactions";
 
@@ -8,6 +12,17 @@ const transactionApi = {
   getTransactions: async (): Promise<TransactionListResponseDto> => {
     const response =
       await api.get<TransactionListResponseDto>(TRANSACTION_BASE_URL);
+    return response.data;
+  },
+
+  // 거래 생성
+  createTransaction: async (
+    data: TransactionCreateRequestDto,
+  ): Promise<TransactionResponseDto> => {
+    const response = await api.post<TransactionResponseDto>(
+      TRANSACTION_BASE_URL,
+      data,
+    );
     return response.data;
   },
 };

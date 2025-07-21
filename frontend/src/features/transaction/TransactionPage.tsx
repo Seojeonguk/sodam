@@ -1,11 +1,23 @@
 import { Box, Typography, Button, Container, Paper } from "@mui/material";
-
 import TransactionList from "./components/TransactionList";
 import { useTransactions } from "./hooks/useTransactions";
+import { AddCircle } from "@mui/icons-material";
+import { useState } from "react";
+import TransactionCreateModal from "./components/TransactionCreateModal";
 
 function TransactionPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { transactions, loading, error, refetchTransactions } =
     useTransactions();
+
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    void refetchTransactions(); // 모달 닫힐 때 목록 갱신
+  };
 
   if (loading) {
     return (
@@ -52,6 +64,14 @@ function TransactionPage() {
         <Typography variant="h4" component="h1">
           📊 내 가계부
         </Typography>
+
+        <Button
+          variant="contained"
+          startIcon={<AddCircle />}
+          onClick={handleOpenCreateModal}
+        >
+          새 거래 추가
+        </Button>
       </Box>
 
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
@@ -60,6 +80,11 @@ function TransactionPage() {
         </Typography>
         <TransactionList transactions={transactions} />
       </Paper>
+
+      <TransactionCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+      />
     </Container>
   );
 }
