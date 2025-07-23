@@ -25,6 +25,15 @@ const transactionApi = {
     );
     return response.data;
   },
+
+  getTransactionBySeq: async (
+    seq: number | null,
+  ): Promise<TransactionResponseDto> => {
+    const response = await api.get<TransactionResponseDto>(
+      `${TRANSACTION_BASE_URL}/${seq}`,
+    );
+    return response.data;
+  },
 };
 
 export default transactionApi;

@@ -17,9 +17,13 @@ import type { TransactionListResponseDto } from "../services/transaction.types";
 
 interface TransactionListProps {
   transactions: TransactionListResponseDto | null;
+  onViewDetail: (seq: number) => void;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
+const TransactionList: React.FC<TransactionListProps> = ({
+  transactions,
+  onViewDetail,
+}) => {
   if (!transactions || transactions.content.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 4 }}>
@@ -34,7 +38,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
     <List>
       {transactions.content.map((transaction, index) => (
         <React.Fragment key={transaction.seq}>
-          <ListItem>
+          <ListItem onClick={() => onViewDetail(transaction.seq)}>
             <ListItemAvatar>
               <Avatar
                 sx={{
