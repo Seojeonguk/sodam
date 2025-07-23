@@ -4,9 +4,14 @@ import { useTransactions } from "./hooks/useTransactions";
 import { AddCircle } from "@mui/icons-material";
 import { useState } from "react";
 import TransactionCreateModal from "./components/TransactionCreateModal";
+import TransactionDetailModal from "./components/TransactionDetailModal";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<
+    number | null
+  >(null);
   const { transactions, loading, error, refetchTransactions } =
     useTransactions();
 
@@ -17,6 +22,17 @@ function TransactionPage() {
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
     void refetchTransactions(); // 모달 닫힐 때 목록 갱신
+  };
+
+  const handleOpenDetailModal = (seq: number) => {
+    setSelectedTransactionSeq(seq);
+    setIsDetailModalOpen(true);
+    console.log(seq);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedTransactionSeq(null);
   };
 
   if (loading) {
@@ -78,12 +94,21 @@ function TransactionPage() {
         <Typography variant="h5" component="h2" mb={2}>
           최근 거래 내역
         </Typography>
-        <TransactionList transactions={transactions} />
+        <TransactionList
+          transactions={transactions}
+          onViewDetail={handleOpenDetailModal}
+        />
       </Paper>
 
       <TransactionCreateModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
+      />
+
+      <TransactionDetailModal
+        isOpen={isDetailModalOpen}
+        transactionSeq={selectedTransactionSeq}
+        onClose={handleCloseDetailModal}
       />
     </Container>
   );
