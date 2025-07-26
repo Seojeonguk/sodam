@@ -5,6 +5,8 @@ import { AddCircle } from "@mui/icons-material";
 import { useState } from "react";
 import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionDetailModal from "./components/TransactionDetailModal";
+import type { TransactionResponseDto } from "./services/transaction.types";
+import TransactionEditModal from "./components/TransactionEditModal";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -12,6 +14,9 @@ function TransactionPage() {
   const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<
     number | null
   >(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] =
+    useState<TransactionResponseDto | null>(null); // 수정할 거래 객체
   const { transactions, loading, error, refetchTransactions } =
     useTransactions();
 
@@ -33,6 +38,17 @@ function TransactionPage() {
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedTransactionSeq(null);
+  };
+
+  const handleOpenEditModal = (transaction: TransactionResponseDto) => {
+    setTransactionToEdit(transaction);
+    setIsEditModalOpen(true);
+    setIsDetailModalOpen(false); // 상세 모달은 닫기
+  };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setTransactionToEdit(null);
+    refetchTransactions(); // 목록 갱신
   };
 
   if (loading) {
@@ -108,7 +124,14 @@ function TransactionPage() {
       <TransactionDetailModal
         isOpen={isDetailModalOpen}
         transactionSeq={selectedTransactionSeq}
+        onEditRequest={handleOpenEditModal}
         onClose={handleCloseDetailModal}
+      />
+
+      <TransactionEditModal
+        isOpen={isEditModalOpen}
+        transactionToEdit={transactionToEdit}
+        onClose={handleCloseEditModal}
       />
     </Container>
   );
