@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { GridCloseIcon } from "@mui/x-data-grid";
+import EditIcon from "@mui/icons-material/Edit";
 import type { TransactionResponseDto } from "../services/transaction.types";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -18,6 +19,7 @@ import dayjs from "dayjs";
 interface TransactionDetailModalProps {
   isOpen: boolean;
   transactionSeq: number | null;
+  onEditRequest: (transaction: TransactionResponseDto) => void;
   onClose: () => void;
 }
 
@@ -37,6 +39,7 @@ const style = {
 const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   isOpen,
   transactionSeq,
+  onEditRequest,
   onClose,
 }) => {
   const [transaction, setTransaction] = useState<TransactionResponseDto | null>(
@@ -72,6 +75,12 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
     fetchTransactionDetail();
   }, [isOpen, transactionSeq]); // 모달이 열리거나 transactionId가 변경될 때마다 데이터를 가져옴
+
+  const handleEdit = () => {
+    if (transaction) {
+      onEditRequest(transaction); // 수정 요청 시 거래 데이터를 함께 전달
+    }
+  };
 
   return (
     <Modal
@@ -143,6 +152,17 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             )}
           </Paper>
         )}
+
+        <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
+          <Button
+            variant="contained"
+            startIcon={<EditIcon />}
+            onClick={handleEdit}
+            disabled={loading || !transaction}
+          >
+            수정
+          </Button>
+        </Box>
       </Box>
     </Modal>
   );

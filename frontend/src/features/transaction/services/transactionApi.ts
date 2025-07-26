@@ -3,6 +3,7 @@ import type {
   TransactionListResponseDto,
   TransactionCreateRequestDto,
   TransactionResponseDto,
+  TransactionUpdateRequestDto,
 } from "./transaction.types";
 
 const TRANSACTION_BASE_URL = "/transactions";
@@ -31,6 +32,17 @@ const transactionApi = {
   ): Promise<TransactionResponseDto> => {
     const response = await api.get<TransactionResponseDto>(
       `${TRANSACTION_BASE_URL}/${seq}`,
+    );
+    return response.data;
+  },
+
+  updateTransaction: async (
+    seq: number,
+    data: TransactionUpdateRequestDto,
+  ): Promise<TransactionResponseDto> => {
+    const response = await api.put<TransactionResponseDto>(
+      `${TRANSACTION_BASE_URL}/${seq}`,
+      data,
     );
     return response.data;
   },

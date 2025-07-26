@@ -32,4 +32,12 @@ export interface TransactionCreateRequestDto {
   transactionDate: string; // 거래 날짜 및 시간 (예: "2025-06-08T10:30:00")
 }
 
+export interface TransactionUpdateRequestDto {
+  type: "INCOME" | "EXPENSE";
+  amount?: number;
+  categorySeq?: number;
+  description?: string;
+  transactionDate?: string;
+}
+
 export type TransactionListResponseDto = PageResponse<TransactionResponseDto>;
