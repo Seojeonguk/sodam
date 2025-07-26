@@ -17,8 +17,13 @@ function TransactionPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] =
     useState<TransactionResponseDto | null>(null); // 수정할 거래 객체
-  const { transactions, loading, error, refetchTransactions } =
-    useTransactions();
+  const {
+    transactions,
+    loading,
+    error,
+    refetchTransactions,
+    deleteTransaction,
+  } = useTransactions();
 
   const handleOpenCreateModal = () => {
     setIsCreateModalOpen(true);
@@ -49,6 +54,14 @@ function TransactionPage() {
     setIsEditModalOpen(false);
     setTransactionToEdit(null);
     refetchTransactions(); // 목록 갱신
+  };
+
+  const handleDeleteTransaction = async (seq: number) => {
+    if (window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
+      await deleteTransaction(seq);
+      refetchTransactions(); // 삭제 후 목록 갱신
+      handleCloseDetailModal(); // 상세 모달이 열려있었다면 닫기
+    }
   };
 
   if (loading) {
@@ -126,6 +139,7 @@ function TransactionPage() {
         transactionSeq={selectedTransactionSeq}
         onEditRequest={handleOpenEditModal}
         onClose={handleCloseDetailModal}
+        onDeleteRequest={handleDeleteTransaction}
       />
 
       <TransactionEditModal

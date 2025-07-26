@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { GridCloseIcon } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import type { TransactionResponseDto } from "../services/transaction.types";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -21,6 +22,7 @@ interface TransactionDetailModalProps {
   transactionSeq: number | null;
   onEditRequest: (transaction: TransactionResponseDto) => void;
   onClose: () => void;
+  onDeleteRequest: (seq: number) => void;
 }
 
 const style = {
@@ -41,6 +43,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   transactionSeq,
   onEditRequest,
   onClose,
+  onDeleteRequest,
 }) => {
   const [transaction, setTransaction] = useState<TransactionResponseDto | null>(
     null,
@@ -79,6 +82,13 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   const handleEdit = () => {
     if (transaction) {
       onEditRequest(transaction); // 수정 요청 시 거래 데이터를 함께 전달
+    }
+  };
+
+  const handleDelete = () => {
+    if (transaction && window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
+      onDeleteRequest(transaction.seq);
+      onClose(); // 삭제 요청 후 모달 닫기
     }
   };
 
@@ -161,6 +171,16 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             disabled={loading || !transaction}
           >
             수정
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="warning"
+            startIcon={<DeleteIcon />}
+            onClick={handleDelete}
+            disabled={loading || !transaction}
+          >
+            삭제
           </Button>
         </Box>
       </Box>

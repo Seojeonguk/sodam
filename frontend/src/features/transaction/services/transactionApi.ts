@@ -46,6 +46,10 @@ const transactionApi = {
     );
     return response.data;
   },
+
+  deleteTransaction: async (seq: number): Promise<void> => {
+    await api.delete(`${TRANSACTION_BASE_URL}/${seq}`);
+  },
 };
 
 export default transactionApi;
