@@ -26,6 +26,29 @@ export const useTransactions = () => {
     }
   };
 
+  const deleteTransaction = async (seq: number) => {
+    try {
+      await transactionApi.deleteTransaction(seq);
+
+      setTransactions((prev) => {
+        if (prev === null) {
+          return null;
+        }
+
+        return {
+          ...prev,
+          content: prev.content.filter((tx) => tx.seq !== seq),
+        };
+      });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        alert(`삭제 실패: ${err.message}`);
+      } else {
+        alert("거래 삭제 중 오류가 발생했습니다.");
+      }
+    }
+  };
+
   useEffect(() => {
     void fetchTransactions();
   }, []);
@@ -35,5 +58,6 @@ export const useTransactions = () => {
     loading,
     error,
     refetchTransactions: fetchTransactions,
+    deleteTransaction,
   };
 };
