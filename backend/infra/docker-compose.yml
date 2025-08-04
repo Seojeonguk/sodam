@@ -18,7 +18,7 @@ services:
 
   eureka-server:
     build:
-      context: ../../backend/eureka-server/
+      context: ./eureka-server/
       dockerfile: Dockerfile
     container_name: eureka-server
     ports:
@@ -36,7 +36,7 @@ services:
 
   transaction-service:
     build:
-      context: ../../backend/transaction-service/
+      context: ./transaction-service/
       dockerfile: Dockerfile
     container_name: transaction-service
     depends_on:
