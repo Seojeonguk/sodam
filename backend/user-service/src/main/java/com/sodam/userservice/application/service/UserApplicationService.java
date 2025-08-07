@@ -3,7 +3,7 @@ package com.sodam.userservice.application.service;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
-import com.sodam.userservice.common.exception.UserNotFoundException;
+import com.sodam.userservice.application.exception.UserNotFoundException;
 import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
@@ -33,13 +33,7 @@ public class UserApplicationService {
                 .role(Role.USER) // 기본 역할 부여
                 .build();
 
-        User user = userService.registerNewUser(newUser);
-
-        if(user == null) {
-            throw new UserNotFoundException("회원가입 이후 대상자 정보를 찾을 수 없습니다.");
-        }
-
-        //return userService.registerNewUser(newUser);
+        userService.registerNewUser(newUser);
     }
 
     @Transactional
