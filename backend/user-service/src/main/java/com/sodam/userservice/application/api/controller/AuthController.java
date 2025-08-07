@@ -1,14 +1,12 @@
 package com.sodam.userservice.application.api.controller;
 
 import com.sodam.userservice.application.api.dto.LoginRequest;
+import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
 import com.sodam.userservice.application.service.UserApplicationService;
-import com.sodam.userservice.config.JwtTokenProvider;
-import com.sodam.userservice.domain.model.Role;
-import com.sodam.userservice.domain.model.User;
+import com.sodam.userservice.common.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,13 +14,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserApplicationService userService;
-    private final PasswordEncoder passwordEncoder;
 
-    @GetMapping("/token")
-    public String getToken(@RequestParam String userId) {
-        return jwtTokenProvider.generateToken(userId);
+    private final UserApplicationService userService;
+
+
+    @GetMapping("/refresh")
+    public ResponseEntity<ApiResponse<String>> refresh(@RequestParam String userId) {
+        String newToken = userService.refresh(userId);
+
+        return ApiResponse.success("토큰 재발급이 완료되었습니다.", newToken);
     }
 
     /**
@@ -32,18 +32,10 @@ public class AuthController {
      * @return JWT 토큰을 포함한 응답
      */
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        // 1. 이메일로 사용자 정보 조회
-        User user = userService.findUserByEmail(loginRequest.getEmail());
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest) {
+        LoginResponse user = userService.login(loginRequest);
 
-        // 2. 비밀번호 일치 여부 확인
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
-        }
-
-        // 3. JWT 토큰 생성 및 반환
-        String token = jwtTokenProvider.generateToken(user.getEmail());
-        return ResponseEntity.ok(token);
+        return ApiResponse.success(user);
     }
 
     /**
@@ -69,19 +61,9 @@ public class AuthController {
      * @return 성공 메시지
      */
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-        // 비밀번호를 암호화하여 저장
-        String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
+    public ResponseEntity<ApiResponse<String>> register(@RequestBody RegisterRequest registerRequest) {
+        userService.registerNewUser(registerRequest);
 
-        User newUser = User.builder()
-                .email(registerRequest.getEmail())
-                .password(encodedPassword)
-                .name(registerRequest.getName())
-                .role(Role.USER) // 기본 역할 부여
-                .build();
-
-        userService.registerNewUser(newUser);
-
-        return ResponseEntity.ok("회원가입이 완료되었습니다.");
+       return ApiResponse.success("회원가입이 완료되었습니다.");
     }
 }
