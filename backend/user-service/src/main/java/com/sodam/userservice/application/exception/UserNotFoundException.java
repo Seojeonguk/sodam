@@ -1,4 +1,4 @@
-package com.sodam.userservice.common.exception;
+package com.sodam.userservice.application.exception;
 
 public class UserNotFoundException extends RuntimeException {
 

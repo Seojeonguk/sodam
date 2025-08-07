@@ -1,6 +1,6 @@
 package com.sodam.userservice.domain.service;
 
-import com.sodam.userservice.common.exception.UserNotFoundException;
+import com.sodam.userservice.application.exception.UserNotFoundException;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
