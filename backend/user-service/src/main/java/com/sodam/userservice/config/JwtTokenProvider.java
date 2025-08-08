@@ -4,32 +4,56 @@ import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
+    @Value("${jwt.issuer}")
+    private String issuer;
+
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+    @Value("${jwt.access-expiration}")
+    private long accessTokenExpiration;
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshTokenExpiration;
 
     /**
      * JWT 토큰을 생성합니다.
      * @param userId 토큰에 담을 사용자 ID
      * @return 생성된 JWT 토큰 문자열
      */
-    public String generateToken(String userId) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+    public String generateAccessToken(String userId) {
+        return generateToken(userId, accessTokenExpiration);
+    }
+
+    public String generateRefreshToken(String userId) {
+        return generateToken(userId, refreshTokenExpiration);
+    }
+
+    public String generateToken(String userId, long expiration) {
+        Instant now = Instant.now();
+        Date expiryDate = Date.from(now.plusMillis(expiration));
 
         return Jwts.builder()
                 .setSubject(userId)
-                .setIssuedAt(now)
+                .setIssuer(issuer)
+                .setIssuedAt(Date.from(now))
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, secretKey)
+                .signWith(generateKey(secretKey), SignatureAlgorithm.HS512)
                 .compact();
+    }
+
+    public static Key generateKey (String strSecretKey ) {
+        byte[] decodedKey = strSecretKey.getBytes( StandardCharsets.UTF_8 );
+        return new SecretKeySpec(decodedKey, "HmacSHA512");
     }
 
     /**

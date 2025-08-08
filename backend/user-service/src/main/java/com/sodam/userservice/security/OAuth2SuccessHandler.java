@@ -24,7 +24,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String userId = authentication.getName();
 
         // 2. userId를 기반으로 JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.generateToken(userId);
+        String jwtToken = jwtTokenProvider.generateAccessToken(userId);
 
         // 3. 리다이렉트 URL 구성 (프론트엔드 URL)
         String redirectUrl = "http://localhost:3000/oauth2/redirect?token=" + jwtToken;

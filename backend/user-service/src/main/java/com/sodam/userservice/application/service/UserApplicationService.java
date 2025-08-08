@@ -3,7 +3,6 @@ package com.sodam.userservice.application.service;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
-import com.sodam.userservice.application.exception.UserNotFoundException;
 import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
@@ -45,8 +44,8 @@ public class UserApplicationService {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
 
-        String accessToken = jwtTokenProvider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateToken(user.getEmail());
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -71,6 +70,6 @@ public class UserApplicationService {
 
     @Transactional(readOnly = true)
     public String refresh(String userId) {
-        return jwtTokenProvider.generateToken(userId);
+        return jwtTokenProvider.generateAccessToken(userId);
     }
 }
