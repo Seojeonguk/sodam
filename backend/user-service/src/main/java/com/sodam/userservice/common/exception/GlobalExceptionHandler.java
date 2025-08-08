@@ -11,11 +11,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return ApiResponse.failure(ResponseCode.BAD_REQUEST, ex.getMessage());
+        return ApiResponse.failure(ResponseCode.BAD_REQUEST.getCode(), ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
-        return ApiResponse.failure(ResponseCode.BAD_REQUEST, ex.getMessage());
+        return ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage());
     }
 }
