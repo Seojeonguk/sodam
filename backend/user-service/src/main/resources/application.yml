@@ -26,9 +26,9 @@ spring:
       client:
         registration:
           google:
-            client-id: ??_CLIENT_ID
-            client-secret: ??_SECRET
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-id: "ENC(mE5fsS+OOPJp6dNKdIzC2kEwO3yD5TIWO2f8CoKy31rCZt0ImoUCs7vYqwstSLcrMN10gPi1H/ezIaXdsp7IwtZMq1tfp06q2DyQhX9V1oCOSDecWQ5q+A==)"
+            client-secret: "ENC(fPYGxHDZWj30jx9Lunn8eoMXbk7t6NbXffJm4JT4v5pU7HTPazHef2Ie/Vl9Yv2q)"
+            redirect-uri: "http://localhost:10002/login/oauth2/code/google"
             scope:
               - email
               - profile

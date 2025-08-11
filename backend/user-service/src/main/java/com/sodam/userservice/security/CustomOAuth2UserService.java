@@ -1,21 +1,23 @@
 package com.sodam.userservice.security;
 
 import com.sodam.userservice.domain.model.AuthProvider;
+import com.sodam.userservice.domain.model.OAuthAttributes;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
@@ -33,24 +35,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
 
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        String email = (String) attributes.get("email");
-        String name = (String) attributes.get("name");
+        OAuthAttributes attributes = OAuthAttributes.of(registrationId, nameAttributeKey, oAuth2User.getAttributes());
 
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+        Optional<User> optionalUser = userRepository.findByEmail(attributes.getEmail());
 
         User user;
         if (optionalUser.isPresent()) {
             // 이미 존재하는 사용자라면 정보 업데이트
             user = optionalUser.get();
-            user.setName(name);
+            user.setName(attributes.getName());
         } else {
             // 신규 사용자라면 새로운 사용자 정보 저장
             user = User.builder()
-                    .name(name)
-                    .email(email)
+                    .name(attributes.getName())
+                    .email(attributes.getEmail())
                     .authProvider(AuthProvider.valueOf(registrationId.toUpperCase()))
-                    .providerId((String) attributes.get(nameAttributeKey))
+                    .providerId(attributes.getNameAttributeKey())
                     .role(Role.USER) // 신규 가입 시 기본 역할(Role.USER) 부여
                     .build();
         }
@@ -59,6 +59,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User savedUser = userRepository.save(user);
 
         // CustomOAuth2User에 저장된 사용자 정보와 속성을 담아 반환
-        return new CustomOAuth2User(savedUser, attributes, nameAttributeKey);
+        return new CustomOAuth2User(savedUser, attributes.getAttributes());
     }
 }
