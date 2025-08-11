@@ -8,15 +8,14 @@ import com.sodam.userservice.common.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-
     private final UserApplicationService userService;
-
 
     @GetMapping("/refresh")
     public ResponseEntity<ApiResponse<String>> refresh(@RequestParam String userId) {
@@ -65,5 +64,10 @@ public class AuthController {
         userService.registerNewUser(registerRequest);
 
        return ApiResponse.success("회원가입이 완료되었습니다.");
+    }
+
+    @GetMapping("/kakao")
+    public RedirectView loginKakao(@RequestParam("code") String code) {
+        return new RedirectView(userService.loginKakao(code));
     }
 }
