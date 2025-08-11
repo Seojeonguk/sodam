@@ -37,7 +37,7 @@ spring:
             client-secret: "ENC(N6dBlbsiLK1+PkSsmJjkwTqdO/1pxNPgE4As8vLpwAqa2CCisa9LK5MMVoOdobGN)"
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:10002/api/auth/kakao"
+            redirect-uri: "http://localhost:10002/login/oauth2/code/kakao"
             scope:
               - profile_nickname
               - profile_image
