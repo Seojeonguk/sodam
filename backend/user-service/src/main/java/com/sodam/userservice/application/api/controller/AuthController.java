@@ -8,7 +8,6 @@ import com.sodam.userservice.common.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -63,11 +62,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> register(@RequestBody RegisterRequest registerRequest) {
         userService.registerNewUser(registerRequest);
 
-       return ApiResponse.success("회원가입이 완료되었습니다.");
-    }
-
-    @GetMapping("/kakao")
-    public RedirectView loginKakao(@RequestParam("code") String code) {
-        return new RedirectView(userService.loginKakao(code));
+        return ApiResponse.success("회원가입이 완료되었습니다.");
     }
 }

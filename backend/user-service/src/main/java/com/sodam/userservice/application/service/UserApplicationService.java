@@ -1,14 +1,13 @@
 package com.sodam.userservice.application.service;
 
-import com.sodam.userservice.application.api.dto.*;
-import com.sodam.userservice.application.exception.UserNotFoundException;
-import com.sodam.userservice.application.util.KakaoUtil;
+import com.sodam.userservice.application.api.dto.LoginRequest;
+import com.sodam.userservice.application.api.dto.LoginResponse;
+import com.sodam.userservice.application.api.dto.RegisterRequest;
 import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.service.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +19,6 @@ public class UserApplicationService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserServiceImpl userService;
-    private final KakaoUtil kakaoUtil;
-
 
     @Transactional
     public void registerNewUser(RegisterRequest registerRequest) {
@@ -73,16 +70,5 @@ public class UserApplicationService {
     @Transactional(readOnly = true)
     public String refresh(String userId) {
         return jwtTokenProvider.generateAccessToken(userId);
-    }
-
-    public String loginKakao(String code) {
-        String accessToken = kakaoUtil.getKakaoAccessToken(code);
-        if(Strings.isEmpty(accessToken)) {
-            throw new UserNotFoundException("카카오 액세스 토큰 인증 오류");
-        }
-
-        KakaoProfile userInfo = kakaoUtil.getKakaoUserInfo(accessToken);
-
-        return "http://localhost:3000";
     }
 }
