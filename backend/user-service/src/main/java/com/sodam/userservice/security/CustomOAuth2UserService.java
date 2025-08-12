@@ -25,8 +25,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
+        log.debug("Load OAuth2 user info: {}", oAuth2User);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        log.debug("Identify registrationId: {}", registrationId);
 
         // OAuth2 제공자별로 사용자 정보를 가져오는 키가 다르므로, 이를 동적으로 처리해야 합니다.
         // 예: Google은 "sub", Naver는 "response", Kakao는 "id"
@@ -34,10 +36,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .getProviderDetails()
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
+        log.debug("Identify nameAttributeKey: {}", nameAttributeKey);
 
         OAuthAttributes attributes = OAuthAttributes.of(registrationId, nameAttributeKey, oAuth2User.getAttributes());
+        log.debug("Map OAuth attributes: {}", attributes);
 
         Optional<User> optionalUser = userRepository.findByEmail(attributes.getEmail());
+        if (optionalUser.isPresent()) {
+            log.debug("Find existing user: {}", optionalUser.get());
+        } else {
+            log.debug("No existing user found. Create new user.");
+        }
 
         User user;
         if (optionalUser.isPresent()) {
@@ -57,6 +66,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         // 업데이트 또는 신규 저장
         User savedUser = userRepository.save(user);
+        log.debug("Save user info: {}", savedUser);
 
         // CustomOAuth2User에 저장된 사용자 정보와 속성을 담아 반환
         return new CustomOAuth2User(savedUser, attributes.getAttributes());
