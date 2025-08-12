@@ -64,3 +64,13 @@ jwt:
   secret: "yF3y4uLhH7zJv8GkM0x1N6oPq2b5r9TfW4c7e0d3s5a8pA9B8C5E7F9G2I4J6L8M0N2P4Q6R8S0T2U4V6W8X0Y2Z4A6B8C0D3E5F7H9J2K4L6M8N0P2R4S6T8U0V2W4X6Y8Z0"
   access-expiration: 900
   refresh-expiration: 86400
+
+logging:
+  level:
+    root: info
+    com.sodam.userservice: debug
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: TRACE
