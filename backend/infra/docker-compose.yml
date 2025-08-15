@@ -18,7 +18,7 @@ services:
 
   eureka-server:
     build:
-      context: ./eureka-server/
+      context: ../eureka-server/
       dockerfile: Dockerfile
     container_name: eureka-server
     ports:
@@ -36,7 +36,7 @@ services:
 
   transaction-service:
     build:
-      context: ./transaction-service/
+      context: ../transaction-service/
       dockerfile: Dockerfile
     container_name: transaction-service
     depends_on:
@@ -49,6 +49,26 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  user-service:
+    build:
+      context: ../user-service/
+      dockerfile: Dockerfile
+    container_name: user-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "10002:10002"
+    networks:
+      - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 10

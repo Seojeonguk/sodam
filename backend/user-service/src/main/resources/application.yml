@@ -1,0 +1,76 @@
+server:
+  port: 10002
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3310/sodam
+    username: sodam
+    password: 1s2o3d4a5m
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
+    open-in-view: false
+  cloud:
+    discovery:
+      enabled: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "ENC(mE5fsS+OOPJp6dNKdIzC2kEwO3yD5TIWO2f8CoKy31rCZt0ImoUCs7vYqwstSLcrMN10gPi1H/ezIaXdsp7IwtZMq1tfp06q2DyQhX9V1oCOSDecWQ5q+A==)"
+            client-secret: "ENC(fPYGxHDZWj30jx9Lunn8eoMXbk7t6NbXffJm4JT4v5pU7HTPazHef2Ie/Vl9Yv2q)"
+            redirect-uri: "http://localhost:10002/login/oauth2/code/google"
+            scope:
+              - email
+              - profile
+          kakao:
+            client-id: "ENC(FFWVwvBw8KQxdaQssq0zOvMF5xQ4nRNPuekf+p3qnf8rcWnfR4S50LTDxeAO+kKs)"
+            client-secret: "ENC(N6dBlbsiLK1+PkSsmJjkwTqdO/1pxNPgE4As8vLpwAqa2CCisa9LK5MMVoOdobGN)"
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:10002/login/oauth2/code/kakao"
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    instance-id: localhost:${spring.application.instance_id:${server.port}}
+    hostname: localhost
+    prefer-ip-address: false
+    non-secure-port: 10002
+
+jwt:
+  issuer: sodam
+  secret: "yF3y4uLhH7zJv8GkM0x1N6oPq2b5r9TfW4c7e0d3s5a8pA9B8C5E7F9G2I4J6L8M0N2P4Q6R8S0T2U4V6W8X0Y2Z4A6B8C0D3E5F7H9J2K4L6M8N0P2R4S6T8U0V2W4X6Y8Z0"
+  access-expiration: 900
+  refresh-expiration: 86400
+
+logging:
+  level:
+    root: info
+    com.sodam.userservice: debug
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: TRACE
