@@ -74,6 +74,26 @@ services:
       retries: 10
       start_period: 30s
 
+  gateway-service:
+    build:
+      context: ../gateway-service/
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "10003:10003"
+    networks:
+      - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
   maria-db: 
 
