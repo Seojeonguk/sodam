@@ -9,12 +9,19 @@ function App() {
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
-        backgroundColor: "#f0f2f5",
         padding: 0,
       }}
     >
-      <AppBar position="static">
-        <Toolbar>
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{
+          bgcolor: "#FFFFFF",
+          color: "#333333",
+          borderBottom: "1px solid #E0E0E0",
+        }}
+      >
+        <Toolbar sx={{ minHeight: 56 }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             💰 소담
           </Typography>
