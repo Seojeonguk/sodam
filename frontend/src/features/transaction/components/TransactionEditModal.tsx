@@ -251,7 +251,8 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
 
         <Box display="flex" justifyContent="space-between" gap={2}>
           <Button
-            variant="outlined"
+            variant="contained"
+            color="error"
             onClick={handleClose}
             sx={{ flexGrow: 1 }}
             disabled={loading}

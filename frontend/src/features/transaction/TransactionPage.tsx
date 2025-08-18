@@ -112,6 +112,7 @@ function TransactionPage() {
 
         <Button
           variant="contained"
+          color="primary"
           startIcon={<AddCircle />}
           onClick={handleOpenCreateModal}
         >

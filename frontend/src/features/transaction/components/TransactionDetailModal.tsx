@@ -113,7 +113,15 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           >
             거래 상세 내역
           </Typography>
-          <Button onClick={onClose} startIcon={<GridCloseIcon />}>
+          <Button
+            onClick={onClose}
+            sx={{
+              color: (theme) => theme.palette.primary.contrastText,
+            }}
+            variant="text"
+            color="primary"
+            startIcon={<GridCloseIcon />}
+          >
             닫기
           </Button>
         </Box>
@@ -166,6 +174,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
           <Button
             variant="contained"
+            color="primary"
             startIcon={<EditIcon />}
             onClick={handleEdit}
             disabled={loading || !transaction}
@@ -174,8 +183,8 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           </Button>
 
           <Button
-            variant="outlined"
-            color="warning"
+            variant="contained"
+            color="error"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
             disabled={loading || !transaction}
