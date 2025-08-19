@@ -1,4 +1,3 @@
-import "./App.css";
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import TransactionPage from "./features/transaction/TransactionPage";
 
