@@ -1,6 +1,7 @@
 import { AppBar, Box, Toolbar, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
+import TransactionPage from "./features/transaction/TransactionPage";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
       >
         <Routes>
           <Route path="/" element={<LoginPage />} />
+          <Route path="/transactions" element={<TransactionPage />} />
         </Routes>
       </Box>
       <Box

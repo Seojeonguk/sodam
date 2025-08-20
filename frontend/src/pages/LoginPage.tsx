@@ -2,11 +2,15 @@ import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import LoginApi from "../features/login/services/LoginApi";
 import type { LoginRequestDto } from "../features/login/services/login.types";
+import { useNavigate } from "react-router-dom";
+
 
 function LoginPage() {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [errorMsg, setErrorMsg] = useState<string>('');
+
+    const navigate = useNavigate();
 
     const handleSubmit = async(e:React.FormEvent) => {
         e.preventDefault();
@@ -26,6 +30,8 @@ function LoginPage() {
 
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', refreshToken);
+
+          navigate('/transactions');
         }
     }
   return (
