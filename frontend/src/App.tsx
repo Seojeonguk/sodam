@@ -1,5 +1,6 @@
 import { AppBar, Box, Toolbar, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
+import { Route, Routes } from "react-router-dom";
 
 function App() {
   return (
@@ -36,7 +37,9 @@ function App() {
           flexDirection: "column",
         }}
       >
-        <LoginPage />
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+        </Routes>
       </Box>
       <Box
         component="footer"
