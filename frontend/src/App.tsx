@@ -1,5 +1,5 @@
-import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
-import TransactionPage from "./features/transaction/TransactionPage";
+import { AppBar, Box, Toolbar, Typography } from "@mui/material";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
           </Typography>
         </Toolbar>
       </AppBar>
-      <Container
+      <Box
         maxWidth="md"
         sx={{
           flexGrow: 1,
@@ -36,8 +36,8 @@ function App() {
           flexDirection: "column",
         }}
       >
-        <TransactionPage />
-      </Container>
+        <LoginPage />
+      </Box>
       <Box
         component="footer"
         sx={{
