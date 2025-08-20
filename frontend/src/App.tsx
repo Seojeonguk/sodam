@@ -1,4 +1,6 @@
-import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography } from "@mui/material";
+import LoginPage from "./pages/LoginPage";
+import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 
 function App() {
@@ -26,7 +28,7 @@ function App() {
           </Typography>
         </Toolbar>
       </AppBar>
-      <Container
+      <Box
         maxWidth="md"
         sx={{
           flexGrow: 1,
@@ -36,8 +38,11 @@ function App() {
           flexDirection: "column",
         }}
       >
-        <TransactionPage />
-      </Container>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/transactions" element={<TransactionPage />} />
+        </Routes>
+      </Box>
       <Box
         component="footer"
         sx={{
