@@ -29,7 +29,6 @@ function App() {
         </Toolbar>
       </AppBar>
       <Box
-        maxWidth="md"
         sx={{
           flexGrow: 1,
           mt: 4,
