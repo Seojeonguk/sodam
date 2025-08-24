@@ -27,7 +27,7 @@ public class JwtUtil {
                 .getBody();
     }
 
-    public String getUserId(String token) {
+    public String getUserEmail(String token) {
         Claims claims = parseClaims(token);
         return claims.getSubject();
     }

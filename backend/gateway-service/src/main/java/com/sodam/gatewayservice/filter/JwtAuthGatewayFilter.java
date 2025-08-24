@@ -37,10 +37,10 @@ public class JwtAuthGatewayFilter implements GatewayFilter {
             return exchange.getResponse().setComplete();
         }
 
-        String userId = jwtUtil.getUserId(token);
-        log.debug("JWT 토큰 검증 결과 사용자 아이디 정보 : {}", userId);
+        String email = jwtUtil.getUserEmail(token);
+        log.debug("JWT 토큰 검증 결과 사용자 아이디 정보 : {}", email);
         ServerHttpRequest request = exchange.getRequest().mutate()
-                .header("X-User-Id", String.valueOf(userId))
+                .header("X-User-Email", String.valueOf(email))
                 .build();
 
         return chain.filter(exchange.mutate().request(request).build());
