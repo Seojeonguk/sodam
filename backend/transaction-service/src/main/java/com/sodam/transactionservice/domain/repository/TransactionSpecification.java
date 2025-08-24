@@ -27,6 +27,10 @@ public class TransactionSpecification {
                     predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("transactionDate"), eDate))
             );
 
+            Optional.ofNullable(searchRequest.getUserId()).ifPresent(userSeq ->
+                    predicates.add(criteriaBuilder.equal(root.get("userSeq"), userSeq))
+            );
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
