@@ -30,9 +30,9 @@ public class TransactionController {
      * @return 생성된 거래 정보 (응답 DTO)
      */
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request) {
+    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request, @RequestHeader("X-User-Email") String email) {
         log.info("거래 생성 요청: {}", request);
-        Transaction transaction = transactionApplicationService.createTransaction(request);
+        Transaction transaction = transactionApplicationService.createTransaction(request, email);
         return ResponseEntity.status(HttpStatus.CREATED).body(TransactionResponse.from(transaction));
     }
 
@@ -93,10 +93,12 @@ public class TransactionController {
     @GetMapping
     public ResponseEntity<Page<TransactionResponse>> getTransactions(
             @ModelAttribute TransactionSearchRequest searchRequest,
-            Pageable pageable) {
+            Pageable pageable,
+            @RequestHeader("X-User-Email") String email) {
         log.info("거래 목록 조회 요청: 조건 = {}, 페이징 = {}", searchRequest, pageable);
+        log.info("거래 목록 조회 요청 사용자 id : {}", email);
 
-        Page<Transaction> transactionsPage = transactionApplicationService.getTransactions(searchRequest, pageable);
+        Page<Transaction> transactionsPage = transactionApplicationService.getTransactions(searchRequest, pageable, email);
         return ResponseEntity.ok(transactionsPage.map(TransactionResponse::from));
     }
 }

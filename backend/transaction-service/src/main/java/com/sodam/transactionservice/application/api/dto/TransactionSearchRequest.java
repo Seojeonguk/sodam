@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class TransactionSearchRequest {
+    private Long userId;
     private Long accountBookSeq;
     private LocalDate startDate;
     private LocalDate endDate;

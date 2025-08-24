@@ -58,6 +58,11 @@ public class UserApplicationService {
     }
 
     @Transactional
+    public User findUserByEmail(String email) {
+        return userService.findUserByEmail(email);
+    }
+
+    @Transactional
     public User updateUser(User user) {
         return userService.updateUser(user);
     }
