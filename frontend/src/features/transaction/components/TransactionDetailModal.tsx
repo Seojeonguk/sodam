@@ -141,31 +141,49 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {transaction && !loading && (
           <Paper elevation={0} sx={{ p: 2, bgcolor: "background.default" }}>
             <Typography variant="body1" sx={{ mb: 1 }}>
-              <strong>종류:</strong>{" "}
-              <span
-                style={{
+              <Typography component="span" fontWeight="bold">
+                종류:
+              </Typography>{" "}
+              <Typography
+                component="span"
+                sx={{
                   color: transaction.type === "INCOME" ? "green" : "red",
+                  fontWeight: "bold",
                 }}
               >
                 {transaction.type === "INCOME" ? "수입" : "지출"}
-              </span>
+              </Typography>
             </Typography>
+
             <Typography variant="h6" sx={{ mb: 1 }}>
-              <strong>금액:</strong>{" "}
+              <Typography component="span" fontWeight="bold">
+                금액:
+              </Typography>{" "}
               {transaction.amount.toLocaleString("ko-KR")}원
             </Typography>
+
             <Typography variant="body1" sx={{ mb: 1 }}>
-              <strong>카테고리:</strong> {transaction.categorySeq}
+              <Typography component="span" fontWeight="bold">
+                카테고리:
+              </Typography>{" "}
+              {transaction.categorySeq}
             </Typography>
+
             <Typography variant="body1" sx={{ mb: 1 }}>
-              <strong>날짜:</strong>{" "}
+              <Typography component="span" fontWeight="bold">
+                날짜:
+              </Typography>{" "}
               {dayjs(transaction.transactionDate).format(
                 "YYYY년 MM월 DD일 HH시 mm분",
               )}
             </Typography>
+
             {transaction.description && (
               <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>내용:</strong> {transaction.description}
+                <Typography component="span" fontWeight="bold">
+                  내용:
+                </Typography>{" "}
+                {transaction.description}
               </Typography>
             )}
           </Paper>
