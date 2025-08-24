@@ -3,6 +3,7 @@ package com.sodam.userservice.application.api.controller;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
+import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.application.service.UserApplicationService;
 import com.sodam.userservice.common.api.ApiResponse;
 import com.sodam.userservice.domain.model.User;
@@ -69,11 +70,9 @@ public class AuthController {
     }
 
     @GetMapping("/users/{email}")
-    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable String email) {
-        User user = userService.findUserByEmail(email);
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String email) {
+        UserResponse userInfo = userService.findUserByEmail(email);
 
-        log.info("사용자 정보 : {}", user);
-
-        return ApiResponse.success(user);
+        return ApiResponse.success(userInfo);
     }
 }
