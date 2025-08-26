@@ -3,6 +3,7 @@ package com.sodam.userservice.application.service;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
+import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
@@ -55,6 +56,12 @@ public class UserApplicationService {
     @Transactional
     public User findUserById(Long userId) {
         return userService.findUserById(userId);
+    }
+
+    @Transactional
+    public UserResponse findUserByEmail(String email) {
+        User user = userService.findUserByEmail(email);
+        return UserResponse.fromEntity(user);
     }
 
     @Transactional

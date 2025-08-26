@@ -4,7 +4,11 @@ import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
 import com.sodam.transactionservice.domain.service.TransactionDomainService;
+import com.sodam.transactionservice.infrastructure.ApiResponse;
+import com.sodam.transactionservice.infrastructure.UserDto;
+import com.sodam.transactionservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransactionApplicationService {
 
     private final TransactionDomainService transactionDomainService;
+    private final UserServiceClient userServiceClient;
 
     /**
      * 새로운 거래를 생성합니다.
@@ -23,7 +29,18 @@ public class TransactionApplicationService {
      * @return 생성된 거래 엔티티
      */
     @Transactional
-    public Transaction createTransaction(TransactionRequest request) {
+    public Transaction createTransaction(TransactionRequest request, String email) {
+
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        log.info("사용자 응답 정보 : {}", userResponse);
+
+        Long id = userResponse.getData().getId();
+
+        log.info("사용자 id : {}" ,id);
+
+        request.setUserSeq(id);
+
         return transactionDomainService.createTransaction(request);
     }
 
@@ -69,7 +86,17 @@ public class TransactionApplicationService {
      * @return 조건에 맞는 페이지네이션된 거래 목록 (Page<Transaction> 객체)
      */
     @Transactional(readOnly = true)
-    public Page<Transaction> getTransactions(TransactionSearchRequest searchRequest, Pageable pageable) {
+    public Page<Transaction> getTransactions(TransactionSearchRequest searchRequest, Pageable pageable, String email) {
+
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        log.info("사용자 응답 정보 : {}", userResponse);
+
+        Long id = userResponse.getData().getId();
+
+        log.info("사용자 id : {}" ,id);
+
+        searchRequest.setUserId(id);
 
         return transactionDomainService.getTransactionsByConditions(searchRequest, pageable);
     }

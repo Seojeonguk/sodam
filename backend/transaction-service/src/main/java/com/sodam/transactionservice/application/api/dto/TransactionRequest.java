@@ -16,6 +16,7 @@ public class TransactionRequest {
 
     private Long accountBookSeq;
 
+    @NotNull(message = "사용자 정보는 필수입니다.")
     private Long userSeq;
 
     private Long categorySeq;

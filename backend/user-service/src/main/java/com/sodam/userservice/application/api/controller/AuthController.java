@@ -3,15 +3,19 @@ package com.sodam.userservice.application.api.controller;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
+import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.application.service.UserApplicationService;
 import com.sodam.userservice.common.api.ApiResponse;
+import com.sodam.userservice.domain.model.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final UserApplicationService userService;
@@ -63,5 +67,12 @@ public class AuthController {
         userService.registerNewUser(registerRequest);
 
         return ApiResponse.success("회원가입이 완료되었습니다.");
+    }
+
+    @GetMapping("/users/{email}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String email) {
+        UserResponse userInfo = userService.findUserByEmail(email);
+
+        return ApiResponse.success(userInfo);
     }
 }
