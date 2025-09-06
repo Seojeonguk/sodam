@@ -6,9 +6,9 @@ spring:
     name: category-service
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/sodam
-    username: root
-    password: ./root./
+    url: jdbc:mariadb://localhost:3310/sodam
+    username: sodam
+    password: 1s2o3d4a5m
   jpa:
     hibernate:
       ddl-auto: update
