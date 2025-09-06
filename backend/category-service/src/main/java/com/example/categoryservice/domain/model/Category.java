@@ -1,6 +1,7 @@
 package com.example.categoryservice.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Table(name = "category")
+@Builder
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,8 +23,8 @@ public class Category {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(name = "user_seq")
+    private Long userSeq;
 
     @Column(name = "color")
     private String color;
