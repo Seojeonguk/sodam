@@ -94,6 +94,26 @@ services:
       retries: 10
       start_period: 30s
 
+  category-service:
+    build:
+      context: ../category-service/
+      dockerfile: Dockerfile
+    container_name: category-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "10004:10004"
+    networks:
+      - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
   maria-db: 
 
