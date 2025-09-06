@@ -13,10 +13,10 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import dayjs from "dayjs";
 
-import type { TransactionListResponseDto } from "../services/transaction.types";
+import type { TransactionListResponse } from "../services/transaction.types";
 
 interface TransactionListProps {
-  transactions: TransactionListResponseDto | null;
+  transactions: TransactionListResponse | null;
   onViewDetail: (seq: number) => void;
 }
 
@@ -24,7 +24,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
   onViewDetail,
 }) => {
-  if (!transactions || transactions.content.length === 0) {
+  if (!transactions || transactions.transactions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 4 }}>
         <Typography variant="h6" color="text.secondary">
@@ -36,7 +36,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
   return (
     <List>
-      {transactions.content.map((transaction, index) => (
+      {transactions.transactions.map((transaction, index) => (
         <React.Fragment key={transaction.seq}>
           <ListItem onClick={() => onViewDetail(transaction.seq)}>
             <ListItemAvatar>
@@ -78,7 +78,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     variant="body2"
                     color="text.primary"
                   >
-                    {transaction.categorySeq} -{" "}
+                    {"카테고리"} -{" "}
                   </Typography>
                   <Typography
                     component="span"
@@ -86,7 +86,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     color="text.secondary"
                   >
                     {dayjs(transaction.transactionDate).format(
-                      "YYYY.MM.DD HH:mm",
+                      "YYYY.MM.DD HH:mm"
                     )}
                   </Typography>
                   {transaction.description && (
@@ -103,7 +103,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
               }
             />
           </ListItem>
-          {index < transactions.content.length - 1 && (
+          {index < transactions.transactions.length - 1 && (
             <Divider component="li" variant="inset" />
           )}
         </React.Fragment>

@@ -1,6 +1,6 @@
 import api from "../../../utils/api";
 import type {
-  TransactionListResponseDto,
+  TransactionListResponse,
   TransactionCreateRequestDto,
   TransactionResponseDto,
   TransactionUpdateRequestDto,
@@ -10,39 +10,39 @@ const TRANSACTION_BASE_URL = "/transactions";
 
 const transactionApi = {
   // 거래 목록 조회
-  getTransactions: async (): Promise<TransactionListResponseDto> => {
+  getTransactions: async (): Promise<TransactionListResponse> => {
     const response =
-      await api.get<TransactionListResponseDto>(TRANSACTION_BASE_URL);
+      await api.get<TransactionListResponse>(TRANSACTION_BASE_URL);
     return response.data;
   },
 
   // 거래 생성
   createTransaction: async (
-    data: TransactionCreateRequestDto,
+    data: TransactionCreateRequestDto
   ): Promise<TransactionResponseDto> => {
     const response = await api.post<TransactionResponseDto>(
       TRANSACTION_BASE_URL,
-      data,
+      data
     );
     return response.data;
   },
 
   getTransactionBySeq: async (
-    seq: number | null,
+    seq: number | null
   ): Promise<TransactionResponseDto> => {
     const response = await api.get<TransactionResponseDto>(
-      `${TRANSACTION_BASE_URL}/${seq}`,
+      `${TRANSACTION_BASE_URL}/${seq}`
     );
     return response.data;
   },
 
   updateTransaction: async (
     seq: number,
-    data: TransactionUpdateRequestDto,
+    data: TransactionUpdateRequestDto
   ): Promise<TransactionResponseDto> => {
     const response = await api.put<TransactionResponseDto>(
       `${TRANSACTION_BASE_URL}/${seq}`,
-      data,
+      data
     );
     return response.data;
   },

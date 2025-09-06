@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import transactionApi from "../services/transactionApi";
-import type { TransactionListResponseDto } from "../services/transaction.types";
+import type { TransactionListResponse } from "../services/transaction.types";
 import axios from "axios";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
-    useState<TransactionListResponseDto | null>(null);
+    useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export const useTransactions = () => {
 
         return {
           ...prev,
-          content: prev.content.filter((tx) => tx.seq !== seq),
+          content: prev.transactions.filter((tx) => tx.seq !== seq),
         };
       });
     } catch (err) {
