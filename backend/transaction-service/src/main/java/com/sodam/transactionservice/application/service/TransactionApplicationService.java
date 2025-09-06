@@ -1,5 +1,7 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.transactionservice.application.api.dto.TransactionListItemResponse;
+import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
@@ -86,7 +88,7 @@ public class TransactionApplicationService {
      * @return 조건에 맞는 페이지네이션된 거래 목록 (Page<Transaction> 객체)
      */
     @Transactional(readOnly = true)
-    public Page<Transaction> getTransactions(TransactionSearchRequest searchRequest, Pageable pageable, String email) {
+    public TransactionListResponse getTransactions(TransactionSearchRequest searchRequest, Pageable pageable, String email) {
 
         ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
 
@@ -98,6 +100,16 @@ public class TransactionApplicationService {
 
         searchRequest.setUserId(id);
 
-        return transactionDomainService.getTransactionsByConditions(searchRequest, pageable);
+        Page<Transaction> transactions = transactionDomainService.getTransactionsByConditions(searchRequest, pageable);
+
+        return TransactionListResponse.builder()
+                .transactions(transactions.getContent().stream()
+                        .map(TransactionListItemResponse::from)
+                        .toList())
+                .pageNumber(transactions.getNumber())
+                .pageSize(transactions.getSize())
+                .totalElements(transactions.getTotalElements())
+                .totalPages(transactions.getTotalPages())
+                .build();
     }
 }

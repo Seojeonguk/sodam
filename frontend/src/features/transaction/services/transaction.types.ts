@@ -1,15 +1,17 @@
-export interface PageResponse<T> {
-  content: T[];
-  pageable: any;
-  last: boolean;
-  totalPages: number;
+export interface TransactionListResponse {
+  transactions: TransactionListItemResponse[];
+  pageNumber: number;
+  pageSize: number;
   totalElements: number;
-  size: number;
-  number: number;
-  sort: any;
-  first: boolean;
-  numberOfElements: number;
-  empty: boolean;
+  totalPages: number;
+}
+
+export interface TransactionListItemResponse {
+  seq: number;
+  amount: number;
+  description: string;
+  transactionDate: string;
+  type: "EXPENSE" | "INCOME";
 }
 
 export interface TransactionResponseDto {
@@ -39,5 +41,3 @@ export interface TransactionUpdateRequestDto {
   description?: string;
   transactionDate?: string;
 }
-
-export type TransactionListResponseDto = PageResponse<TransactionResponseDto>;

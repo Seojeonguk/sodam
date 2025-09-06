@@ -1,5 +1,6 @@
 package com.sodam.transactionservice.application.api.controller;
 
+import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
@@ -91,14 +92,13 @@ public class TransactionController {
      * @return 페이지네이션된 거래 목록 (응답 DTO)
      */
     @GetMapping
-    public ResponseEntity<Page<TransactionResponse>> getTransactions(
+    public ResponseEntity<TransactionListResponse> getTransactions(
             @ModelAttribute TransactionSearchRequest searchRequest,
             Pageable pageable,
             @RequestHeader("X-User-Email") String email) {
         log.info("거래 목록 조회 요청: 조건 = {}, 페이징 = {}", searchRequest, pageable);
         log.info("거래 목록 조회 요청 사용자 id : {}", email);
 
-        Page<Transaction> transactionsPage = transactionApplicationService.getTransactions(searchRequest, pageable, email);
-        return ResponseEntity.ok(transactionsPage.map(TransactionResponse::from));
+        return ResponseEntity.ok(transactionApplicationService.getTransactions(searchRequest, pageable, email));
     }
 }
