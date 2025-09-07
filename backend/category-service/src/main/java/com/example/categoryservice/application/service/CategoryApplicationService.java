@@ -79,4 +79,12 @@ public class CategoryApplicationService {
                 .color(category.getColor())
                 .build();
     }
+
+    public void deleteCateogry(Long id, String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        Long userId = userResponse.getData().getId();
+
+        categoryService.deleteCateogry(id, userId);
+    }
 }

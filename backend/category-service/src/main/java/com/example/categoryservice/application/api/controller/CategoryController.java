@@ -40,4 +40,10 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
         return ResponseEntity.ok(service.getCategory(id, email));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        service.deleteCateogry(id, email);
+        return ResponseEntity.noContent().build();
+    }
 }

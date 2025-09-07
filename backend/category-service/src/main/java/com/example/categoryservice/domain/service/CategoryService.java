@@ -61,4 +61,13 @@ public class CategoryService {
         }
         return category;
     }
+
+    @Transactional
+    public void deleteCateogry(Long id, Long userId) {
+        Category category = getCategoryById(id);
+        if(!category.getUserSeq().equals(userId)) {
+            throw new IllegalArgumentException("카테고리 작성자가 아닙니다: " + userId);
+        }
+        categoryRepository.deleteById(id);
+    }
 }
