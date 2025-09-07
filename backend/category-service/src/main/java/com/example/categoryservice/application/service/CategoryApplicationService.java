@@ -65,4 +65,18 @@ public class CategoryApplicationService {
                 .color(updatedCategory.getColor())
                 .build();
     }
+
+    public CategoryResponse getCategory(Long id, String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        Long userId = userResponse.getData().getId();
+
+        Category category = categoryService.getCategoryById(id, userId);
+
+        return CategoryResponse.builder()
+                .name(category.getName())
+                .description(category.getDescription())
+                .color(category.getColor())
+                .build();
+    }
 }

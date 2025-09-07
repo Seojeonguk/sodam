@@ -35,4 +35,9 @@ public class CategoryController {
             @RequestHeader("X-User-Email") String email) {
         return ResponseEntity.ok(service.updateCategory(id, request, email));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        return ResponseEntity.ok(service.getCategory(id, email));
+    }
 }

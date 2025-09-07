@@ -52,4 +52,13 @@ public class CategoryService {
     public Category getCategoryById(Long id) {
         return categoryRepository.findById(id).orElse(null);
     }
+
+    @Transactional(readOnly = true)
+    public Category getCategoryById(Long id, Long userId) {
+        Category category = getCategoryById(id);
+        if(!category.getUserSeq().equals(userId)) {
+            throw new IllegalArgumentException("카테고리 작성자가 아닙니다: " + userId);
+        }
+        return category;
+    }
 }
