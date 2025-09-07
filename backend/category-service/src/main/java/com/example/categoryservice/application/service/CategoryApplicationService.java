@@ -51,4 +51,18 @@ public class CategoryApplicationService {
                 .totalPages(categories.getTotalPages())
                 .build();
     }
+
+    public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request, String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        Long userId = userResponse.getData().getId();
+
+        Category updatedCategory = categoryService.updateCategory(id, request, userId);
+
+        return CategoryResponse.builder()
+                .name(updatedCategory.getName())
+                .description(updatedCategory.getDescription())
+                .color(updatedCategory.getColor())
+                .build();
+    }
 }

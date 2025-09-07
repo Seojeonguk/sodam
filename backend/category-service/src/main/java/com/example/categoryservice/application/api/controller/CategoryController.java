@@ -1,9 +1,6 @@
 package com.example.categoryservice.application.api.controller;
 
-import com.example.categoryservice.application.api.dto.CategoryCreateRequest;
-import com.example.categoryservice.application.api.dto.CategoryListRequest;
-import com.example.categoryservice.application.api.dto.CategoryListResponse;
-import com.example.categoryservice.application.api.dto.CategoryResponse;
+import com.example.categoryservice.application.api.dto.*;
 import com.example.categoryservice.application.service.CategoryApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -29,5 +26,13 @@ public class CategoryController {
             @RequestHeader("X-User-Email") String email
     ) {
         return ResponseEntity.ok(service.getCategories(request, pageable, email));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponse> updateCategory(
+            @PathVariable Long id,
+            @RequestBody CategoryUpdateRequest request,
+            @RequestHeader("X-User-Email") String email) {
+        return ResponseEntity.ok(service.updateCategory(id, request, email));
     }
 }

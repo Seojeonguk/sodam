@@ -1,5 +1,6 @@
 package com.example.categoryservice.domain.model;
 
+import com.example.categoryservice.application.api.dto.CategoryUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,4 +43,10 @@ public class Category {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void updateCategory(CategoryUpdateRequest request) {
+        this.name = request.getName();
+        this.description = request.getDescription();
+        this.color = request.getColor();
+    }
 }
