@@ -1,9 +1,13 @@
 package com.example.categoryservice.domain.service;
 
 import com.example.categoryservice.application.api.dto.CategoryCreateRequest;
+import com.example.categoryservice.application.api.dto.CategoryListRequest;
 import com.example.categoryservice.domain.model.Category;
 import com.example.categoryservice.domain.repository.CategoryRepository;
+import com.example.categoryservice.domain.repository.CategorySpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,5 +26,13 @@ public class CategoryService {
                 .build();
 
         return categoryRepository.save(category);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Category> getCategoriesByConditions(CategoryListRequest request, Pageable pageable) {
+        return categoryRepository.findAll(
+                CategorySpecification.searchByConditions(request),
+                pageable
+        );
     }
 }
