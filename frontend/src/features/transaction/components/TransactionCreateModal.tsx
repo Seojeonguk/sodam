@@ -54,7 +54,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   // 폼 필드 상태 관리
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE"); // 기본값 지출
   const [amount, setAmount] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  const [category, setCategory] = useState<number | null>(null);
   const [description, setDescription] = useState<string>("");
   const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs()); // dayjs 객체
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
@@ -92,7 +92,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     // 모달 닫기 전 상태 초기화
     setType("EXPENSE");
     setAmount("");
-    setCategory("");
+    setCategory(null);
     setDescription("");
     setTransactionDate(dayjs());
     setLoading(false);
@@ -111,10 +111,6 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       setError("금액을 올바르게 입력해주세요.");
       return;
     }
-    if (!category) {
-      setError("카테고리를 선택해주세요.");
-      return;
-    }
     if (!transactionDate) {
       setError("거래 날짜를 선택해주세요.");
       return;
@@ -126,7 +122,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       const newTransaction: TransactionCreateRequestDto = {
         type: type,
         amount: parseFloat(amount), // 숫자로 변환
-        category: category,
+        categorySeq: category,
         description: description,
         transactionDate: transactionDate.toISOString(), // ISO 8601 문자열로 변환
       };
@@ -190,7 +186,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             label="종류"
             onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
               setType(e.target.value);
-              setCategory(""); // 종류 변경 시 카테고리 초기화
+              setCategory(null); // 종류 변경 시 카테고리 초기화
             }}
           >
             <MenuItem value="EXPENSE">지출</MenuItem>
@@ -216,7 +212,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             id="category-select"
             value={category}
             label="카테고리"
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => setCategory(Number(e.target.value))}
             required
           >
             {categories.map((cat) => (
