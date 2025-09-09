@@ -3,7 +3,7 @@ import axios, { type AxiosInstance, AxiosError } from "axios";
 const api: AxiosInstance = axios.create({
   baseURL:
     import.meta.env.VITE_API_TRANSACTION_BASE_URL ??
-    "http://localhost:10001/api",
+    "http://localhost:10003/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -23,7 +23,7 @@ api.interceptors.request.use(
   (error: AxiosError) => {
     console.error("API 요청 에러:", error);
     return Promise.reject(error);
-  },
+  }
 );
 
 api.interceptors.response.use(
@@ -32,7 +32,7 @@ api.interceptors.response.use(
       "API 응답 성공:",
       response.config.url,
       response.status,
-      response.data,
+      response.data
     );
     return response;
   },
@@ -46,7 +46,7 @@ api.interceptors.response.use(
           break;
         case 401:
           alert(
-            "인증이 필요하거나 세션이 만료되었습니다. 다시 로그인해주세요.",
+            "인증이 필요하거나 세션이 만료되었습니다. 다시 로그인해주세요."
           );
           break;
         case 403:
@@ -69,7 +69,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Box,
@@ -21,6 +21,11 @@ import dayjs, { Dayjs } from "dayjs";
 import transactionApi from "../services/transactionApi"; // 거래 API 서비스 임포트
 import type { TransactionCreateRequestDto } from "../services/transaction.types"; // DTO 임포트
 import axios, { AxiosError } from "axios"; // AxiosError 타입 체크를 위해 임포트
+import api from "../../../utils/api";
+import type {
+  CategoryListItemResponse,
+  CategoryListResponse,
+} from "../services/category.types";
 
 // 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
@@ -52,17 +57,36 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [category, setCategory] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs()); // dayjs 객체
+  const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
 
   // API 호출 상태 관리
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // 카테고리 옵션 (예시 데이터, 실제로는 API로 가져올 수 있음)
-  const categories =
-    type === "EXPENSE"
-      ? ["식비", "교통비", "문화생활", "통신비", "월세", "기타지출"]
-      : ["월급", "부수입", "용돈", "환급", "기타수입"];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get<CategoryListResponse>(
+          `/categories?page=0&size=10`
+        );
+        const data = response.data;
+        setCategories(data.categories);
+      } catch (error) {
+        const err = error as AxiosError<{ message?: string }>;
+
+        if (axios.isAxiosError(err) && err.response) {
+          setError(
+            `카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`
+          );
+        } else {
+          setError("카테고리 목록 조회 중 예상치 못한 오류가 발생했습니다.");
+        }
+      }
+    };
+
+    void fetchCategories(); // 👈 eslint no-floating-promises 해결
+  }, []);
 
   const handleClose = () => {
     // 모달 닫기 전 상태 초기화
@@ -119,7 +143,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       if (axios.isAxiosError(err) && err.response) {
         // 백엔드에서 보낸 구체적인 에러 메시지가 있다면
         setError(
-          `거래 추가 실패: ${err.response.data?.message ?? err.message}`,
+          `거래 추가 실패: ${err.response.data?.message ?? err.message}`
         );
       } else {
         setError("거래 추가 중 예상치 못한 오류가 발생했습니다.");
@@ -196,8 +220,8 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             required
           >
             {categories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
+              <MenuItem key={cat.id} value={cat.id}>
+                {cat.name}
               </MenuItem>
             ))}
           </Select>
