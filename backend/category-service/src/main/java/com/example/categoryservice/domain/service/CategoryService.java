@@ -2,7 +2,6 @@ package com.example.categoryservice.domain.service;
 
 import com.example.categoryservice.application.api.dto.CategoryCreateRequest;
 import com.example.categoryservice.application.api.dto.CategoryListRequest;
-import com.example.categoryservice.application.api.dto.CategoryResponse;
 import com.example.categoryservice.application.api.dto.CategoryUpdateRequest;
 import com.example.categoryservice.domain.model.Category;
 import com.example.categoryservice.domain.repository.CategoryRepository;
@@ -12,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class CategoryService {
     @Transactional
     public Category updateCategory(Long id, CategoryUpdateRequest request, Long userId) {
         Category category = getCategoryById(id);
-        if(!category.getUserSeq().equals(userId)) {
+        if (!category.getUserSeq().equals(userId)) {
             throw new IllegalArgumentException("카테고리 작성자가 아닙니다: " + userId);
         }
         category.updateCategory(request);
@@ -56,7 +57,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public Category getCategoryById(Long id, Long userId) {
         Category category = getCategoryById(id);
-        if(!category.getUserSeq().equals(userId)) {
+        if (!category.getUserSeq().equals(userId)) {
             throw new IllegalArgumentException("카테고리 작성자가 아닙니다: " + userId);
         }
         return category;
@@ -65,9 +66,14 @@ public class CategoryService {
     @Transactional
     public void deleteCateogry(Long id, Long userId) {
         Category category = getCategoryById(id);
-        if(!category.getUserSeq().equals(userId)) {
+        if (!category.getUserSeq().equals(userId)) {
             throw new IllegalArgumentException("카테고리 작성자가 아닙니다: " + userId);
         }
         categoryRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Category> getCategoriesByIds(List<Long> ids) {
+        return categoryRepository.findAllById(ids);
     }
 }
