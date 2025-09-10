@@ -26,7 +26,6 @@ public class TransactionApplicationService {
     private final TransactionDomainService transactionDomainService;
     private final UserServiceClient userServiceClient;
     private final CategoryServiceClient categoryServiceClient;
-    private final CategoryServiceClient categoryServiceClient;
 
     /**
      * 새로운 거래를 생성합니다.
