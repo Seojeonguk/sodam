@@ -12,6 +12,7 @@ export interface TransactionListItemResponse {
   description: string;
   transactionDate: string;
   type: "EXPENSE" | "INCOME";
+  categoryName: string | null;
 }
 
 export interface TransactionResponseDto {
