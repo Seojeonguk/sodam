@@ -16,7 +16,7 @@ public class RouteConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                .route("user-service-no-filter", r -> r.path("/api/auth/login", "/api/auth/logout", "/api/auth/register")
+                .route("user-service-no-filter", r -> r.path("/api/auth/login", "/api/auth/logout", "/api/auth/register", "/oauth2/authorization/**")
                         .uri("lb://user-service"))
                 .route("user-service-with-filter", r -> r.path("/api/auth/**")
                         .filters(f -> f.filter(jwtAuthGatewayFilter))
