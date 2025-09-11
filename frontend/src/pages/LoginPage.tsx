@@ -40,6 +40,13 @@ function LoginPage() {
     window.location.href = "https://junguk7880.site/oauth2/authorization/kakao";
   };
 
+  const handleGoogleLoginBtn = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    window.location.href =
+      "https://junguk7880.site/oauth2/authorization/google";
+  };
+
   useEffect(() => {
     // 현재 URL에서 accessToken 추출
     const params = new URLSearchParams(window.location.search);
@@ -108,6 +115,16 @@ function LoginPage() {
             onClick={handleKakaoLoginBtn}
           >
             카카오 로그인
+          </Button>
+
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ backgroundColor: "white" }}
+            fullWidth
+            onClick={handleGoogleLoginBtn}
+          >
+            구글 로그인
           </Button>
         </Box>
       </Box>
