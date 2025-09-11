@@ -6,15 +6,17 @@ import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
 import com.sodam.transactionservice.domain.service.TransactionDomainService;
-import com.sodam.transactionservice.infrastructure.ApiResponse;
-import com.sodam.transactionservice.infrastructure.UserDto;
-import com.sodam.transactionservice.infrastructure.UserServiceClient;
+import com.sodam.transactionservice.infrastructure.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class TransactionApplicationService {
 
     private final TransactionDomainService transactionDomainService;
     private final UserServiceClient userServiceClient;
+    private final CategoryServiceClient categoryServiceClient;
 
     /**
      * 새로운 거래를 생성합니다.
@@ -102,9 +105,19 @@ public class TransactionApplicationService {
 
         Page<Transaction> transactions = transactionDomainService.getTransactionsByConditions(searchRequest, pageable);
 
+        List<Long> categoryIds = transactions.getContent().stream()
+                        .map(Transaction::getCategorySeq)
+                        .distinct()
+                        .toList();
+
+        List<CategoryListItemResponse> categories = categoryServiceClient.getCategoriesByIds(categoryIds);
+
+        Map<Long, String> categoryNames = categories.stream()
+                .collect(Collectors.toMap(CategoryListItemResponse::getId, CategoryListItemResponse::getName));
+
         return TransactionListResponse.builder()
                 .transactions(transactions.getContent().stream()
-                        .map(TransactionListItemResponse::from)
+                        .map(transaction -> TransactionListItemResponse.from(transaction, categoryNames.getOrDefault(transaction.getCategorySeq(), "기타")))
                         .toList())
                 .pageNumber(transactions.getNumber())
                 .pageSize(transactions.getSize())

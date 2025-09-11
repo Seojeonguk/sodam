@@ -1,5 +1,6 @@
 package com.sodam.transactionservice.application.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sodam.transactionservice.domain.model.TransactionType;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -16,7 +17,7 @@ public class TransactionRequest {
 
     private Long accountBookSeq;
 
-    @NotNull(message = "사용자 정보는 필수입니다.")
+    @JsonIgnore
     private Long userSeq;
 
     private Long categorySeq;

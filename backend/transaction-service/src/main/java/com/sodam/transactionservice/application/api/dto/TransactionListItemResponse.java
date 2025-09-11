@@ -16,14 +16,16 @@ public class TransactionListItemResponse {
     private String description;
     private LocalDate transactionDate;
     private TransactionType type;
+    private String categoryName;
 
-    public static TransactionListItemResponse from(Transaction transaction) {
+    public static TransactionListItemResponse from(Transaction transaction, String categoryName) {
         return TransactionListItemResponse.builder()
                 .seq(transaction.getSeq())
                 .amount(transaction.getAmount())
                 .description(transaction.getDescription())
                 .transactionDate(transaction.getTransactionDate())
                 .type(transaction.getType())
+                .categoryName(categoryName)
                 .build();
     }
 }

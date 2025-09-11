@@ -78,7 +78,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     variant="body2"
                     color="text.primary"
                   >
-                    {"카테고리"} -{" "}
+                    {transaction.categoryName} -{" "}
                   </Typography>
                   <Typography
                     component="span"
