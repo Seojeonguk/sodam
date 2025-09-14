@@ -114,6 +114,26 @@ services:
       retries: 10
       start_period: 30s
 
+  account-book-service:
+    build:
+      context: ../account-book-service/
+      dockerfile: Dockerfile
+    container_name: account-book-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "10005:10005"
+    networks:
+      - spring-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
   maria-db: 
 
