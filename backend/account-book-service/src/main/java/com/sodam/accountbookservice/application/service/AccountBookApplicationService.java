@@ -2,6 +2,7 @@ package com.sodam.accountbookservice.application.service;
 
 import com.sodam.accountbookservice.application.api.dto.AccountBookCreateRequest;
 import com.sodam.accountbookservice.application.api.dto.AccountBookResponse;
+import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import com.sodam.accountbookservice.domain.model.AccountBook;
 import com.sodam.accountbookservice.domain.service.AccountBookService;
 import com.sodam.accountbookservice.infrastructure.ApiResponse;
@@ -31,5 +32,30 @@ public class AccountBookApplicationService {
                 .name(accountBook.getName())
                 .updatedAt(accountBook.getUpdatedAt())
                 .build();
+    }
+
+    public AccountBookResponse updateAccountBook(Long id, AccountBookUpdateRequest request, String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+        request.setUserId(userResponse.getData().getId());
+
+        AccountBook accountBook = accountBookService.updateAccountBook(id, request);
+
+        return AccountBookResponse.builder()
+                .name(accountBook.getName())
+                .updatedAt(accountBook.getUpdatedAt())
+                .build();
+    }
+
+    public AccountBookResponse getAccountBook(Long id, String email) {
+        AccountBook accountBook = accountBookService.getAccountBookById(id);
+
+        return AccountBookResponse.builder()
+                .name(accountBook.getName())
+                .updatedAt(accountBook.getUpdatedAt())
+                .build();
+    }
+
+    public void deleteAccountBook(Long id, String email) {
+        accountBookService.deleteAccountBookById(id);
     }
 }

@@ -1,5 +1,6 @@
 package com.sodam.accountbookservice.domain.model;
 
+import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -36,4 +37,9 @@ public class AccountBook {
 
     @Column(name = "updated_by")
     private Long updatedBy;
+
+    public void updateAccountBook(AccountBookUpdateRequest request) {
+        this.name = request.getName();
+        updatedBy = request.getUserId();
+    }
 }
