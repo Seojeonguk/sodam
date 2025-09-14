@@ -4,6 +4,9 @@ import com.sodam.accountbookservice.application.api.dto.AccountBookCreateRequest
 import com.sodam.accountbookservice.application.api.dto.AccountBookResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import com.sodam.accountbookservice.domain.model.AccountBook;
+import com.sodam.accountbookservice.domain.model.AccountBookMember;
+import com.sodam.accountbookservice.domain.model.Authority;
+import com.sodam.accountbookservice.domain.service.AccountBookMemberService;
 import com.sodam.accountbookservice.domain.service.AccountBookService;
 import com.sodam.accountbookservice.infrastructure.ApiResponse;
 import com.sodam.accountbookservice.infrastructure.UserDto;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountBookApplicationService {
 
     private final AccountBookService accountBookService;
+    private final AccountBookMemberService accountBookMemberService;
 
     private final UserServiceClient userServiceClient;
 
@@ -27,6 +31,19 @@ public class AccountBookApplicationService {
         request.setUserId(userResponse.getData().getId());
 
         AccountBook accountBook = accountBookService.createAccountBook(request);
+
+        AccountBookMember accountBookMember = AccountBookMember.builder()
+                .accountBookId(accountBook.getId())
+                .createdBy(userResponse.getData().getId())
+                .updatedBy(userResponse.getData().getId())
+                .authority(Authority.OWNER)
+                .isAvailable("Y")
+                .build();
+
+        AccountBookMember createdAccountBookMember = accountBookMemberService.createAccountBookMember(accountBookMember);
+        if(createdAccountBookMember == null) {
+            throw new IllegalArgumentException("생성된 가계부 권한이 없습니다.");
+        }
 
         return AccountBookResponse.builder()
                 .name(accountBook.getName())
