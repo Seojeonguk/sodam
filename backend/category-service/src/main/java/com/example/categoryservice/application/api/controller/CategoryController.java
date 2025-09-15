@@ -43,7 +43,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
-        service.deleteCateogry(id, email);
+        service.deleteCategory(id, email);
         return ResponseEntity.noContent().build();
     }
 }

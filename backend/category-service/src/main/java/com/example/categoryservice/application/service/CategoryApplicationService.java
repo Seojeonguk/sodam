@@ -80,11 +80,11 @@ public class CategoryApplicationService {
                 .build();
     }
 
-    public void deleteCateogry(Long id, String email) {
+    public void deleteCategory(Long id, String email) {
         ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
 
         Long userId = userResponse.getData().getId();
 
-        categoryService.deleteCateogry(id, userId);
+        categoryService.deleteCategory(id, userId);
     }
 }
