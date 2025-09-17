@@ -7,6 +7,7 @@ import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.application.service.UserApplicationService;
 import com.sodam.userservice.common.api.ApiResponse;
 import com.sodam.userservice.domain.model.User;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +35,11 @@ public class AuthController {
      * @return JWT 토큰을 포함한 응답
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse user = userService.login(loginRequest);
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
+            @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response
+    ) {
+        LoginResponse user = userService.login(loginRequest, response);
 
         return ApiResponse.success(user);
     }
