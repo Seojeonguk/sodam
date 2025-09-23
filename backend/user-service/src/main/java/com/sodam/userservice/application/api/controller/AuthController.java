@@ -6,10 +6,13 @@ import com.sodam.userservice.application.api.dto.RegisterRequest;
 import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.application.service.UserApplicationService;
 import com.sodam.userservice.common.api.ApiResponse;
+import com.sodam.userservice.common.api.ResponseCode;
 import com.sodam.userservice.domain.model.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,6 +79,17 @@ public class AuthController {
     @GetMapping("/users/{email}")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String email) {
         UserResponse userInfo = userService.findUserByEmail(email);
+
+        return ApiResponse.success(userInfo);
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<LoginResponse>> reissue(HttpServletRequest request) {
+        LoginResponse userInfo = userService.reissue(request);
+
+        if(userInfo == null) {
+            return ApiResponse.failure(ResponseCode.UNAUTHORIZED.getCode(), "Refresh token이 유효하지 않습니다.");
+        }
 
         return ApiResponse.success(userInfo);
     }

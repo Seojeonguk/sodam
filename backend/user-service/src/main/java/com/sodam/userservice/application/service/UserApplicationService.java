@@ -9,6 +9,7 @@ import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.service.UserServiceImpl;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -85,5 +86,40 @@ public class UserApplicationService {
     @Transactional(readOnly = true)
     public String refresh(String userId) {
         return jwtTokenProvider.generateAccessToken(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponse reissue(HttpServletRequest request) {
+        // 쿠키에서 refreshToken 추출
+        String refreshToken = extractRefreshTokenFromCookie(request);
+
+        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+            return null;
+        }
+
+        // refreshToken에서 이메일 추출
+        String email = jwtTokenProvider.getUserEmail(refreshToken);
+
+        // 유저 검증 (선택적)
+        userService.findUserByEmail(email);
+
+        // 새 accessToken 발급
+        String newAccessToken = jwtTokenProvider.generateAccessToken(email);
+
+        return LoginResponse.builder()
+                .accessToken(newAccessToken)
+                .build();
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+        for (Cookie cookie : request.getCookies()) {
+            if ("refreshToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

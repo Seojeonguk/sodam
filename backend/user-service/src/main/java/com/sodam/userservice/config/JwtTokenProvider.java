@@ -78,4 +78,18 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    public String getUserEmail(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getSubject();
+    }
+
+    public Claims parseClaims(String token) {
+        Key signingKey = generateKey(secretKey);
+        return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
 }
