@@ -12,12 +12,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserApplicationService {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -94,6 +96,7 @@ public class UserApplicationService {
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+            log.error("유효하지 않은 토큰 정보. refresh token : {}", refreshToken);
             return null;
         }
 
@@ -113,13 +116,17 @@ public class UserApplicationService {
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
+            log.error("쿠키 정보가 존재하지 않음.");
             return null;
         }
+
         for (Cookie cookie : request.getCookies()) {
             if ("refreshToken".equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
+
+        log.error("쿠키 내 refresh token 확인 불가.");
         return null;
     }
 }

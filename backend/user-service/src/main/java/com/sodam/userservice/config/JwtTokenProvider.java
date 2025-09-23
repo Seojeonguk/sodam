@@ -1,6 +1,7 @@
 package com.sodam.userservice.config;
 
 import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.time.Instant;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
     @Value("${jwt.issuer}")
@@ -72,9 +74,10 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(generateKey(secretKey)).build().parseClaimsJws(authToken);
             return true;
         } catch (Exception ex) {
+            log.error("토큰 유효성 검사 통과 실패. 사유 : {}", ex.getMessage());
             return false;
         }
     }
