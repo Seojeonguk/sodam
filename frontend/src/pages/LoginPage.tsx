@@ -25,10 +25,8 @@ function LoginPage() {
       setErrorMsg(message);
     } else {
       const accessToken = res.data?.accessToken;
-      const refreshToken = res.data?.refreshToken;
 
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
 
       navigate("/transactions");
     }
