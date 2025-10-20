@@ -59,7 +59,7 @@ const onRefreshed = (token: string): void => {
  */
 async function requestNewAccessToken(): Promise<string> {
   try {
-    const url = `${BASE_URL}auth/reissue`; // 서버의 리프레시 엔드포인트
+    const url = `${BASE_URL}/auth/reissue`; // 서버의 리프레시 엔드포인트
     const res: AxiosResponse<ApiResponse<ReissueData>> = await axios.post(
       url,
       {},
