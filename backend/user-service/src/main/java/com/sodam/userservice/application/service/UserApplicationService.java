@@ -57,6 +57,7 @@ public class UserApplicationService {
         refreshCookie.setSecure(true); // HTTPS 환경 권장
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+        refreshCookie.setAttribute("SameSite", "None");
         response.addCookie(refreshCookie);
 
         return LoginResponse.builder()
