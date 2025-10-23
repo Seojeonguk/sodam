@@ -6,13 +6,15 @@ import com.sodam.transactionservice.domain.repository.StatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class StatDomainService {
 
     private final StatMapper mapper;
 
-    public StatResponse getStat(StatRequest request) {
+    public List<StatResponse> getStat(StatRequest request) {
         return mapper.getStat(request);
     }
 }

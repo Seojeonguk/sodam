@@ -4,7 +4,9 @@ import com.sodam.transactionservice.application.api.dto.StatRequest;
 import com.sodam.transactionservice.application.api.dto.StatResponse;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface StatMapper {
-    StatResponse getStat(StatRequest statRequest);
+    List<StatResponse> getStat(StatRequest statRequest);
 }

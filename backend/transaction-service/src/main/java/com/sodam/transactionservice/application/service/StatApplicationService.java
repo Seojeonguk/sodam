@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -18,7 +20,7 @@ public class StatApplicationService {
     private final StatDomainService statDomainService;
     private final UserServiceClient userServiceClient;
 
-    public StatResponse getStat(StatRequest request, String email) {
+    public List<StatResponse> getStat(StatRequest request, String email) {
         ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
 
         log.info("사용자 응답 정보 : {}", userResponse);

@@ -9,10 +9,9 @@
             resultType="com.sodam.transactionservice.application.api.dto.StatResponse"
     >
         SELECT
-            SUM(tr.amount),
-            tr.category_seq,
-            tr.type,
-            NVL(cg.name, '미분류')
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            NVL(cg.name, '미분류') AS name
         FROM
             transaction tr
             LEFT JOIN category cg ON tr.category_seq = cg.id

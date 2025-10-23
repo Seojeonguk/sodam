@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/stat")
@@ -14,7 +16,7 @@ public class StatController {
     private final StatApplicationService service;
 
     @GetMapping("")
-    public ResponseEntity<StatResponse> getStat(@ModelAttribute StatRequest request, @RequestHeader("X-User-Email") String email) {
+    public ResponseEntity<List<StatResponse>> getStat(@ModelAttribute StatRequest request, @RequestHeader("X-User-Email") String email) {
         return ResponseEntity.ok(service.getStat(request, email));
     }
 }
