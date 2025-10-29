@@ -7,6 +7,7 @@ import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 import type { TransactionResponseDto } from "./services/transaction.types";
 import TransactionEditModal from "./components/TransactionEditModal";
+import {PieChart} from "@mui/x-charts";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -23,6 +24,7 @@ function TransactionPage() {
     error,
     refetchTransactions,
     deleteTransaction,
+    stats
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -120,6 +122,16 @@ function TransactionPage() {
         </Button>
       </Box>
 
+      <Box>
+        <PieChart
+          series={[{
+            data: stats
+          }]}
+          width={150}
+          height={150}
+        />
+      </Box>
+      
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" component="h2" mb={2}>
           최근 거래 내역

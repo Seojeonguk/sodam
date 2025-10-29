@@ -5,13 +5,14 @@ import type { TransactionListResponse } from "../services/transaction.types";
 import axios from "axios";
 import type { StatResponse } from "../services/stat.types";
 import type { StatRequest } from "./../services/stat.types";
+import type { PieValueType } from "@mui/x-charts/models/seriesType";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<StatResponse | null>(null);
+  const [stats, setStats] = useState<PieValueType[]>([]);
   const [statReq, setStatReq] = useState<StatRequest>({});
 
   const fetchTransactions = async () => {
@@ -57,8 +58,16 @@ export const useTransactions = () => {
   const fetchStats = async () => {
     try {
       const response = await statApi.getStats(statReq);
-      setStats(response);
-      console.log(response);
+
+      const stat:PieValueType[] = response.map((item, idx)=> ({
+        id : idx,
+        value : item.total,
+        label: item.name
+      }));
+
+      setStats(stat);
+
+      console.log('통계 결과 : ', stat);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
@@ -84,5 +93,6 @@ export const useTransactions = () => {
     error,
     refetchTransactions: fetchTransactions,
     deleteTransaction,
+    stats
   };
 };
