@@ -24,7 +24,8 @@ function TransactionPage() {
     error,
     refetchTransactions,
     deleteTransaction,
-    stats
+    incomeStats,
+    expenseStats
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -122,14 +123,32 @@ function TransactionPage() {
         </Button>
       </Box>
 
-      <Box>
-        <PieChart
-          series={[{
-            data: stats
-          }]}
-          width={150}
-          height={150}
-        />
+      <Box display={"flex"} flexDirection={"row"} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
+        <Box>
+          <Typography variant="h5" component="h2" mb={2}>
+            수입
+          </Typography>
+          <PieChart
+            series={[{
+              data: incomeStats
+            }]}
+            width={150}
+            height={150}
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="h5" component="h2" mb={2}>
+            지출
+          </Typography>
+          <PieChart
+            series={[{
+              data: expenseStats
+            }]}
+            width={150}
+            height={150}
+          />
+        </Box>
       </Box>
       
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>

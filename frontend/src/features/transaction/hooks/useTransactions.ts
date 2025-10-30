@@ -12,7 +12,8 @@ export const useTransactions = () => {
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<PieValueType[]>([]);
+  const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
+  const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
   const [statReq, setStatReq] = useState<StatRequest>({});
 
   const fetchTransactions = async () => {
@@ -55,19 +56,42 @@ export const useTransactions = () => {
     }
   };
 
+  const getRandomColor = () =>
+  `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
   const fetchStats = async () => {
     try {
       const response = await statApi.getStats(statReq);
 
-      const stat:PieValueType[] = response.map((item, idx)=> ({
+      console.debug('전체 통계 정보 : ', response);
+
+      const incomeStats:PieValueType[] = response.filter((item)=> {
+        return item.type === 'INCOME'
+      })
+      .map((item, idx)=> ({
         id : idx,
         value : item.total,
-        label: item.name
+        label: item.name,
+        color : getRandomColor()
       }));
 
-      setStats(stat);
+      console.debug('수입 통계 정보 : ', incomeStats);
 
-      console.log('통계 결과 : ', stat);
+      setIncomeStats(incomeStats);
+
+      const expenseStats:PieValueType[] = response.filter((item)=> {
+        return item.type === 'EXPENSE'
+      })
+      .map((item, idx)=> ({
+        id : idx,
+        value : item.total,
+        label: item.name,
+        color : getRandomColor()
+      }));
+
+      console.log('지출 통계 정보 : ', expenseStats);
+
+      setExpenseStats(expenseStats);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
@@ -93,6 +117,7 @@ export const useTransactions = () => {
     error,
     refetchTransactions: fetchTransactions,
     deleteTransaction,
-    stats
+    incomeStats,
+    expenseStats
   };
 };
