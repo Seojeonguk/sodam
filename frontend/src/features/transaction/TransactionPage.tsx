@@ -7,7 +7,7 @@ import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 import type { TransactionResponseDto } from "./services/transaction.types";
 import TransactionEditModal from "./components/TransactionEditModal";
-import {PieChart} from "@mui/x-charts";
+import {BarChart, PieChart} from "@mui/x-charts";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -26,7 +26,8 @@ function TransactionPage() {
     deleteTransaction,
     incomeStats,
     expenseStats,
-    fetchStats
+    fetchStats,
+    statPeriodDataset
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -127,30 +128,46 @@ function TransactionPage() {
         </Button>
       </Box>
 
-      <Box display={"flex"} flexDirection={"row"} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
-        <Box>
-          <Typography variant="h5" component="h2" mb={2}>
-            수입
-          </Typography>
-          <PieChart
-            series={[{
-              data: incomeStats
-            }]}
-            width={150}
-            height={150}
-          />
+      <Box>
+        <Box display={"flex"} flexDirection={"row"} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
+          <Box>
+            <Typography variant="h5" component="h2" mb={2}>
+              수입
+            </Typography>
+            <PieChart
+              series={[{
+                data: incomeStats
+              }]}
+              width={150}
+              height={150}
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="h5" component="h2" mb={2}>
+              지출
+            </Typography>
+            <PieChart
+              series={[{
+                data: expenseStats
+              }]}
+              width={150}
+              height={150}
+            />
+          </Box>
         </Box>
 
         <Box>
-          <Typography variant="h5" component="h2" mb={2}>
-            지출
+          <Typography>
+            차트
           </Typography>
-          <PieChart
-            series={[{
-              data: expenseStats
-            }]}
-            width={150}
-            height={150}
+          <BarChart
+            dataset={statPeriodDataset}
+                xAxis={[{ dataKey: 'period', scaleType: 'band' }]}
+                series={[
+                  { dataKey: 'income', label: '수입' },
+                  { dataKey: 'expense', label: '지출' },
+                ]}
           />
         </Box>
       </Box>

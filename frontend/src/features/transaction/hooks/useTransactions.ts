@@ -3,8 +3,7 @@ import transactionApi from "../services/transactionApi";
 import statApi from "../services/statApi";
 import type { TransactionListResponse } from "../services/transaction.types";
 import axios from "axios";
-import type { StatResponse } from "../services/stat.types";
-import type { StatRequest } from "./../services/stat.types";
+import type { StatPeriodRequest, StatPeriodResponse, StatRequest } from "./../services/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
 
 export const useTransactions = () => {
@@ -12,9 +11,19 @@ export const useTransactions = () => {
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [statReq, setStatReq] = useState<StatRequest>({});
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
-  const [statReq, setStatReq] = useState<StatRequest>({});
+  
+  const [statPeriodReq, setStatPeriodReq] = useState<StatPeriodRequest>({
+    startDate: '',
+    endDate: ''
+  });
+  const [statPeriodDataset, setStatPeriodDataset] = useState<any[]>([]);
+
+  
+
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -103,12 +112,48 @@ export const useTransactions = () => {
     }
   };
 
+  const fetchPeriodStats = async () => {
+    try {
+      const response = await statApi.getPeriodStats(statPeriodReq);
+
+      console.debug('전체 월별 통계 정보 : ', response);
+
+      const dataset = response.reduce((acc: any[], item: StatPeriodResponse) => {
+        const month = item.transaction_date;
+        const found = acc.find((d) => d.period === month);
+        if (found) {
+          found[item.type.toLowerCase()] = item.total;
+        } else {
+          acc.push({
+            period: month,
+            [item.type.toLowerCase()]: item.total,
+          });
+        }
+        return acc;
+      }, []);
+
+      setStatPeriodDataset(dataset);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.message);
+      } else {
+        setError("알 수 없는 오류가 발생했습니다.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     void fetchTransactions();
   }, []);
 
   useEffect(() => {
     void fetchStats();
+  }, []);
+
+  useEffect(() => {
+    void fetchPeriodStats();
   }, []);
 
   return {
@@ -119,6 +164,8 @@ export const useTransactions = () => {
     deleteTransaction,
     incomeStats,
     expenseStats,
-    fetchStats
+    fetchStats,
+    fetchPeriodStats,
+    statPeriodDataset
   };
 };

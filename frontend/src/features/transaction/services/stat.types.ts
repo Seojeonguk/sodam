@@ -5,3 +5,14 @@ export interface StatResponse {
   type: string;
   name: string;
 }
+
+export interface StatPeriodRequest {
+  startDate: string;
+  endDate: string;
+}
+
+export interface StatPeriodResponse {
+  total: number;
+  type: string;
+  transaction_date: string;
+}
