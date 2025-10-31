@@ -133,7 +133,7 @@ function TransactionPage() {
       </Box>
 
       <Box>
-        <Box display={"flex"} flexDirection={"row"} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
+        <Box display={"flex"} flexDirection={{ xs: "column", sm: "row" }} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
           <Box>
             <Typography variant="h5" component="h2" mb={2}>
               수입
