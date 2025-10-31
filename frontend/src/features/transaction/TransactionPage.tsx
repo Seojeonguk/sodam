@@ -25,7 +25,8 @@ function TransactionPage() {
     refetchTransactions,
     deleteTransaction,
     incomeStats,
-    expenseStats
+    expenseStats,
+    fetchStats
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -35,6 +36,7 @@ function TransactionPage() {
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
     void refetchTransactions(); // 모달 닫힐 때 목록 갱신
+    void fetchStats();
   };
 
   const handleOpenDetailModal = (seq: number) => {
@@ -57,12 +59,14 @@ function TransactionPage() {
     setIsEditModalOpen(false);
     setTransactionToEdit(null);
     refetchTransactions(); // 목록 갱신
+    fetchStats();
   };
 
   const handleDeleteTransaction = async (seq: number) => {
     if (window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
       await deleteTransaction(seq);
       refetchTransactions(); // 삭제 후 목록 갱신
+      fetchStats();
       handleCloseDetailModal(); // 상세 모달이 열려있었다면 닫기
     }
   };

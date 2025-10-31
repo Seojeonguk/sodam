@@ -118,6 +118,7 @@ export const useTransactions = () => {
     refetchTransactions: fetchTransactions,
     deleteTransaction,
     incomeStats,
-    expenseStats
+    expenseStats,
+    fetchStats
   };
 };
