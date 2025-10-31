@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sodam.transactionservice.domain.repository.StatMapper">
+
+    <select id="getStat"
+            parameterType="com.sodam.transactionservice.application.api.dto.StatRequest"
+            resultType="com.sodam.transactionservice.application.api.dto.StatResponse"
+    >
+        SELECT
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            NVL(cg.name, '미분류') AS name
+        FROM
+            transaction tr
+            LEFT JOIN category cg ON tr.category_seq = cg.id
+        WHERE
+            1=1
+            and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
+        GROUP BY
+            tr.category_seq, tr.type
+    </select>
+
+    <select id="getPeriodStat"
+            parameterType="com.sodam.transactionservice.application.api.dto.StatPeriodRequest"
+            resultType="com.sodam.transactionservice.application.api.dto.StatPeriodResponse"
+    >
+        SELECT
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            TO_CHAR(tr.transaction_date, 'YYYYMM') AS transaction_date
+        FROM
+            transaction tr
+                LEFT JOIN category cg ON tr.category_seq = cg.id
+        WHERE
+            1=1
+          and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
+        GROUP BY
+            TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type
+    </select>
+</mapper>

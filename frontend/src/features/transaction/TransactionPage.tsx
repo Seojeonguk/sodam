@@ -7,6 +7,7 @@ import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 import type { TransactionResponseDto } from "./services/transaction.types";
 import TransactionEditModal from "./components/TransactionEditModal";
+import {BarChart, PieChart} from "@mui/x-charts";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -23,6 +24,11 @@ function TransactionPage() {
     error,
     refetchTransactions,
     deleteTransaction,
+    incomeStats,
+    expenseStats,
+    fetchStats,
+    statPeriodDataset,
+    fetchPeriodStats
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -32,6 +38,8 @@ function TransactionPage() {
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
     void refetchTransactions(); // 모달 닫힐 때 목록 갱신
+    void fetchStats();
+    void fetchPeriodStats();
   };
 
   const handleOpenDetailModal = (seq: number) => {
@@ -54,12 +62,16 @@ function TransactionPage() {
     setIsEditModalOpen(false);
     setTransactionToEdit(null);
     refetchTransactions(); // 목록 갱신
+    fetchPeriodStats();
+    fetchStats();
   };
 
   const handleDeleteTransaction = async (seq: number) => {
     if (window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
       await deleteTransaction(seq);
       refetchTransactions(); // 삭제 후 목록 갱신
+      fetchPeriodStats();
+      fetchStats();
       handleCloseDetailModal(); // 상세 모달이 열려있었다면 닫기
     }
   };
@@ -120,6 +132,51 @@ function TransactionPage() {
         </Button>
       </Box>
 
+      <Box>
+        <Box display={"flex"} flexDirection={"row"} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
+          <Box>
+            <Typography variant="h5" component="h2" mb={2}>
+              수입
+            </Typography>
+            <PieChart
+              series={[{
+                data: incomeStats
+              }]}
+              width={150}
+              height={150}
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="h5" component="h2" mb={2}>
+              지출
+            </Typography>
+            <PieChart
+              series={[{
+                data: expenseStats
+              }]}
+              width={150}
+              height={150}
+            />
+          </Box>
+        </Box>
+
+        <Box>
+          <Typography>
+            차트
+          </Typography>
+          <BarChart
+            dataset={statPeriodDataset}
+            xAxis={[{ dataKey: 'period', scaleType: 'band' }]}
+            series={[
+              { dataKey: 'income', label: '수입' },
+              { dataKey: 'expense', label: '지출' },
+            ]}
+            height={300}
+          />
+        </Box>
+      </Box>
+      
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" component="h2" mb={2}>
           최근 거래 내역

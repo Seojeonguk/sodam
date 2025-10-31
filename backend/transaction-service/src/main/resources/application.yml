@@ -34,3 +34,6 @@ logging:
         orm:
           jdbc:
             bind: TRACE
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
