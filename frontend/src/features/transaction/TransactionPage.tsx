@@ -163,11 +163,12 @@ function TransactionPage() {
           </Typography>
           <BarChart
             dataset={statPeriodDataset}
-                xAxis={[{ dataKey: 'period', scaleType: 'band' }]}
-                series={[
-                  { dataKey: 'income', label: '수입' },
-                  { dataKey: 'expense', label: '지출' },
-                ]}
+            xAxis={[{ dataKey: 'period', scaleType: 'band' }]}
+            series={[
+              { dataKey: 'income', label: '수입' },
+              { dataKey: 'expense', label: '지출' },
+            ]}
+            height={300}
           />
         </Box>
       </Box>
