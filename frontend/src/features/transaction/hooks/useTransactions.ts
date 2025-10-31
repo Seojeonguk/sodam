@@ -12,11 +12,11 @@ export const useTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [statReq, setStatReq] = useState<StatRequest>({});
+  const [statReq] = useState<StatRequest>({});
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
   
-  const [statPeriodReq, setStatPeriodReq] = useState<StatPeriodRequest>({
+  const [statPeriodReq] = useState<StatPeriodRequest>({
     startDate: '',
     endDate: ''
   });
