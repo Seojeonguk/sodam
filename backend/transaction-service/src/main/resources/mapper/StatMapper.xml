@@ -19,7 +19,7 @@
             1=1
             and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
         GROUP BY
-            tr.category_seq
+            tr.category_seq, tr.type
     </select>
 
 </mapper>
