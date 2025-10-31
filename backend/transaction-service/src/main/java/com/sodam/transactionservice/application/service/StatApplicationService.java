@@ -1,5 +1,7 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.transactionservice.application.api.dto.StatPeriodRequest;
+import com.sodam.transactionservice.application.api.dto.StatPeriodResponse;
 import com.sodam.transactionservice.application.api.dto.StatRequest;
 import com.sodam.transactionservice.application.api.dto.StatResponse;
 import com.sodam.transactionservice.domain.service.StatDomainService;
@@ -32,5 +34,19 @@ public class StatApplicationService {
         request.setUserSeq(id);
 
         return statDomainService.getStat(request);
+    }
+
+    public List<StatPeriodResponse> getPeriodStat(StatPeriodRequest request, String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        log.info("사용자 응답 정보 : {}", userResponse);
+
+        Long id = userResponse.getData().getId();
+
+        log.info("사용자 id : {}" ,id);
+
+        request.setUserSeq(id);
+
+        return statDomainService.getPeriodStat(request);
     }
 }

@@ -22,4 +22,21 @@
             tr.category_seq, tr.type
     </select>
 
+    <select id="getPeriodStat"
+            parameterType="com.sodam.transactionservice.application.api.dto.StatPeriodRequest"
+            resultType="com.sodam.transactionservice.application.api.dto.StatPeriodResponse"
+    >
+        SELECT
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            TO_CHAR(tr.transaction_date, 'YYYYMM') AS transaction_date
+        FROM
+            transaction tr
+                LEFT JOIN category cg ON tr.category_seq = cg.id
+        WHERE
+            1=1
+          and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
+        GROUP BY
+            TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type
+    </select>
 </mapper>
