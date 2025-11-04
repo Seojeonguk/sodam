@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -21,32 +20,14 @@ import MailIcon from '@mui/icons-material/Mail';
 
 const drawerWidth = 240;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
-  open?: boolean;
-}>(({ theme }) => ({
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: `-${drawerWidth}px`,
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        transition: theme.transitions.create('margin', {
-          easing: theme.transitions.easing.easeOut,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-        marginLeft: 0,
-      },
-    },
-  ],
-}));
-
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
+}
+
+interface SideBarDrawerProps {
+  openSide: boolean;
+  toggleDrawer: () => void;
+  handleDrawerClose: () => void;
 }
 
 const AppBar = styled(MuiAppBar, {
@@ -80,17 +61,12 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function SideBarDrawer() {
+export default function SideBarDrawer({
+  openSide,
+  toggleDrawer,
+  handleDrawerClose,
+}: SideBarDrawerProps) {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-
-  const toggleDrawer = () => {
-    setOpen(!open);
-  }
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
 
   const sideMenuList = [{
     label : "카테고리",
@@ -102,7 +78,7 @@ export default function SideBarDrawer() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open}>
+      <AppBar position="relative" open={openSide}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -113,7 +89,7 @@ export default function SideBarDrawer() {
               {
                 mr: 2,
               },
-              open && { display: 'none' },
+              openSide && { display: 'none' },
             ]}
           >
             <MenuIcon />
@@ -134,11 +110,11 @@ export default function SideBarDrawer() {
         }}
         variant="persistent"
         anchor="left"
-        open={open}
+        open={openSide}
         onClose={handleDrawerClose}
       >
         <DrawerHeader>
-          <IconButton onClick={handleDrawerClose}>
+          <IconButton onClick={toggleDrawer}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </DrawerHeader>
@@ -157,10 +133,6 @@ export default function SideBarDrawer() {
         </List>
         <Divider />
       </Drawer>
-      <Main open={open}>
-        sdfsdf
-        <DrawerHeader />
-      </Main>
     </Box>
   );
 }

@@ -3,8 +3,17 @@ import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
+import {useState} from "react";
+
+const drawerWidth = 240;
+const appBarHeight = 64;
 
 function App() {
+  const [openSide, setOpenSide] = useState<boolean>(false);
+
+  const toggleDrawer = () => setOpenSide(!openSide);
+  const handleDrawerClose = () => setOpenSide(false);
+
   return (
     <Box
       sx={{
@@ -14,7 +23,11 @@ function App() {
         padding: 0,
       }}
     >
-      <SideBarDrawer />
+      <SideBarDrawer
+        openSide={openSide}
+        toggleDrawer={toggleDrawer}
+        handleDrawerClose={handleDrawerClose}
+      />
       <Box
         sx={{
           flexGrow: 1,
@@ -22,6 +35,9 @@ function App() {
           mb: 4,
           display: "flex",
           flexDirection: "column",
+          transition: "margin 0.3s ease",
+          marginLeft: openSide ? `${drawerWidth}px` : 0,
+          marginTop: 0
         }}
       >
         <Routes>
@@ -36,6 +52,8 @@ function App() {
           mt: "auto",
           backgroundColor: "#e0e0e0",
           textAlign: "center",
+          transition: "margin 0.3s ease",
+          marginLeft: openSide ? `${drawerWidth}px` : 0,
         }}
       >
         <Typography variant="body2" color="text.secondary">
