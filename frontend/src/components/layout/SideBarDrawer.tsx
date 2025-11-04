@@ -126,7 +126,7 @@ export default function SideBarDrawer({
                 <ListItemIcon>
                   {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>
-                <ListItemText primary={item.label} />
+                <ListItemText sx={{overflowWrap:"break-word"}} primary={item.label} />
               </ListItemButton>
             </ListItem>
           ))}
