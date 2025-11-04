@@ -1,7 +1,8 @@
-import { AppBar, Box, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Icon, Toolbar, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
+import SideBarDrawer from "./components/layout/SideBarDrawer";
 
 function App() {
   return (
@@ -13,21 +14,7 @@ function App() {
         padding: 0,
       }}
     >
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
-          bgcolor: "#FFFFFF",
-          color: "#333333",
-          borderBottom: "1px solid #E0E0E0",
-        }}
-      >
-        <Toolbar sx={{ minHeight: 56 }}>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            💰 소담
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <SideBarDrawer />
       <Box
         sx={{
           flexGrow: 1,
