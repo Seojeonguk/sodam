@@ -1,4 +1,4 @@
-import { AppBar, Box, Icon, Toolbar, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
