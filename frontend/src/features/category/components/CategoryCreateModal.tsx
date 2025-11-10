@@ -1,5 +1,6 @@
 import React, {useState} from "react";
-import {Alert, Box, Button, CircularProgress, Modal, TextField, Typography,} from "@mui/material";
+import {Alert, Box, Button, CircularProgress, ClickAwayListener, Modal, TextField, Typography,} from "@mui/material";
+import {ChromePicker } from "react-color";
 
 // 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
@@ -22,12 +23,13 @@ interface TransactionCreateModalProps {
 }
 
 const CategoryCreateModal: React.FC<TransactionCreateModalProps> = ({
-                                                                      isOpen,
-                                                                      onClose,
-                                                                    }) => {
+  isOpen,
+  onClose,
+}) => {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [color, setColor] = useState<string>("");
+  const [color, setColor] = useState<string>("#000");
+  const [displayColorPicker, setDisplayColorPicker] = useState<boolean>(false);
 
   // API 호출 상태 관리
   const [loading, setLoading] = useState<boolean>(false);
@@ -42,8 +44,21 @@ const CategoryCreateModal: React.FC<TransactionCreateModalProps> = ({
     onClose(); // 부모 컴포넌트의 onClose 호출
   };
 
-  const handleSubmit =  (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+  }
+
+  const handleColor = (color: { hex: string }) => {
+    setColor(color.hex);
+    console.log(color.hex);
+  }
+
+  const handleOpenColorPicker = () => {
+    setDisplayColorPicker(true);
+  }
+
+  const handleCloseColorPicker = () => {
+    setDisplayColorPicker(false);
   }
 
   return (
@@ -103,8 +118,17 @@ const CategoryCreateModal: React.FC<TransactionCreateModalProps> = ({
           onChange={(e) => setColor(e.target.value)}
           margin="normal"
           sx={{mb: 2}}
+          onClick={handleOpenColorPicker}
         />
 
+        {displayColorPicker
+          &&
+            <ClickAwayListener onClickAway={() => handleCloseColorPicker()} >
+              <Box sx={{zIndex: 2, width : "fit-content", marginBottom: 5}}>
+                  <ChromePicker color = {color} onChange={handleColor} />
+              </Box>
+            </ClickAwayListener>
+        }
 
         <Box display="flex" justifyContent="space-between" gap={2}>
           <Button
