@@ -4,10 +4,9 @@ import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
 import {useState} from "react";
+import CategoryPage from "./features/category/CategoryPage.tsx";
 
 const drawerWidth = 240;
-const appBarHeight = 64;
-
 function App() {
   const [openSide, setOpenSide] = useState<boolean>(false);
 
@@ -43,6 +42,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/transactions" element={<TransactionPage />} />
+          <Route path="/category" element={<CategoryPage />} />
         </Routes>
       </Box>
       <Box

@@ -17,6 +17,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
+import {useNavigate} from "react-router-dom";
 
 const drawerWidth = 240;
 
@@ -67,13 +68,21 @@ export default function SideBarDrawer({
   handleDrawerClose,
 }: SideBarDrawerProps) {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const sideMenuList = [{
     label : "카테고리",
-    func : () => {
-        console.log('click');
+    func : async () => {
+      await navigate("/category");
     }
-  }];
+  },
+    {
+      label : "거래내역",
+      func : async () => {
+        await navigate("/transactions")
+      }
+    }
+  ];
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -122,7 +131,7 @@ export default function SideBarDrawer({
         <List>
           {sideMenuList.map((item, index) => (
             <ListItem key={item.label} disablePadding>
-              <ListItemButton>
+              <ListItemButton onClick={item.func}>
                 <ListItemIcon>
                   {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>
