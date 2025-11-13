@@ -1,9 +1,18 @@
-import { AppBar, Box, Toolbar, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
+import SideBarDrawer from "./components/layout/SideBarDrawer";
+import {useState} from "react";
+import CategoryPage from "./features/category/CategoryPage.tsx";
 
+const drawerWidth = 240;
 function App() {
+  const [openSide, setOpenSide] = useState<boolean>(false);
+
+  const toggleDrawer = () => setOpenSide(!openSide);
+  const handleDrawerClose = () => setOpenSide(false);
+
   return (
     <Box
       sx={{
@@ -13,21 +22,11 @@ function App() {
         padding: 0,
       }}
     >
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
-          bgcolor: "#FFFFFF",
-          color: "#333333",
-          borderBottom: "1px solid #E0E0E0",
-        }}
-      >
-        <Toolbar sx={{ minHeight: 56 }}>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            💰 소담
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <SideBarDrawer
+        openSide={openSide}
+        toggleDrawer={toggleDrawer}
+        handleDrawerClose={handleDrawerClose}
+      />
       <Box
         sx={{
           flexGrow: 1,
@@ -35,11 +34,15 @@ function App() {
           mb: 4,
           display: "flex",
           flexDirection: "column",
+          transition: "margin 0.3s ease",
+          marginLeft: openSide ? `${drawerWidth}px` : 0,
+          marginTop: 0
         }}
       >
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/transactions" element={<TransactionPage />} />
+          <Route path="/category" element={<CategoryPage />} />
         </Routes>
       </Box>
       <Box
@@ -49,6 +52,8 @@ function App() {
           mt: "auto",
           backgroundColor: "#e0e0e0",
           textAlign: "center",
+          transition: "margin 0.3s ease",
+          marginLeft: openSide ? `${drawerWidth}px` : 0,
         }}
       >
         <Typography variant="body2" color="text.secondary">
