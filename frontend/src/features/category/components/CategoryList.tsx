@@ -68,7 +68,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
             <ListItemAvatar>
               <Avatar
                 sx={{
-                  bgcolor: category.color || "primary.main",
+                  bgcolor: category.color ?? "primary.main",
                 }}
               >
                 <CategoryIcon />
