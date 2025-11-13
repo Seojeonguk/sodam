@@ -7,6 +7,7 @@ import {
   Box,
   IconButton,
   Chip,
+  alpha,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -73,75 +74,127 @@ const CategoryList: React.FC<CategoryListProps> = ({
   }
 
   return (
-    <List>
-      {categories.map((category, index) => (
-        <React.Fragment key={category.id}>
-          <ListItem
-            secondaryAction={
-              <Box>
-                {onEdit && (
+    <Box
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+        overflow: "hidden",
+      }}
+    >
+      <List disablePadding>
+        {categories.map((category, index) => (
+          <React.Fragment key={category.id}>
+            <ListItem
+              sx={{
+                py: 1.5,
+                px: 2,
+                "&:hover": {
+                  backgroundColor: (theme) =>
+                    alpha(theme.palette.action.hover, 0.5),
+                },
+                transition: "background-color 0.15s ease-in-out",
+              }}
+              secondaryAction={
+                <Box display="flex" gap={0.5}>
+                  {onEdit && (
+                    <IconButton
+                      edge="end"
+                      aria-label="edit"
+                      onClick={() => onEdit(category)}
+                      size="small"
+                      sx={{
+                        color: "text.secondary",
+                        "&:hover": {
+                          color: "primary.main",
+                          backgroundColor: (theme) =>
+                            alpha(theme.palette.primary.main, 0.1),
+                        },
+                        transition: "all 0.15s ease-in-out",
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton
                     edge="end"
-                    aria-label="edit"
-                    onClick={() => onEdit(category)}
-                    sx={{ mr: 1 }}
+                    aria-label="delete"
+                    onClick={() => onDelete(category.id)}
+                    size="small"
+                    sx={{
+                      color: "text.secondary",
+                      "&:hover": {
+                        color: "error.main",
+                        backgroundColor: (theme) =>
+                          alpha(theme.palette.error.main, 0.1),
+                      },
+                      transition: "all 0.15s ease-in-out",
+                    }}
                   >
-                    <EditIcon />
+                    <DeleteIcon fontSize="small" />
                   </IconButton>
+                </Box>
+              }
+            >
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={2}
+                sx={{ flex: 1, minWidth: 0 }}
+              >
+                {category.color ? (
+                  <Chip
+                    label={category.name}
+                    size="small"
+                    sx={{
+                      backgroundColor: category.color,
+                      color: getContrastColor(category.color),
+                      fontWeight: 500,
+                      height: "20px",
+                      fontSize: "0.75rem",
+                      borderRadius: "12px",
+                      "& .MuiChip-label": {
+                        padding: "0 8px",
+                      },
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label={category.name}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      fontWeight: 500,
+                      height: "20px",
+                      fontSize: "0.75rem",
+                      borderRadius: "12px",
+                      "& .MuiChip-label": {
+                        padding: "0 8px",
+                      },
+                    }}
+                  />
                 )}
-                <IconButton
-                  edge="end"
-                  aria-label="delete"
-                  onClick={() => onDelete(category.id)}
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
+                {category.description && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {category.description}
+                  </Typography>
+                )}
               </Box>
-            }
-          >
-            <Box display="flex" alignItems="center" gap={2} sx={{ flex: 1 }}>
-              {category.color ? (
-                <Chip
-                  label={category.name}
-                  size="small"
-                  sx={{
-                    backgroundColor: category.color,
-                    color: getContrastColor(category.color),
-                    fontWeight: 500,
-                    height: "20px",
-                    "& .MuiChip-label": {
-                      padding: "0 8px",
-                    },
-                  }}
-                />
-              ) : (
-                <Chip
-                  label={category.name}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    fontWeight: 500,
-                    height: "20px",
-                    "& .MuiChip-label": {
-                      padding: "0 8px",
-                    },
-                  }}
-                />
-              )}
-              {category.description && (
-                <Typography variant="body2" color="text.secondary">
-                  {category.description}
-                </Typography>
-              )}
-            </Box>
-          </ListItem>
-          {index < categories.length - 1 && (
-            <Divider component="li" variant="inset" />
-          )}
-        </React.Fragment>
-      ))}
-    </List>
+            </ListItem>
+            {index < categories.length - 1 && <Divider />}
+          </React.Fragment>
+        ))}
+      </List>
+    </Box>
   );
 };
 
