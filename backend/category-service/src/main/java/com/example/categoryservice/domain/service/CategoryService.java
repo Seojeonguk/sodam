@@ -25,6 +25,7 @@ public class CategoryService {
         Category category = Category.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .color(request.getColor())
                 .userSeq(request.getUserSeq())
                 .build();
 
