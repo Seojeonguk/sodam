@@ -2,7 +2,6 @@ import React from "react";
 import {
   List,
   ListItem,
-  ListItemText,
   Divider,
   Typography,
   Box,
@@ -101,47 +100,41 @@ const CategoryList: React.FC<CategoryListProps> = ({
               </Box>
             }
           >
-            <ListItemText
-              primary={
-                <Box display="flex" alignItems="center" gap={1}>
-                  {category.color ? (
-                    <Chip
-                      label={category.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: category.color,
-                        color: getContrastColor(category.color),
-                        fontWeight: 500,
-                        height: "20px",
-                        "& .MuiChip-label": {
-                          padding: "0 8px",
-                        },
-                      }}
-                    />
-                  ) : (
-                    <Chip
-                      label={category.name}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        fontWeight: 500,
-                        height: "20px",
-                        "& .MuiChip-label": {
-                          padding: "0 8px",
-                        },
-                      }}
-                    />
-                  )}
-                </Box>
-              }
-              secondary={
-                category.description && (
-                  <Typography variant="body2" color="text.secondary">
-                    {category.description}
-                  </Typography>
-                )
-              }
-            />
+            <Box display="flex" alignItems="center" gap={2} sx={{ flex: 1 }}>
+              {category.color ? (
+                <Chip
+                  label={category.name}
+                  size="small"
+                  sx={{
+                    backgroundColor: category.color,
+                    color: getContrastColor(category.color),
+                    fontWeight: 500,
+                    height: "20px",
+                    "& .MuiChip-label": {
+                      padding: "0 8px",
+                    },
+                  }}
+                />
+              ) : (
+                <Chip
+                  label={category.name}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontWeight: 500,
+                    height: "20px",
+                    "& .MuiChip-label": {
+                      padding: "0 8px",
+                    },
+                  }}
+                />
+              )}
+              {category.description && (
+                <Typography variant="body2" color="text.secondary">
+                  {category.description}
+                </Typography>
+              )}
+            </Box>
           </ListItem>
           {index < categories.length - 1 && (
             <Divider component="li" variant="inset" />
