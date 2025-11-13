@@ -2,11 +2,16 @@ import { Box, Button, Container, Typography, Paper } from "@mui/material";
 import { AddCircle } from "@mui/icons-material";
 import { useState } from "react";
 import CategoryCreateModal from "./components/CategoryCreateModal.tsx";
+import CategoryEditModal from "./components/CategoryEditModal.tsx";
 import CategoryList from "./components/CategoryList.tsx";
 import { useCategories } from "./hooks/useCategories.ts";
+import type { CategoryListItemResponse } from "../transaction/services/category.types";
 
 function CategoryPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryListItemResponse | null>(null);
   const { categories, loading, error, refetchCategories, deleteCategory } =
     useCategories();
 
@@ -16,6 +21,17 @@ function CategoryPage() {
 
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
+    void refetchCategories(); // 모달 닫힐 때 목록 갱신
+  };
+
+  const handleOpenEditCategoryModal = (category: CategoryListItemResponse) => {
+    setSelectedCategory(category);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedCategory(null);
     void refetchCategories(); // 모달 닫힐 때 목록 갱신
   };
 
@@ -88,6 +104,7 @@ function CategoryPage() {
               onDelete={(id) => {
                 void handleDeleteCategory(id);
               }}
+              onEdit={handleOpenEditCategoryModal}
             />
           </Paper>
         </>
@@ -96,6 +113,12 @@ function CategoryPage() {
       <CategoryCreateModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
+      />
+
+      <CategoryEditModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        category={selectedCategory}
       />
     </Container>
   );

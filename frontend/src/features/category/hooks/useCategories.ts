@@ -14,7 +14,7 @@ export const useCategories = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await categoryApi.getCategories(0, 100);
+      const response = await categoryApi.getCategories(0, 20);
       setCategories(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
