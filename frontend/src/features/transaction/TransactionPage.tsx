@@ -7,7 +7,7 @@ import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 import type { TransactionResponseDto } from "./services/transaction.types";
 import TransactionEditModal from "./components/TransactionEditModal";
-import {BarChart, PieChart} from "@mui/x-charts";
+import { BarChart, PieChart } from "@mui/x-charts";
 
 function TransactionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -28,7 +28,7 @@ function TransactionPage() {
     expenseStats,
     fetchStats,
     statPeriodDataset,
-    fetchPeriodStats
+    fetchPeriodStats,
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -133,15 +133,24 @@ function TransactionPage() {
       </Box>
 
       <Box>
-        <Box display={"flex"} flexDirection={{ xs: "column", sm: "row" }} alignItems={"center"} justifyContent={"center"} gap={10} paddingBottom={5}>
+        <Box
+          display={"flex"}
+          flexDirection={{ xs: "column", sm: "row" }}
+          alignItems={"center"}
+          justifyContent={"center"}
+          gap={10}
+          paddingBottom={5}
+        >
           <Box>
             <Typography variant="h5" component="h2" mb={2}>
               수입
             </Typography>
             <PieChart
-              series={[{
-                data: incomeStats
-              }]}
+              series={[
+                {
+                  data: incomeStats,
+                },
+              ]}
               width={150}
               height={150}
             />
@@ -152,9 +161,11 @@ function TransactionPage() {
               지출
             </Typography>
             <PieChart
-              series={[{
-                data: expenseStats
-              }]}
+              series={[
+                {
+                  data: expenseStats,
+                },
+              ]}
               width={150}
               height={150}
             />
@@ -162,21 +173,27 @@ function TransactionPage() {
         </Box>
 
         <Box>
-          <Typography>
-            차트
-          </Typography>
+          <Typography>차트</Typography>
           <BarChart
             dataset={statPeriodDataset}
-            xAxis={[{ dataKey: 'period', scaleType: 'band' }]}
+            xAxis={[
+              {
+                dataKey: "period",
+                scaleType: "band",
+                label: "기간",
+                height: 50,
+              },
+            ]}
             series={[
-              { dataKey: 'income', label: '수입' },
-              { dataKey: 'expense', label: '지출' },
+              { dataKey: "income", label: "수입" },
+              { dataKey: "expense", label: "지출" },
             ]}
             height={300}
+            grid={{ horizontal: true }}
           />
         </Box>
       </Box>
-      
+
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" component="h2" mb={2}>
           최근 거래 내역

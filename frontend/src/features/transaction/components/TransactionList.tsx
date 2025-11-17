@@ -86,7 +86,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     color="text.secondary"
                   >
                     {dayjs(transaction.transactionDate).format(
-                      "YYYY.MM.DD HH:mm"
+                      "YYYY.MM.DD HH:mm",
                     )}
                   </Typography>
                   {transaction.description && (

@@ -89,7 +89,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       const axiosError = err as AxiosError<{ message?: string }>;
       if (axios.isAxiosError(axiosError) && axiosError.response) {
         setError(
-          `카테고리 수정 실패: ${axiosError.response.data?.message ?? axiosError.message}`
+          `카테고리 수정 실패: ${axiosError.response.data?.message ?? axiosError.message}`,
         );
       } else {
         setError("카테고리 수정 중 예상치 못한 오류가 발생했습니다.");

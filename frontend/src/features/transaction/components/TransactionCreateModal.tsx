@@ -68,7 +68,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     const fetchCategories = async () => {
       try {
         const response = await api.get<CategoryListResponse>(
-          `/categories?page=0&size=10`
+          `/categories?page=0&size=10`,
         );
         const data = response.data;
         setCategories(data.categories);
@@ -77,7 +77,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
 
         if (axios.isAxiosError(err) && err.response) {
           setError(
-            `카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`
+            `카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`,
           );
         } else {
           setError("카테고리 목록 조회 중 예상치 못한 오류가 발생했습니다.");
@@ -139,7 +139,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       if (axios.isAxiosError(err) && err.response) {
         // 백엔드에서 보낸 구체적인 에러 메시지가 있다면
         setError(
-          `거래 추가 실패: ${err.response.data?.message ?? err.message}`
+          `거래 추가 실패: ${err.response.data?.message ?? err.message}`,
         );
       } else {
         setError("거래 추가 중 예상치 못한 오류가 발생했습니다.");

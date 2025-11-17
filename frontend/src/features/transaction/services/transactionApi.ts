@@ -18,31 +18,31 @@ const transactionApi = {
 
   // 거래 생성
   createTransaction: async (
-    data: TransactionCreateRequestDto
+    data: TransactionCreateRequestDto,
   ): Promise<TransactionResponseDto> => {
     const response = await api.post<TransactionResponseDto>(
       TRANSACTION_BASE_URL,
-      data
+      data,
     );
     return response.data;
   },
 
   getTransactionBySeq: async (
-    seq: number | null
+    seq: number | null,
   ): Promise<TransactionResponseDto> => {
     const response = await api.get<TransactionResponseDto>(
-      `${TRANSACTION_BASE_URL}/${seq}`
+      `${TRANSACTION_BASE_URL}/${seq}`,
     );
     return response.data;
   },
 
   updateTransaction: async (
     seq: number,
-    data: TransactionUpdateRequestDto
+    data: TransactionUpdateRequestDto,
   ): Promise<TransactionResponseDto> => {
     const response = await api.put<TransactionResponseDto>(
       `${TRANSACTION_BASE_URL}/${seq}`,
-      data
+      data,
     );
     return response.data;
   },

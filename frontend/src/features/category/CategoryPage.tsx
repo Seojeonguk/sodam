@@ -41,7 +41,7 @@ function CategoryPage() {
         await deleteCategory(id);
       } catch (err) {
         alert(
-          `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`
+          `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`,
         );
       }
     }
