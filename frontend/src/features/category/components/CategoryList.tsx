@@ -1,17 +1,17 @@
 import React from "react";
 import {
-  List,
-  ListItem,
-  Divider,
   Typography,
   Box,
   IconButton,
   Chip,
+  Paper,
+  Stack,
   alpha,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import type { CategoryListItemResponse } from "../../transaction/services/category.types";
+import { useTheme } from "@mui/material/styles";
 
 interface CategoryListProps {
   categories: CategoryListItemResponse[];
@@ -63,6 +63,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
   onDelete,
   onEdit,
 }) => {
+  const theme = useTheme();
+
   if (categories.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 4 }}>
@@ -76,26 +78,91 @@ const CategoryList: React.FC<CategoryListProps> = ({
   return (
     <Box
       sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 1,
-        overflow: "hidden",
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "repeat(auto-fit, minmax(240px, 1fr))",
+          md: "repeat(auto-fit, minmax(260px, 1fr))",
+        },
+        gap: 2.5,
       }}
     >
-      <List disablePadding>
-        {categories.map((category, index) => (
-          <React.Fragment key={category.id}>
-            <ListItem
-              sx={{
-                py: 1.5,
-                px: 2,
-                "&:hover": {
-                  backgroundColor: (theme) =>
-                    alpha(theme.palette.action.hover, 0.5),
-                },
-                transition: "background-color 0.15s ease-in-out",
-              }}
-              secondaryAction={
+      {categories.map((category) => {
+        const accent = category.color ?? theme.palette.divider;
+        return (
+          <Paper
+            key={category.id}
+            elevation={0}
+            sx={{
+              position: "relative",
+              p: 3,
+              borderRadius: 3,
+              border: `1px solid ${alpha(accent, 0.4)}`,
+              backgroundColor: alpha(accent, category.color ? 0.08 : 0.04),
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 15px 30px rgba(15,23,42,0.12)",
+              },
+            }}
+          >
+            <Stack spacing={1.5}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Chip
+                  label={category.name}
+                  size="small"
+                  sx={{
+                    backgroundColor: category.color
+                      ? category.color
+                      : alpha(theme.palette.text.primary, 0.08),
+                    color: category.color
+                      ? getContrastColor(category.color)
+                      : theme.palette.text.primary,
+                    fontWeight: 600,
+                    "& .MuiChip-label": { px: 1.5 },
+                  }}
+                />
+                {category.color && (
+                  <Box
+                    sx={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: "50%",
+                      border: "2px solid rgba(255,255,255,0.6)",
+                      backgroundColor: category.color,
+                      boxShadow: "0 0 0 1px rgba(0,0,0,0.08)",
+                    }}
+                  />
+                )}
+              </Stack>
+
+              {category.description ? (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    minHeight: "2.5rem",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {category.description}
+                </Typography>
+              ) : (
+                <Typography variant="body2" color="text.disabled">
+                  설명이 아직 없습니다.
+                </Typography>
+              )}
+
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="caption" color="text.secondary">
+                  ID #{category.id}
+                </Typography>
                 <Box display="flex" gap={0.5}>
                   {onEdit && (
                     <IconButton
@@ -107,10 +174,12 @@ const CategoryList: React.FC<CategoryListProps> = ({
                         color: "text.secondary",
                         "&:hover": {
                           color: "primary.main",
-                          backgroundColor: (theme) =>
-                            alpha(theme.palette.primary.main, 0.1),
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.12
+                          ),
                         },
-                        transition: "all 0.15s ease-in-out",
+                        transition: "all 0.2s ease",
                       }}
                     >
                       <EditIcon fontSize="small" />
@@ -125,75 +194,29 @@ const CategoryList: React.FC<CategoryListProps> = ({
                       color: "text.secondary",
                       "&:hover": {
                         color: "error.main",
-                        backgroundColor: (theme) =>
-                          alpha(theme.palette.error.main, 0.1),
+                        backgroundColor: alpha(theme.palette.error.main, 0.12),
                       },
-                      transition: "all 0.15s ease-in-out",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Box>
-              }
-            >
-              <Box
-                display="flex"
-                alignItems="center"
-                gap={2}
-                sx={{ flex: 1, minWidth: 0 }}
-              >
-                {category.color ? (
-                  <Chip
-                    label={category.name}
-                    size="small"
-                    sx={{
-                      backgroundColor: category.color,
-                      color: getContrastColor(category.color),
-                      fontWeight: 500,
-                      height: "20px",
-                      fontSize: "0.75rem",
-                      borderRadius: "12px",
-                      "& .MuiChip-label": {
-                        padding: "0 8px",
-                      },
-                    }}
-                  />
-                ) : (
-                  <Chip
-                    label={category.name}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      fontWeight: 500,
-                      height: "20px",
-                      fontSize: "0.75rem",
-                      borderRadius: "12px",
-                      "& .MuiChip-label": {
-                        padding: "0 8px",
-                      },
-                    }}
-                  />
-                )}
-                {category.description && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      flex: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {category.description}
-                  </Typography>
-                )}
-              </Box>
-            </ListItem>
-            {index < categories.length - 1 && <Divider />}
-          </React.Fragment>
-        ))}
-      </List>
+              </Stack>
+            </Stack>
+
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: 3,
+                pointerEvents: "none",
+                border: `1px solid ${alpha(accent, 0.25)}`,
+              }}
+            />
+          </Paper>
+        );
+      })}
     </Box>
   );
 };
