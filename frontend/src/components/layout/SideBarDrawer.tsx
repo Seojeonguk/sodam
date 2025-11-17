@@ -2,15 +2,9 @@ import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import CssBaseline from "@mui/material/CssBaseline";
-import MuiAppBar, {
-  type AppBarProps as MuiAppBarProps,
-} from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
 import List from "@mui/material/List";
-import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItem from "@mui/material/ListItem";
@@ -20,40 +14,20 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { useNavigate } from "react-router-dom";
+import { memo, useCallback } from "react";
+import { DRAWER_WIDTH } from "../../constants/layout";
+import { useIsDesktop } from "../../hooks/useIsDesktop";
 
-const drawerWidth = 240;
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-}
+const SIDE_MENU_ITEMS = [
+  { label: "카테고리", path: "/category" },
+  { label: "거래내역", path: "/transactions" },
+];
 
 interface SideBarDrawerProps {
   openSide: boolean;
   toggleDrawer: () => void;
   handleDrawerClose: () => void;
 }
-
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== "open",
-})<AppBarProps>(({ theme }) => ({
-  transition: theme.transitions.create(["margin", "width"], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        width: `calc(100% - ${drawerWidth}px)`,
-        marginLeft: `${drawerWidth}px`,
-        transition: theme.transitions.create(["margin", "width"], {
-          easing: theme.transitions.easing.easeOut,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-      },
-    },
-  ],
-}));
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -64,63 +38,39 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   justifyContent: "flex-end",
 }));
 
-export default function SideBarDrawer({
+function SideBarDrawerComponent({
   openSide,
   toggleDrawer,
   handleDrawerClose,
 }: SideBarDrawerProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
-  const sideMenuList = [
-    {
-      label: "카테고리",
-      func: async () => {
-        await navigate("/category");
-      },
+  const createNavigateHandler = useCallback(
+    (path: string) => () => {
+      void navigate(path);
+      if (!isDesktop) {
+        handleDrawerClose();
+      }
     },
-    {
-      label: "거래내역",
-      func: async () => {
-        await navigate("/transactions");
-      },
-    },
-  ];
+    [navigate, isDesktop, handleDrawerClose]
+  );
 
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar position="relative" open={openSide}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={toggleDrawer}
-            edge="start"
-            sx={[
-              {
-                mr: 2,
-              },
-              openSide && { display: "none" },
-            ]}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            💰 소담
-          </Typography>
-        </Toolbar>
-      </AppBar>
+
       <Drawer
         sx={{
-          width: drawerWidth,
+          width: DRAWER_WIDTH,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: drawerWidth,
+            width: DRAWER_WIDTH,
             boxSizing: "border-box",
           },
         }}
-        variant="persistent"
+        variant={isDesktop ? "persistent" : "temporary"}
         anchor="left"
         open={openSide}
         onClose={handleDrawerClose}
@@ -136,9 +86,9 @@ export default function SideBarDrawer({
         </DrawerHeader>
         <Divider />
         <List>
-          {sideMenuList.map((item, index) => (
+          {SIDE_MENU_ITEMS.map((item, index) => (
             <ListItem key={item.label} disablePadding>
-              <ListItemButton onClick={item.func}>
+              <ListItemButton onClick={createNavigateHandler(item.path)}>
                 <ListItemIcon>
                   {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>
@@ -155,3 +105,5 @@ export default function SideBarDrawer({
     </Box>
   );
 }
+
+export default memo(SideBarDrawerComponent);
