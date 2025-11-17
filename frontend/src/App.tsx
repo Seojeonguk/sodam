@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
@@ -9,7 +9,9 @@ import Header from "./components/layout/Header.tsx";
 
 const drawerWidth = 240;
 function App() {
+  const theme = useTheme();
   const [openSide, setOpenSide] = useState<boolean>(false);
+  const isDesktop = useMediaQuery(theme.breakpoints.up("sm")); // sm 이상이면 데스크탑
 
   const toggleDrawer = () => setOpenSide(!openSide);
   const handleDrawerClose = () => setOpenSide(false);
@@ -41,7 +43,7 @@ function App() {
           display: "flex",
           flexDirection: "column",
           transition: "margin 0.3s ease",
-          marginLeft: openSide ? `${drawerWidth}px` : 0,
+          marginLeft: openSide && isDesktop ? `${drawerWidth}px` : 0,
           marginTop: 0,
         }}
       >

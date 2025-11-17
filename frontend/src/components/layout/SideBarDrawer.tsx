@@ -18,6 +18,7 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { useNavigate } from "react-router-dom";
+import { useMediaQuery } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -43,6 +44,8 @@ export default function SideBarDrawer({
 }: SideBarDrawerProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+
+  const isDesktop = useMediaQuery(theme.breakpoints.up("sm")); // sm 이상이면 데스크탑
 
   const sideMenuList = [
     {
@@ -72,7 +75,7 @@ export default function SideBarDrawer({
             boxSizing: "border-box",
           },
         }}
-        variant="persistent"
+        variant={isDesktop ? "persistent" : "temporary"}
         anchor="left"
         open={openSide}
         onClose={handleDrawerClose}
