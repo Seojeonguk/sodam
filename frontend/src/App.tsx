@@ -3,7 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
-import {useState} from "react";
+import { useState } from "react";
 import CategoryPage from "./features/category/CategoryPage.tsx";
 
 const drawerWidth = 240;
@@ -36,7 +36,7 @@ function App() {
           flexDirection: "column",
           transition: "margin 0.3s ease",
           marginLeft: openSide ? `${drawerWidth}px` : 0,
-          marginTop: 0
+          marginTop: 0,
         }}
       >
         <Routes>

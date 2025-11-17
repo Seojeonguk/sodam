@@ -3,7 +3,11 @@ import transactionApi from "../services/transactionApi";
 import statApi from "../services/statApi";
 import type { TransactionListResponse } from "../services/transaction.types";
 import axios from "axios";
-import type { StatPeriodRequest, StatPeriodResponse, StatRequest } from "./../services/stat.types";
+import type {
+  StatPeriodRequest,
+  StatPeriodResponse,
+  StatRequest,
+} from "./../services/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
 
 export const useTransactions = () => {
@@ -15,15 +19,12 @@ export const useTransactions = () => {
   const [statReq] = useState<StatRequest>({});
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
-  
+
   const [statPeriodReq] = useState<StatPeriodRequest>({
-    startDate: '',
-    endDate: ''
+    startDate: "",
+    endDate: "",
   });
   const [statPeriodDataset, setStatPeriodDataset] = useState<any[]>([]);
-
-  
-
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -66,39 +67,41 @@ export const useTransactions = () => {
   };
 
   const getRandomColor = () =>
-  `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
   const fetchStats = async () => {
     try {
       const response = await statApi.getStats(statReq);
 
-      console.debug('전체 통계 정보 : ', response);
+      console.debug("전체 통계 정보 : ", response);
 
-      const incomeStats:PieValueType[] = response.filter((item)=> {
-        return item.type === 'INCOME'
-      })
-      .map((item, idx)=> ({
-        id : idx,
-        value : item.total,
-        label: item.name,
-        color : getRandomColor()
-      }));
+      const incomeStats: PieValueType[] = response
+        .filter((item) => {
+          return item.type === "INCOME";
+        })
+        .map((item, idx) => ({
+          id: idx,
+          value: item.total,
+          label: item.name,
+          color: getRandomColor(),
+        }));
 
-      console.debug('수입 통계 정보 : ', incomeStats);
+      console.debug("수입 통계 정보 : ", incomeStats);
 
       setIncomeStats(incomeStats);
 
-      const expenseStats:PieValueType[] = response.filter((item)=> {
-        return item.type === 'EXPENSE'
-      })
-      .map((item, idx)=> ({
-        id : idx,
-        value : item.total,
-        label: item.name,
-        color : getRandomColor()
-      }));
+      const expenseStats: PieValueType[] = response
+        .filter((item) => {
+          return item.type === "EXPENSE";
+        })
+        .map((item, idx) => ({
+          id: idx,
+          value: item.total,
+          label: item.name,
+          color: getRandomColor(),
+        }));
 
-      console.log('지출 통계 정보 : ', expenseStats);
+      console.log("지출 통계 정보 : ", expenseStats);
 
       setExpenseStats(expenseStats);
     } catch (err) {
@@ -116,21 +119,24 @@ export const useTransactions = () => {
     try {
       const response = await statApi.getPeriodStats(statPeriodReq);
 
-      console.debug('전체 월별 통계 정보 : ', response);
+      console.debug("전체 월별 통계 정보 : ", response);
 
-      const dataset = response.reduce((acc: any[], item: StatPeriodResponse) => {
-        const month = item.transaction_date;
-        const found = acc.find((d) => d.period === month);
-        if (found) {
-          found[item.type.toLowerCase()] = item.total;
-        } else {
-          acc.push({
-            period: month,
-            [item.type.toLowerCase()]: item.total,
-          });
-        }
-        return acc;
-      }, []);
+      const dataset = response.reduce(
+        (acc: any[], item: StatPeriodResponse) => {
+          const month = item.transaction_date;
+          const found = acc.find((d) => d.period === month);
+          if (found) {
+            found[item.type.toLowerCase()] = item.total;
+          } else {
+            acc.push({
+              period: month,
+              [item.type.toLowerCase()]: item.total,
+            });
+          }
+          return acc;
+        },
+        [],
+      );
 
       setStatPeriodDataset(dataset);
     } catch (err) {
@@ -142,7 +148,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     void fetchTransactions();
@@ -166,6 +172,6 @@ export const useTransactions = () => {
     expenseStats,
     fetchStats,
     fetchPeriodStats,
-    statPeriodDataset
+    statPeriodDataset,
   };
 };

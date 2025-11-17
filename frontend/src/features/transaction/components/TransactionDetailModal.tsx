@@ -46,7 +46,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   onDeleteRequest,
 }) => {
   const [transaction, setTransaction] = useState<TransactionResponseDto | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
           setError(
-            `거래 상세 조회 실패: ${err.response.data?.message || err.message}`
+            `거래 상세 조회 실패: ${err.response.data?.message || err.message}`,
           );
         } else {
           setError("거래 상세 조회 중 예상치 못한 오류가 발생했습니다.");
@@ -174,7 +174,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 날짜:
               </Typography>{" "}
               {dayjs(transaction.transactionDate).format(
-                "YYYY년 MM월 DD일 HH시 mm분"
+                "YYYY년 MM월 DD일 HH시 mm분",
               )}
             </Typography>
 

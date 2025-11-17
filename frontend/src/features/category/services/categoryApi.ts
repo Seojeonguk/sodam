@@ -10,10 +10,10 @@ const categoryApi = {
   // 카테고리 목록 조회
   getCategories: async (
     page: number = 0,
-    size: number = 100
+    size: number = 100,
   ): Promise<CategoryListResponse> => {
     const response = await api.get<CategoryListResponse>(
-      `${CATEGORY_BASE_URL}?page=${page}&size=${size}`
+      `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
     );
     return response.data;
   },
@@ -26,7 +26,7 @@ const categoryApi = {
   }): Promise<CategoryListItemResponse> => {
     const response = await api.post<CategoryListItemResponse>(
       CATEGORY_BASE_URL,
-      data
+      data,
     );
     return response.data;
   },
@@ -43,11 +43,11 @@ const categoryApi = {
       name: string;
       description?: string;
       color?: string;
-    }
+    },
   ): Promise<CategoryListItemResponse> => {
     const response = await api.put<CategoryListItemResponse>(
       `${CATEGORY_BASE_URL}/${id}`,
-      data
+      data,
     );
     return response.data;
   },

@@ -68,7 +68,7 @@ async function requestNewAccessToken(): Promise<string> {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (
@@ -100,7 +100,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error),
 );
 
 /** 응답 인터셉터: 401 발생 시 refresh 시도 후 원래 요청 재시도 */
@@ -126,7 +126,7 @@ api.interceptors.response.use(
               .catch((e) => {
                 // Promise.reject 시에는 Error 객체 사용
                 reject(
-                  e instanceof Error ? e : new Error("Retry request failed")
+                  e instanceof Error ? e : new Error("Retry request failed"),
                 );
               });
           });
@@ -171,7 +171,7 @@ api.interceptors.response.use(
 
     // 401 외의 에러는 그대로 전달 (또는 여기서 공통 에러 처리)
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
