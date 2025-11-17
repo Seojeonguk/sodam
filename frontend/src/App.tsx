@@ -8,11 +8,13 @@ import CategoryPage from "./features/category/CategoryPage.tsx";
 import Header from "./components/layout/Header.tsx";
 import { DRAWER_WIDTH } from "./constants/layout";
 import { useIsDesktop } from "./hooks/useIsDesktop";
+import DashboardPage from "./features/dashboard/DashboardPage.tsx";
 
 const AppRoutes = memo(function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/transactions" element={<TransactionPage />} />
       <Route path="/category" element={<CategoryPage />} />
     </Routes>
