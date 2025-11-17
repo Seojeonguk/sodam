@@ -3,6 +3,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
+import { memo } from "react";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 
@@ -37,7 +38,7 @@ const StyledAppBar = styled(MuiAppBar, {
     }),
 }));
 
-export default function Header({ openSide, toggleDrawer }: HeaderProps) {
+function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
   return (
@@ -64,3 +65,5 @@ export default function Header({ openSide, toggleDrawer }: HeaderProps) {
     </StyledAppBar>
   );
 }
+
+export default memo(HeaderComponent);

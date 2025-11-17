@@ -14,7 +14,7 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { useNavigate } from "react-router-dom";
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 
@@ -38,7 +38,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   justifyContent: "flex-end",
 }));
 
-export default function SideBarDrawer({
+function SideBarDrawerComponent({
   openSide,
   toggleDrawer,
   handleDrawerClose,
@@ -48,8 +48,8 @@ export default function SideBarDrawer({
   const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
   const createNavigateHandler = useCallback(
-    (path: string) => async () => {
-      await navigate(path);
+    (path: string) => () => {
+      void navigate(path);
       if (!isDesktop) {
         handleDrawerClose();
       }
@@ -105,3 +105,5 @@ export default function SideBarDrawer({
     </Box>
   );
 }
+
+export default memo(SideBarDrawerComponent);

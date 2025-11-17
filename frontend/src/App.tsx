@@ -3,11 +3,21 @@ import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import CategoryPage from "./features/category/CategoryPage.tsx";
 import Header from "./components/layout/Header.tsx";
 import { DRAWER_WIDTH } from "./constants/layout";
 import { useIsDesktop } from "./hooks/useIsDesktop";
+
+const AppRoutes = memo(function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/transactions" element={<TransactionPage />} />
+      <Route path="/category" element={<CategoryPage />} />
+    </Routes>
+  );
+});
 
 function App() {
   const [openSide, setOpenSide] = useState<boolean>(false);
@@ -46,11 +56,7 @@ function App() {
           marginTop: 0,
         }}
       >
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/transactions" element={<TransactionPage />} />
-          <Route path="/category" element={<CategoryPage />} />
-        </Routes>
+        <AppRoutes />
       </Box>
       <Box
         component="footer"
