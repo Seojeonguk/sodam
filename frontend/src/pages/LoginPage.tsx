@@ -28,7 +28,7 @@ function LoginPage() {
 
       localStorage.setItem("accessToken", accessToken);
 
-      navigate("/transactions");
+      navigate("/dashboard");
     }
   };
 
