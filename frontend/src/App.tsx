@@ -1,20 +1,23 @@
-import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from "react-router-dom";
 import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import CategoryPage from "./features/category/CategoryPage.tsx";
 import Header from "./components/layout/Header.tsx";
+import { DRAWER_WIDTH } from "./constants/layout";
+import { useIsDesktop } from "./hooks/useIsDesktop";
 
-const drawerWidth = 240;
 function App() {
-  const theme = useTheme();
   const [openSide, setOpenSide] = useState<boolean>(false);
-  const isDesktop = useMediaQuery(theme.breakpoints.up("sm")); // sm 이상이면 데스크탑
+  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
-  const toggleDrawer = () => setOpenSide(!openSide);
-  const handleDrawerClose = () => setOpenSide(false);
+  const toggleDrawer = useCallback(
+    () => setOpenSide((prevOpen) => !prevOpen),
+    []
+  );
+  const handleDrawerClose = useCallback(() => setOpenSide(false), []);
 
   return (
     <Box
@@ -25,11 +28,7 @@ function App() {
         padding: 0,
       }}
     >
-      <Header
-        openSide={openSide}
-        toggleDrawer={toggleDrawer}
-        handleDrawerClose={handleDrawerClose}
-      />
+      <Header openSide={openSide} toggleDrawer={toggleDrawer} />
       <SideBarDrawer
         openSide={openSide}
         toggleDrawer={toggleDrawer}
@@ -43,7 +42,7 @@ function App() {
           display: "flex",
           flexDirection: "column",
           transition: "margin 0.3s ease",
-          marginLeft: openSide && isDesktop ? `${drawerWidth}px` : 0,
+          marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
           marginTop: 0,
         }}
       >
@@ -61,7 +60,7 @@ function App() {
           backgroundColor: "#e0e0e0",
           textAlign: "center",
           transition: "margin 0.3s ease",
-          marginLeft: openSide ? `${drawerWidth}px` : 0,
+          marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
         }}
       >
         <Typography variant="body2" color="text.secondary">

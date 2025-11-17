@@ -2,13 +2,9 @@ import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import CssBaseline from "@mui/material/CssBaseline";
-
-import Toolbar from "@mui/material/Toolbar";
 import List from "@mui/material/List";
-import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItem from "@mui/material/ListItem";
@@ -18,9 +14,14 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { useNavigate } from "react-router-dom";
-import { useMediaQuery } from "@mui/material";
+import { useCallback } from "react";
+import { DRAWER_WIDTH } from "../../constants/layout";
+import { useIsDesktop } from "../../hooks/useIsDesktop";
 
-const drawerWidth = 240;
+const SIDE_MENU_ITEMS = [
+  { label: "카테고리", path: "/category" },
+  { label: "거래내역", path: "/transactions" },
+];
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -44,23 +45,17 @@ export default function SideBarDrawer({
 }: SideBarDrawerProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
-  const isDesktop = useMediaQuery(theme.breakpoints.up("sm")); // sm 이상이면 데스크탑
-
-  const sideMenuList = [
-    {
-      label: "카테고리",
-      func: async () => {
-        await navigate("/category");
-      },
+  const createNavigateHandler = useCallback(
+    (path: string) => async () => {
+      await navigate(path);
+      if (!isDesktop) {
+        handleDrawerClose();
+      }
     },
-    {
-      label: "거래내역",
-      func: async () => {
-        await navigate("/transactions");
-      },
-    },
-  ];
+    [navigate, isDesktop, handleDrawerClose]
+  );
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -68,10 +63,10 @@ export default function SideBarDrawer({
 
       <Drawer
         sx={{
-          width: drawerWidth,
+          width: DRAWER_WIDTH,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: drawerWidth,
+            width: DRAWER_WIDTH,
             boxSizing: "border-box",
           },
         }}
@@ -91,9 +86,9 @@ export default function SideBarDrawer({
         </DrawerHeader>
         <Divider />
         <List>
-          {sideMenuList.map((item, index) => (
+          {SIDE_MENU_ITEMS.map((item, index) => (
             <ListItem key={item.label} disablePadding>
-              <ListItemButton onClick={item.func}>
+              <ListItemButton onClick={createNavigateHandler(item.path)}>
                 <ListItemIcon>
                   {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>

@@ -1,60 +1,47 @@
-import {
-  IconButton,
-  styled,
-  Toolbar,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { IconButton, Toolbar, Typography, styled } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
+import { DRAWER_WIDTH } from "../../constants/layout";
+import { useIsDesktop } from "../../hooks/useIsDesktop";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
-const drawerWidth = 240;
-
-interface SideBarDrawerProps {
+interface HeaderProps {
   openSide: boolean;
   toggleDrawer: () => void;
-  handleDrawerClose: () => void;
 }
 
-export default function Header({
-  openSide,
-  toggleDrawer,
-  handleDrawerClose,
-}: SideBarDrawerProps) {
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("sm")); // sm 이상이면 데스크탑
+interface StyledAppBarProps extends AppBarProps {
+  isDesktop: boolean;
+}
 
-  const AppBar = styled(MuiAppBar, {
-    shouldForwardProp: (prop) => prop !== "open",
-  })<AppBarProps>(({ theme }) => ({
-    transition: theme.transitions.create(["margin", "width"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
+const StyledAppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== "open" && prop !== "isDesktop",
+})<StyledAppBarProps>(({ theme, open, isDesktop }) => ({
+  transition: theme.transitions.create(["margin", "width"], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open &&
+    isDesktop && {
+      width: `calc(100% - ${DRAWER_WIDTH}px)`,
+      marginLeft: `${DRAWER_WIDTH}px`,
+      transition: theme.transitions.create(["margin", "width"], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
     }),
-    variants: [
-      {
-        props: ({ open }) => open,
-        style: {
-          width: !isDesktop ? "100%" : `calc(100% - ${drawerWidth}px)`,
-          marginLeft: isDesktop ? `${drawerWidth}px` : 0,
-          transition: theme.transitions.create(["margin", "width"], {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-        },
-      },
-    ],
-  }));
+}));
+
+export default function Header({ openSide, toggleDrawer }: HeaderProps) {
+  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
   return (
-    <AppBar position="relative" open={openSide}>
+    <StyledAppBar position="relative" open={openSide} isDesktop={isDesktop}>
       <Toolbar>
         <IconButton
           color="inherit"
@@ -74,6 +61,6 @@ export default function Header({
           💰 소담
         </Typography>
       </Toolbar>
-    </AppBar>
+    </StyledAppBar>
   );
 }
