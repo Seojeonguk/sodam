@@ -1,0 +1,68 @@
+import { IconButton, styled, Toolbar, Typography } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import MuiAppBar, {
+  type AppBarProps as MuiAppBarProps,
+} from "@mui/material/AppBar";
+
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+}
+
+const drawerWidth = 240;
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== "open",
+})<AppBarProps>(({ theme }) => ({
+  transition: theme.transitions.create(["margin", "width"], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  variants: [
+    {
+      props: ({ open }) => open,
+      style: {
+        width: `calc(100% - ${drawerWidth}px)`,
+        marginLeft: `${drawerWidth}px`,
+        transition: theme.transitions.create(["margin", "width"], {
+          easing: theme.transitions.easing.easeOut,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+      },
+    },
+  ],
+}));
+
+interface SideBarDrawerProps {
+  openSide: boolean;
+  toggleDrawer: () => void;
+  handleDrawerClose: () => void;
+}
+
+export default function Header({
+  openSide,
+  toggleDrawer,
+  handleDrawerClose,
+}: SideBarDrawerProps) {
+  return (
+    <AppBar position="relative" open={openSide}>
+      <Toolbar>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          onClick={toggleDrawer}
+          edge="start"
+          sx={[
+            {
+              mr: 2,
+            },
+            openSide && { display: "none" },
+          ]}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          💰 소담
+        </Typography>
+      </Toolbar>
+    </AppBar>
+  );
+}

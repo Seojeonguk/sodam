@@ -5,6 +5,7 @@ import TransactionPage from "./features/transaction/TransactionPage";
 import SideBarDrawer from "./components/layout/SideBarDrawer";
 import { useState } from "react";
 import CategoryPage from "./features/category/CategoryPage.tsx";
+import Header from "./components/layout/Header.tsx";
 
 const drawerWidth = 240;
 function App() {
@@ -22,6 +23,11 @@ function App() {
         padding: 0,
       }}
     >
+      <Header
+        openSide={openSide}
+        toggleDrawer={toggleDrawer}
+        handleDrawerClose={handleDrawerClose}
+      />
       <SideBarDrawer
         openSide={openSide}
         toggleDrawer={toggleDrawer}
