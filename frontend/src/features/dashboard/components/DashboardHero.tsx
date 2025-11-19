@@ -52,10 +52,23 @@ export const DashboardHero = ({
           <Typography variant="overline" sx={{ letterSpacing: 2 }}>
             FINANCE DASHBOARD
           </Typography>
-          <Typography variant="h4" component="h1" fontWeight={700} mb={1}>
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight={700}
+            mb={1}
+            sx={{ fontSize: { xs: "1rem", md: "2rem" } }}
+          >
             💡 한눈에 보는 지출 & 수입 흐름
           </Typography>
-          <Typography variant="body1" sx={{ maxWidth: 640, opacity: 0.9 }}>
+          <Typography
+            variant="body1"
+            sx={{
+              maxWidth: 640,
+              opacity: 0.9,
+              fontSize: { xs: "0.8rem", md: "1rem" },
+            }}
+          >
             최근 거래, 카테고리, 월별 추이를 묶어 재무 흐름을 빠르게 파악하세요.
             주요 지표를 기반으로 오늘의 결정을 뒷받침해 드립니다.
           </Typography>
