@@ -29,7 +29,7 @@ export const MonthlyTrendSection = ({ dataset }: MonthlyTrendSectionProps) => {
             dataKey: "period",
             scaleType: "band",
             label: "기간",
-            height: 40,
+            height: 50,
           },
         ]}
         series={[
