@@ -21,9 +21,11 @@ export const TypeBreakdownSection = ({
         borderRadius: 3,
         border: "1px solid",
         borderColor: "divider",
+        paddingLeft: 0,
+        paddingRight: 0,
       }}
     >
-      <Typography variant="h6" fontWeight={600} mb={2}>
+      <Typography variant="h6" fontWeight={600} mb={2} sx={{ paddingLeft: 3 }}>
         유형별 비중
       </Typography>
       <PieChart
