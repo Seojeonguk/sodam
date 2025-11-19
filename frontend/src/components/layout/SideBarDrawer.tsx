@@ -11,16 +11,18 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
-import MailIcon from "@mui/icons-material/Mail";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import CategoryIcon from "@mui/icons-material/Category";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { useNavigate } from "react-router-dom";
 import { memo, useCallback } from "react";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 
 const SIDE_MENU_ITEMS = [
-  { label: "카테고리", path: "/category" },
-  { label: "거래내역", path: "/transactions" },
+  { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
+  { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
+  { label: "거래내역", path: "/transactions", icon: <ReceiptLongIcon /> },
 ];
 
 interface SideBarDrawerProps {
@@ -86,12 +88,10 @@ function SideBarDrawerComponent({
         </DrawerHeader>
         <Divider />
         <List>
-          {SIDE_MENU_ITEMS.map((item, index) => (
+          {SIDE_MENU_ITEMS.map((item) => (
             <ListItem key={item.label} disablePadding>
               <ListItemButton onClick={createNavigateHandler(item.path)}>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
+                <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText
                   sx={{ overflowWrap: "break-word" }}
                   primary={item.label}
