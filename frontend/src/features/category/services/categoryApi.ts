@@ -33,8 +33,9 @@ const categoryApi = {
 
   // 카테고리 삭제
   deleteCategory: async (id: number, replacementId: number): Promise<void> => {
-    // 만약 쿼리스트링 방식이 아니라면 body 또는 URL을 백엔드에 맞게 조정하세요
-    await api.delete(`${CATEGORY_BASE_URL}/${id}?replace=${replacementId}`);
+    await api.delete(`${CATEGORY_BASE_URL}/${id}`, {
+      data: { replaceCategoryId: replacementId },
+    });
   },
 
   // 카테고리 수정
