@@ -16,12 +16,17 @@ import CategoryList from "./components/CategoryList.tsx";
 import { useCategories } from "./hooks/useCategories.ts";
 import type { CategoryListItemResponse } from "../transaction/services/category.types";
 import { alpha, useTheme } from "@mui/material/styles";
+import CategoryReplaceModal from "./components/CategoryReplaceModal.tsx";
 
 function CategoryPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryListItemResponse | null>(null);
+  const [isReplaceModalOpen, setIsReplaceModalOpen] = useState<boolean>(false);
+  const [deleteTargetCategoryId, setDeleteTargetCategoryId] = useState<
+    number | null
+  >(null);
   const { categories, loading, error, refetchCategories, deleteCategory } =
     useCategories();
   const theme = useTheme();
@@ -72,16 +77,19 @@ function CategoryPage() {
     void refetchCategories(); // 모달 닫힐 때 목록 갱신
   };
 
-  const handleDeleteCategory = async (id: number) => {
-    if (window.confirm("정말로 이 카테고리를 삭제하시겠습니까?")) {
-      try {
-        await deleteCategory(id);
-      } catch (err) {
-        alert(
-          `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`
-        );
-      }
-    }
+  const handleOpenReplaceModal = (categoryId: number) => {
+    setDeleteTargetCategoryId(categoryId);
+    setIsReplaceModalOpen(true);
+  };
+
+  const handleCloseReplaceModal = () => {
+    setIsReplaceModalOpen(false);
+    setDeleteTargetCategoryId(null);
+  };
+
+  // handleDeleteCategory를 모달 오픈 용으로 변경
+  const handleDeleteCategory = (id: number) => {
+    handleOpenReplaceModal(id);
   };
 
   return (
@@ -366,6 +374,31 @@ function CategoryPage() {
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         category={selectedCategory}
+      />
+
+      <CategoryReplaceModal
+        isOpen={isReplaceModalOpen}
+        onClose={handleCloseReplaceModal}
+        categories={
+          categories?.categories?.filter(
+            (c) => c.id !== deleteTargetCategoryId
+          ) ?? []
+        }
+        onConfirm={(replacementId: number) => {
+          void (async () => {
+            if (deleteTargetCategoryId && replacementId) {
+              try {
+                await deleteCategory(deleteTargetCategoryId, replacementId);
+                handleCloseReplaceModal();
+                void refetchCategories();
+              } catch (err) {
+                alert(
+                  `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`
+                );
+              }
+            }
+          })();
+        }}
       />
     </Container>
   );
