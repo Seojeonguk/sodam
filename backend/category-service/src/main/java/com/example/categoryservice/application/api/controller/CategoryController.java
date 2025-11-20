@@ -2,6 +2,7 @@ package com.example.categoryservice.application.api.controller;
 
 import com.example.categoryservice.application.api.dto.*;
 import com.example.categoryservice.application.service.CategoryApplicationService;
+import jakarta.ws.rs.QueryParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -42,8 +43,8 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
-        service.deleteCategory(id, email);
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email, @RequestBody CategoryDeleteRequest request) {
+        service.deleteCategory(id, email, request);
         return ResponseEntity.noContent().build();
     }
 }
