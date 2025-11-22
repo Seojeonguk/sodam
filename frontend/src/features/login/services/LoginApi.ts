@@ -10,19 +10,22 @@ const AUTH_BASE_URL = "/auth";
 
 const LoginApi = {
   login: async (
-    data: LoginRequestDto,
+    data: LoginRequestDto
   ): Promise<CommonResponse<LoginResponseDto>> => {
     try {
       const response = await api.post<CommonResponse<LoginResponseDto>>(
         `${AUTH_BASE_URL}/login`,
-        data,
+        data
       );
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data;
-        alert(data?.message);
-        return data;
+        const data =
+          error.response?.data && typeof error.response.data === "object"
+            ? (error.response.data as { message?: string })
+            : undefined;
+        alert(data?.message ?? "알 수 없는 오류가 발생했습니다.");
+        return data as CommonResponse<LoginResponseDto>;
       } else {
         console.error("unknown error", error);
       }
