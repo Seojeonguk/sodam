@@ -130,12 +130,14 @@ export const useTransactions = () => {
         (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
           const month = item.transaction_date;
           const found = acc.find((d) => d.period === month);
+          const typeKey = item.type.toLowerCase() as "income" | "expense";
           if (found) {
-            found[item.type.toLowerCase() as "income" | "expense"] = item.total;
+            found[typeKey] = item.total;
           } else {
             acc.push({
               period: month,
-              [item.type.toLowerCase() as "income" | "expense"]: item.total,
+              income: typeKey === "income" ? item.total : 0,
+              expense: typeKey === "expense" ? item.total : 0,
             });
           }
           return acc;
@@ -182,7 +184,8 @@ export const useTransactions = () => {
 };
 
 interface StatPeriodDatasetEntry {
+  [key: string]: string | number;
   period: string;
-  income?: number;
-  expense?: number;
+  income: number;
+  expense: number;
 }
