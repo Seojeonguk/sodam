@@ -11,16 +11,16 @@ const STAT_BASE_URL = "/stat";
 const statApi = {
   getStats: async (data: StatRequest): Promise<StatResponse[]> => {
     const response = await api.get<StatResponse[]>(STAT_BASE_URL, {
-      data: data,
+      params: data,
     });
     return response.data;
   },
   getPeriodStats: async (
-    req: StatPeriodRequest,
+    req: StatPeriodRequest
   ): Promise<StatPeriodResponse[]> => {
     const response = await api.get<StatPeriodResponse[]>(
       `${STAT_BASE_URL}/period`,
-      { data: req },
+      { data: req }
     );
     return response.data;
   },

@@ -16,7 +16,10 @@ export const useTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [statReq] = useState<StatRequest>({});
+  const [statReq] = useState<StatRequest>({
+    startDate: "",
+    endDate: "",
+  });
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
 
