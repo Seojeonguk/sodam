@@ -6,6 +6,7 @@ import MuiAppBar, {
 import { memo } from "react";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
+import { useNavigate } from "react-router-dom";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -41,6 +42,12 @@ const StyledAppBar = styled(MuiAppBar, {
 function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
 
+  const nav = useNavigate();
+
+  const handleLogoClick = () => {
+    void nav("/dashboard");
+  };
+
   return (
     <StyledAppBar position="relative" open={openSide} isDesktop={isDesktop}>
       <Toolbar>
@@ -58,7 +65,12 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{ flexGrow: 1 }}
+          onClick={handleLogoClick}
+        >
           💰 소담
         </Typography>
       </Toolbar>
