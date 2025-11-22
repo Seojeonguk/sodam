@@ -5,7 +5,7 @@ import axios from "axios";
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<CategoryListResponse | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,10 +27,10 @@ export const useCategories = () => {
     }
   };
 
-  const deleteCategory = async (id: number) => {
+  const deleteCategory = async (id: number, replacementId: number) => {
     try {
-      await categoryApi.deleteCategory(id);
-      await fetchCategories(); // 삭제 후 목록 갱신
+      await categoryApi.deleteCategory(id, replacementId);
+      await fetchCategories();
     } catch (err) {
       if (axios.isAxiosError(err)) {
         throw new Error(err.message);

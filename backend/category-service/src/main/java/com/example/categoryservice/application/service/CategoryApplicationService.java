@@ -4,6 +4,7 @@ import com.example.categoryservice.application.api.dto.*;
 import com.example.categoryservice.domain.model.Category;
 import com.example.categoryservice.domain.service.CategoryService;
 import com.example.categoryservice.infrastructure.ApiResponse;
+import com.example.categoryservice.infrastructure.TransactionServiceClient;
 import com.example.categoryservice.infrastructure.UserDto;
 import com.example.categoryservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class CategoryApplicationService {
 
     private final CategoryService categoryService;
     private final UserServiceClient userServiceClient;
+    private final TransactionServiceClient transactionServiceClient;
 
     public CategoryResponse createCategory(CategoryCreateRequest request, String email) {
         ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
@@ -80,10 +82,12 @@ public class CategoryApplicationService {
                 .build();
     }
 
-    public void deleteCategory(Long id, String email) {
+    public void deleteCategory(Long id, String email, CategoryDeleteRequest request) {
         ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
 
         Long userId = userResponse.getData().getId();
+
+        transactionServiceClient.moveCategory(id, request.getReplaceCategoryId());
 
         categoryService.deleteCategory(id, userId);
     }

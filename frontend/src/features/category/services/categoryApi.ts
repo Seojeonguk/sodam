@@ -9,11 +9,11 @@ const CATEGORY_BASE_URL = "/categories";
 const categoryApi = {
   // 카테고리 목록 조회
   getCategories: async (
-    page: number = 0,
-    size: number = 100,
+    page = 0,
+    size = 100
   ): Promise<CategoryListResponse> => {
     const response = await api.get<CategoryListResponse>(
-      `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
+      `${CATEGORY_BASE_URL}?page=${page}&size=${size}`
     );
     return response.data;
   },
@@ -26,14 +26,16 @@ const categoryApi = {
   }): Promise<CategoryListItemResponse> => {
     const response = await api.post<CategoryListItemResponse>(
       CATEGORY_BASE_URL,
-      data,
+      data
     );
     return response.data;
   },
 
   // 카테고리 삭제
-  deleteCategory: async (id: number): Promise<void> => {
-    await api.delete(`${CATEGORY_BASE_URL}/${id}`);
+  deleteCategory: async (id: number, replacementId: number): Promise<void> => {
+    await api.delete(`${CATEGORY_BASE_URL}/${id}`, {
+      data: { replaceCategoryId: replacementId },
+    });
   },
 
   // 카테고리 수정
@@ -43,11 +45,11 @@ const categoryApi = {
       name: string;
       description?: string;
       color?: string;
-    },
+    }
   ): Promise<CategoryListItemResponse> => {
     const response = await api.put<CategoryListItemResponse>(
       `${CATEGORY_BASE_URL}/${id}`,
-      data,
+      data
     );
     return response.data;
   },

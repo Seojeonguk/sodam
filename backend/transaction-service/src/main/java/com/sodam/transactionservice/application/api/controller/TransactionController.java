@@ -1,9 +1,6 @@
 package com.sodam.transactionservice.application.api.controller;
 
-import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionRequest;
-import com.sodam.transactionservice.application.api.dto.TransactionResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
+import com.sodam.transactionservice.application.api.dto.*;
 import com.sodam.transactionservice.application.service.TransactionApplicationService;
 import com.sodam.transactionservice.domain.model.Transaction;
 import jakarta.validation.Valid;
@@ -100,5 +97,10 @@ public class TransactionController {
         log.info("거래 목록 조회 요청 사용자 id : {}", email);
 
         return ResponseEntity.ok(transactionApplicationService.getTransactions(searchRequest, pageable, email));
+    }
+
+    @PutMapping("category/move")
+    public ResponseEntity<TransactionMoveCategoryResponse> moveCategory(@RequestParam Long oldCategoryId, @RequestParam Long newCategoryId) {
+        return ResponseEntity.ok(transactionApplicationService.moveCategory(oldCategoryId, newCategoryId));
     }
 }

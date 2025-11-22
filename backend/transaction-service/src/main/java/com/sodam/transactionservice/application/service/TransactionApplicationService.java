@@ -1,9 +1,6 @@
 package com.sodam.transactionservice.application.service;
 
-import com.sodam.transactionservice.application.api.dto.TransactionListItemResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionRequest;
-import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
+import com.sodam.transactionservice.application.api.dto.*;
 import com.sodam.transactionservice.domain.model.Transaction;
 import com.sodam.transactionservice.domain.service.TransactionDomainService;
 import com.sodam.transactionservice.infrastructure.*;
@@ -124,5 +121,18 @@ public class TransactionApplicationService {
                 .totalElements(transactions.getTotalElements())
                 .totalPages(transactions.getTotalPages())
                 .build();
+    }
+
+    @Transactional
+    public TransactionMoveCategoryResponse moveCategory(Long oldCategoryId, Long newCategoryId) {
+        Integer updatedCnt = transactionDomainService.moveCategory(oldCategoryId, newCategoryId);
+
+        log.info("카테고리 값 {}건 업데이트 완료. {} -> {}", updatedCnt, oldCategoryId, newCategoryId);
+
+        TransactionMoveCategoryResponse transactionMoveCategoryResponse = new TransactionMoveCategoryResponse();
+        transactionMoveCategoryResponse.setCode("S-0000");
+        transactionMoveCategoryResponse.setMessage("업데이트 성공");
+        transactionMoveCategoryResponse.setData(updatedCnt);
+        return transactionMoveCategoryResponse;
     }
 }
