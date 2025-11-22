@@ -49,7 +49,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   };
 
   return (
-    <StyledAppBar position="relative" open={openSide} isDesktop={isDesktop}>
+    <StyledAppBar position="fixed" open={openSide} isDesktop={isDesktop}>
       <Toolbar>
         <IconButton
           color="inherit"
