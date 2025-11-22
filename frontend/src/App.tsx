@@ -56,6 +56,7 @@ function App() {
           transition: "margin 0.3s ease",
           marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
           marginTop: 0,
+          paddingTop: isDesktop ? "64px" : "56px",
         }}
       >
         <AppRoutes />
