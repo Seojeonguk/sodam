@@ -1,4 +1,4 @@
-import { IconButton, Toolbar, Typography, styled } from "@mui/material";
+import { IconButton, Toolbar, Typography, styled, Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
@@ -65,13 +65,14 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography
-          variant="h6"
-          component="div"
-          sx={{ flexGrow: 1, cursor: "pointer" }}
-          onClick={handleLogoClick}
-        >
-          💰 소담
+        <Typography variant="h6" component="div">
+          <Box
+            component="span"
+            sx={{ cursor: "pointer", display: "inline-block" }}
+            onClick={handleLogoClick}
+          >
+            💰 소담
+          </Box>
         </Typography>
       </Toolbar>
     </StyledAppBar>
