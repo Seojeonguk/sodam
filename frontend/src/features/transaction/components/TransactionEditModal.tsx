@@ -28,7 +28,7 @@ import type {
 import axios from "axios";
 
 const style = {
-  position: "absolute" as "absolute",
+  position: "absolute" as const,
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -192,7 +192,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
             value={type}
             label="종류"
             onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
-              setType(e.target.value as "INCOME" | "EXPENSE");
+              setType(e.target.value);
               setCategorySeq(undefined);
             }}
           >

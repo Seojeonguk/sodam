@@ -176,7 +176,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
                           color: "primary.main",
                           backgroundColor: alpha(
                             theme.palette.primary.main,
-                            0.12
+                            0.12,
                           ),
                         },
                         transition: "all 0.2s ease",

@@ -28,10 +28,10 @@ export const DashboardHero = ({
         overflow: "hidden",
         backgroundImage: `linear-gradient(135deg, ${alpha(
           theme.palette.primary.main,
-          0.95
+          0.95,
         )} 0%, ${alpha(theme.palette.primary.dark, 0.92)} 60%, ${alpha(
           theme.palette.secondary.main,
-          0.9
+          0.9,
         )} 100%)`,
       }}
     >

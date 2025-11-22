@@ -36,7 +36,7 @@ function CategoryPage() {
 
   const showcaseCategories = useMemo(
     () => (categories?.categories ?? []).slice(0, 4),
-    [categories]
+    [categories],
   );
 
   const palettePreview = useMemo(() => {
@@ -105,10 +105,10 @@ function CategoryPage() {
           color: "common.white",
           backgroundImage: `linear-gradient(135deg, ${alpha(
             theme.palette.primary.main,
-            0.95
+            0.95,
           )} 0%, ${alpha(theme.palette.primary.dark, 0.92)} 45%, ${alpha(
             theme.palette.secondary.main,
-            0.9
+            0.9,
           )} 100%)`,
         }}
       >
@@ -381,7 +381,7 @@ function CategoryPage() {
         onClose={handleCloseReplaceModal}
         categories={
           categories?.categories?.filter(
-            (c) => c.id !== deleteTargetCategoryId
+            (c) => c.id !== deleteTargetCategoryId,
           ) ?? []
         }
         onConfirm={(replacementId: number) => {
@@ -393,7 +393,7 @@ function CategoryPage() {
                 void refetchCategories();
               } catch (err) {
                 alert(
-                  `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`
+                  `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`,
                 );
               }
             }

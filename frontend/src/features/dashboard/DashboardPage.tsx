@@ -39,28 +39,28 @@ function DashboardPage() {
     () =>
       incomeStats.reduce(
         (sum, stat) => sum + (typeof stat.value === "number" ? stat.value : 0),
-        0
+        0,
       ),
-    [incomeStats]
+    [incomeStats],
   );
   const totalExpense = useMemo(
     () =>
       expenseStats.reduce(
         (sum, stat) => sum + (typeof stat.value === "number" ? stat.value : 0),
-        0
+        0,
       ),
-    [expenseStats]
+    [expenseStats],
   );
   const netBalance = totalIncome - totalExpense;
 
   const recentTransactions = useMemo(
     () => transactions?.transactions.slice(0, 5) ?? [],
-    [transactions]
+    [transactions],
   );
 
   const highlightedCategories = useMemo(
     () => (categories?.categories ?? []).slice(0, 6),
-    [categories]
+    [categories],
   );
 
   const summaryCards = [
