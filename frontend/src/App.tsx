@@ -27,7 +27,7 @@ function App() {
 
   const toggleDrawer = useCallback(
     () => setOpenSide((prevOpen) => !prevOpen),
-    []
+    [],
   );
   const handleDrawerClose = useCallback(() => setOpenSide(false), []);
 

@@ -5,7 +5,7 @@ import axios from "axios";
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<CategoryListResponse | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

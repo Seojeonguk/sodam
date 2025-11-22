@@ -28,7 +28,7 @@ function LoginPage() {
 
       localStorage.setItem("accessToken", accessToken);
 
-      navigate("/dashboard");
+      void navigate("/dashboard");
     }
   };
 
@@ -53,7 +53,7 @@ function LoginPage() {
     if (accessToken) {
       localStorage.setItem("accessToken", accessToken);
 
-      navigate("/transactions");
+      void navigate("/transactions");
     }
   }, [navigate]);
 
@@ -100,7 +100,7 @@ function LoginPage() {
             color="primary"
             fullWidth
             sx={{ mt: 2 }}
-            onClick={handleSubmit}
+            onClick={(e) => void handleSubmit(e)}
           >
             로그인
           </Button>

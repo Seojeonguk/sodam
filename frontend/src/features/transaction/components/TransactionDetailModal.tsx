@@ -12,7 +12,7 @@ import { GridCloseIcon } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { TransactionResponseDto } from "../services/transaction.types";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import transactionApi from "../services/transactionApi";
 import dayjs from "dayjs";
@@ -46,7 +46,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   onDeleteRequest,
 }) => {
   const [transaction, setTransaction] = useState<TransactionResponseDto | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +65,12 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         setTransaction(data);
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
+          const data =
+            err.response.data && typeof err.response.data === "object"
+              ? (err.response.data as { message?: string })
+              : undefined;
           setError(
-            `거래 상세 조회 실패: ${err.response.data?.message || err.message}`,
+            `거래 상세 조회 실패: ${data?.message ?? (typeof err.message === "string" ? err.message : "오류가 발생했습니다.")}`
           );
         } else {
           setError("거래 상세 조회 중 예상치 못한 오류가 발생했습니다.");
@@ -76,7 +80,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       }
     };
 
-    fetchTransactionDetail();
+    void fetchTransactionDetail();
   }, [isOpen, transactionSeq]); // 모달이 열리거나 transactionId가 변경될 때마다 데이터를 가져옴
 
   const handleEdit = () => {
@@ -174,7 +178,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 날짜:
               </Typography>{" "}
               {dayjs(transaction.transactionDate).format(
-                "YYYY년 MM월 DD일 HH시 mm분",
+                "YYYY년 MM월 DD일 HH시 mm분"
               )}
             </Typography>
 

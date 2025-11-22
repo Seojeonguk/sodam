@@ -111,9 +111,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
                   label={category.name}
                   size="small"
                   sx={{
-                    backgroundColor: category.color
-                      ? category.color
-                      : alpha(theme.palette.text.primary, 0.08),
+                    backgroundColor:
+                      category.color ?? alpha(theme.palette.text.primary, 0.08),
                     color: category.color
                       ? getContrastColor(category.color)
                       : theme.palette.text.primary,

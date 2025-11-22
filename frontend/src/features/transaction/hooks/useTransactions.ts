@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import transactionApi from "../services/transactionApi";
 import statApi from "../services/statApi";
 import type { TransactionListResponse } from "../services/transaction.types";
@@ -16,7 +16,10 @@ export const useTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [statReq] = useState<StatRequest>({});
+  const [statReq] = useState<StatRequest>({
+    startDate: "",
+    endDate: "",
+  });
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
 
@@ -24,7 +27,9 @@ export const useTransactions = () => {
     startDate: "",
     endDate: "",
   });
-  const [statPeriodDataset, setStatPeriodDataset] = useState<any[]>([]);
+  const [statPeriodDataset, setStatPeriodDataset] = useState<
+    StatPeriodDatasetEntry[]
+  >([]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -69,7 +74,7 @@ export const useTransactions = () => {
   const getRandomColor = () =>
     `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await statApi.getStats(statReq);
 
@@ -113,29 +118,29 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statReq]);
 
-  const fetchPeriodStats = async () => {
+  const fetchPeriodStats = useCallback(async () => {
     try {
       const response = await statApi.getPeriodStats(statPeriodReq);
 
       console.debug("전체 월별 통계 정보 : ", response);
 
       const dataset = response.reduce(
-        (acc: any[], item: StatPeriodResponse) => {
+        (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
           const month = item.transaction_date;
           const found = acc.find((d) => d.period === month);
           if (found) {
-            found[item.type.toLowerCase()] = item.total;
+            found[item.type.toLowerCase() as "income" | "expense"] = item.total;
           } else {
             acc.push({
               period: month,
-              [item.type.toLowerCase()]: item.total,
+              [item.type.toLowerCase() as "income" | "expense"]: item.total,
             });
           }
           return acc;
         },
-        [],
+        []
       );
 
       setStatPeriodDataset(dataset);
@@ -148,7 +153,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statPeriodReq]);
 
   useEffect(() => {
     void fetchTransactions();
@@ -156,11 +161,11 @@ export const useTransactions = () => {
 
   useEffect(() => {
     void fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   useEffect(() => {
     void fetchPeriodStats();
-  }, []);
+  }, [fetchPeriodStats]);
 
   return {
     transactions,
@@ -175,3 +180,9 @@ export const useTransactions = () => {
     statPeriodDataset,
   };
 };
+
+interface StatPeriodDatasetEntry {
+  period: string;
+  income?: number;
+  expense?: number;
+}

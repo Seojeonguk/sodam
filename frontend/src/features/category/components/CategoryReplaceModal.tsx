@@ -9,7 +9,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
   Typography,
 } from "@mui/material";
 import type { CategoryListItemResponse } from "../../transaction/services/category.types";

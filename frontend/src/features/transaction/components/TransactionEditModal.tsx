@@ -28,7 +28,7 @@ import type {
 import axios from "axios";
 
 const style = {
-  position: "absolute" as "absolute",
+  position: "absolute" as const,
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -53,21 +53,21 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
 }) => {
   // 폼 필드 상태 관리 (초기값은 transactionToEdit에서 가져옴)
   const [type, setType] = useState<"INCOME" | "EXPENSE">(
-    transactionToEdit?.type || "EXPENSE",
+    transactionToEdit?.type ?? "EXPENSE"
   );
   const [amount, setAmount] = useState<string>(
-    transactionToEdit?.amount.toString() || "",
+    transactionToEdit?.amount.toString() ?? ""
   );
   const [categorySeq, setCategorySeq] = useState<number | undefined>(
-    transactionToEdit?.categorySeq,
+    transactionToEdit?.categorySeq
   );
   const [description, setDescription] = useState<string>(
-    transactionToEdit?.description || "",
+    transactionToEdit?.description ?? ""
   );
   const [transactionDate, setTransactionDate] = useState<Dayjs | null>(
     transactionToEdit?.transactionDate
       ? dayjs(transactionToEdit.transactionDate)
-      : dayjs(),
+      : dayjs()
   );
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -136,17 +136,16 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
 
       await transactionApi.updateTransaction(
         transactionToEdit.seq,
-        updatedTransaction,
+        updatedTransaction
       );
       setSuccess("거래가 성공적으로 수정되었습니다!");
       setTimeout(() => {
         handleClose();
       }, 1500);
-    } catch (err) {
+    } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
-        setError(
-          `거래 수정 실패: ${err.response.data?.message || err.message}`,
-        );
+        const data = err.response.data as { message?: string };
+        setError(`거래 수정 실패: ${data.message ?? err.message}`);
       } else {
         setError("거래 수정 중 예상치 못한 오류가 발생했습니다.");
       }
@@ -162,7 +161,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       aria-labelledby="transaction-edit-modal-title"
       aria-describedby="transaction-edit-modal-description"
     >
-      <Box sx={style} component="form" onSubmit={handleSubmit}>
+      <Box sx={style} component="form" onSubmit={(e) => void handleSubmit(e)}>
         <Typography
           id="transaction-edit-modal-title"
           variant="h5"
@@ -192,7 +191,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
             value={type}
             label="종류"
             onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
-              setType(e.target.value as "INCOME" | "EXPENSE");
+              setType(e.target.value);
               setCategorySeq(undefined);
             }}
           >

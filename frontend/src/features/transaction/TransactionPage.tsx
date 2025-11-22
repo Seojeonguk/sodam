@@ -61,17 +61,17 @@ function TransactionPage() {
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setTransactionToEdit(null);
-    refetchTransactions(); // 목록 갱신
-    fetchPeriodStats();
-    fetchStats();
+    void refetchTransactions(); // 목록 갱신
+    void fetchPeriodStats();
+    void fetchStats();
   };
 
   const handleDeleteTransaction = async (seq: number) => {
     if (window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
       await deleteTransaction(seq);
-      refetchTransactions(); // 삭제 후 목록 갱신
-      fetchPeriodStats();
-      fetchStats();
+      void refetchTransactions(); // 삭제 후 목록 갱신
+      void fetchPeriodStats();
+      void fetchStats();
       handleCloseDetailModal(); // 상세 모달이 열려있었다면 닫기
     }
   };
@@ -214,7 +214,7 @@ function TransactionPage() {
         transactionSeq={selectedTransactionSeq}
         onEditRequest={handleOpenEditModal}
         onClose={handleCloseDetailModal}
-        onDeleteRequest={handleDeleteTransaction}
+        onDeleteRequest={(seq) => void handleDeleteTransaction(seq)}
       />
 
       <TransactionEditModal

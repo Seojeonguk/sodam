@@ -44,7 +44,7 @@ export const HighlightedCategoriesSection = ({
                 border: "1px solid",
                 borderColor: alpha(
                   category.color ?? theme.palette.divider,
-                  0.5
+                  0.5,
                 ),
                 borderRadius: 2,
                 p: 1.5,

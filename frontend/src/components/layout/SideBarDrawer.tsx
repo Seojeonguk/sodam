@@ -56,7 +56,7 @@ function SideBarDrawerComponent({
         handleDrawerClose();
       }
     },
-    [navigate, isDesktop, handleDrawerClose]
+    [navigate, isDesktop, handleDrawerClose],
   );
 
   return (

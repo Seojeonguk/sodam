@@ -1,4 +1,7 @@
-export interface StatRequest {}
+export interface StatRequest {
+  startDate: string;
+  endDate: string;
+}
 
 export interface StatResponse {
   total: number;
