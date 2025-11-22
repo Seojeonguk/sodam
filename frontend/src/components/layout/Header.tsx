@@ -68,7 +68,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1 }}
+          sx={{ flexGrow: 1, cursor: "pointer" }}
           onClick={handleLogoClick}
         >
           💰 소담
