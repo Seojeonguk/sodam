@@ -1,29 +1,32 @@
 import { styled, useTheme } from "@mui/material/styles";
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import CssBaseline from "@mui/material/CssBaseline";
-import List from "@mui/material/List";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
+import {
+  Box,
+  Drawer,
+  CssBaseline,
+  List,
+  Divider,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Typography,
+  Button,
+} from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from "@mui/icons-material/Category";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { memo, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { memo, useCallback } from "react";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
-
-const SIDE_MENU_ITEMS = [
-  { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
-  { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
-  { label: "거래내역", path: "/transactions", icon: <ReceiptLongIcon /> },
-];
+import { ExpandMore } from "@mui/icons-material";
+import { useAccountBooks } from "../../features/accountbook/hooks/useAccountBooks";
+import type { AccountBookListResponse } from "../../features/accountbook/services/accountbook.types";
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -31,13 +34,18 @@ interface SideBarDrawerProps {
   handleDrawerClose: () => void;
 }
 
+const SIDE_MENU_ITEMS = [
+  { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
+  { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
+  { label: "거래내역", path: "/transactions", icon: <ReceiptLongIcon /> },
+];
+
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
-  justifyContent: "flex-end",
+  justifyContent: "space-between",
 }));
 
 function SideBarDrawerComponent({
@@ -47,16 +55,39 @@ function SideBarDrawerComponent({
 }: SideBarDrawerProps) {
   const theme = useTheme();
   const navigate = useNavigate();
-  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
+  const isDesktop = useIsDesktop();
+  const { accountBooks } = useAccountBooks();
+
+  const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
+  const [currentAccountBook, setCurrentAccountBook] = useState<AccountBookListResponse | null>(null);
+
+  useEffect(() => {
+    if (accountBooks.length > 0 && !currentAccountBook) {
+      setCurrentAccountBook(accountBooks[0]);
+    }
+  }, [accountBooks, currentAccountBook]);
+
+  const openRepoMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setRepoAnchor(event.currentTarget);
+  };
+
+  const closeRepoMenu = () => {
+    setRepoAnchor(null);
+  };
+
+  const handleSelectAccountBook = (accountBook: AccountBookListResponse) => {
+    setCurrentAccountBook(accountBook);
+    closeRepoMenu();
+  };
 
   const createNavigateHandler = useCallback(
-    (path: string) => () => {
-      void navigate(path);
-      if (!isDesktop) {
-        handleDrawerClose();
-      }
+    (path: string) => {
+      return () => {
+        void navigate(path);
+        if (!isDesktop) handleDrawerClose();
+      };
     },
-    [navigate, isDesktop, handleDrawerClose],
+    [navigate, isDesktop, handleDrawerClose]
   );
 
   return (
@@ -78,6 +109,51 @@ function SideBarDrawerComponent({
         onClose={handleDrawerClose}
       >
         <DrawerHeader>
+          {/* 저장소 선택 버튼 */}
+          <Box>
+            <IconButton
+              onClick={openRepoMenu}
+              sx={{ display: "flex", alignItems: "center", borderRadius: 1 }}
+            >
+              <Typography
+                sx={{
+                  maxWidth: 130,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  textAlign: "left",
+                  mr: 0.5,
+                }}
+              >
+                {currentAccountBook?.name}
+              </Typography>
+              <ExpandMore />
+            </IconButton>
+          </Box>
+
+          {/* 저장소 메뉴 */}
+          <Menu
+            anchorEl={repoAnchor}
+            open={Boolean(repoAnchor)}
+            onClose={closeRepoMenu}
+          >
+            {accountBooks.map((accountbook) => (
+              <MenuItem key={accountbook.id} onClick={() => handleSelectAccountBook(accountbook)}>
+                <Typography
+                  sx={{
+                    maxWidth: 200,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {accountbook.name}
+                </Typography>
+              </MenuItem>
+            ))}
+          </Menu>
+
+          {/* Drawer 닫기 */}
           <IconButton onClick={toggleDrawer}>
             {theme.direction === "ltr" ? (
               <ChevronLeftIcon />
@@ -86,20 +162,21 @@ function SideBarDrawerComponent({
             )}
           </IconButton>
         </DrawerHeader>
+
         <Divider />
+
+        {/* Side 메뉴 */}
         <List>
           {SIDE_MENU_ITEMS.map((item) => (
             <ListItem key={item.label} disablePadding>
               <ListItemButton onClick={createNavigateHandler(item.path)}>
                 <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText
-                  sx={{ overflowWrap: "break-word" }}
-                  primary={item.label}
-                />
+                <ListItemText primary={item.label} />
               </ListItemButton>
             </ListItem>
           ))}
         </List>
+
         <Divider />
       </Drawer>
     </Box>
