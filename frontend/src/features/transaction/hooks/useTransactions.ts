@@ -9,12 +9,15 @@ import type {
   StatRequest,
 } from "./../services/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
+import { useAccountBookContext } from "../../accountbook/context/AccountBookContext";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { currentAccountBook } = useAccountBookContext();
 
   const [statReq] = useState<StatRequest>({
     startDate: "",
@@ -35,7 +38,8 @@ export const useTransactions = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await transactionApi.getTransactions();
+      const accountId = currentAccountBook?.id ?? 0;
+      const response = await transactionApi.getTransactions(accountId);
       setTransactions(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {

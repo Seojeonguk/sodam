@@ -19,12 +19,12 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from "@mui/icons-material/Category";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DRAWER_WIDTH } from "../../constants/layout";
 import { useIsDesktop } from "../../hooks/useIsDesktop";
 import { ExpandMore } from "@mui/icons-material";
-import { useAccountBooks } from "../../features/accountbook/hooks/useAccountBooks";
+import { useAccountBookContext } from "../../features/accountbook/context/AccountBookContext";
 import type { AccountBookListResponse } from "../../features/accountbook/services/accountbook.types";
 
 interface SideBarDrawerProps {
@@ -55,16 +55,9 @@ function SideBarDrawerComponent({
   const theme = useTheme();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
-  const { accountBooks } = useAccountBooks();
+  const { accountBooks, currentAccountBook, setCurrentAccountBook } = useAccountBookContext();
 
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
-  const [currentAccountBook, setCurrentAccountBook] = useState<AccountBookListResponse | null>(null);
-
-  useEffect(() => {
-    if (accountBooks.length > 0 && !currentAccountBook) {
-      setCurrentAccountBook(accountBooks[0]);
-    }
-  }, [accountBooks, currentAccountBook]);
 
   const openRepoMenu = (event: React.MouseEvent<HTMLElement>) => {
     setRepoAnchor(event.currentTarget);
@@ -136,7 +129,7 @@ function SideBarDrawerComponent({
             open={Boolean(repoAnchor)}
             onClose={closeRepoMenu}
           >
-            {accountBooks.map((accountbook) => (
+            {accountBooks.map((accountbook: AccountBookListResponse) => (
               <MenuItem key={accountbook.id} onClick={() => handleSelectAccountBook(accountbook)}>
                 <Typography
                   sx={{

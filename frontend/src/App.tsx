@@ -9,6 +9,7 @@ import Header from "./components/layout/Header.tsx";
 import { DRAWER_WIDTH } from "./constants/layout";
 import { useIsDesktop } from "./hooks/useIsDesktop";
 import DashboardPage from "./features/dashboard/DashboardPage.tsx";
+import { AccountBookProvider } from "./features/accountbook/context/AccountBookContext";
 
 const AppRoutes = memo(function AppRoutes() {
   return (
@@ -40,27 +41,29 @@ function App() {
         padding: 0,
       }}
     >
-      <Header openSide={openSide} toggleDrawer={toggleDrawer} />
-      <SideBarDrawer
-        openSide={openSide}
-        toggleDrawer={toggleDrawer}
-        handleDrawerClose={handleDrawerClose}
-      />
-      <Box
-        sx={{
-          flexGrow: 1,
-          mt: 4,
-          mb: 4,
-          display: "flex",
-          flexDirection: "column",
-          transition: "margin 0.3s ease",
-          marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
-          marginTop: 0,
-          paddingTop: isDesktop ? "64px" : "56px",
-        }}
-      >
-        <AppRoutes />
-      </Box>
+      <AccountBookProvider>
+        <Header openSide={openSide} toggleDrawer={toggleDrawer} />
+        <SideBarDrawer
+          openSide={openSide}
+          toggleDrawer={toggleDrawer}
+          handleDrawerClose={handleDrawerClose}
+        />
+        <Box
+          sx={{
+            flexGrow: 1,
+            mt: 4,
+            mb: 4,
+            display: "flex",
+            flexDirection: "column",
+            transition: "margin 0.3s ease",
+            marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
+            marginTop: 0,
+            paddingTop: isDesktop ? "64px" : "56px",
+          }}
+        >
+          <AppRoutes />
+        </Box>
+      </AccountBookProvider>
       <Box
         component="footer"
         sx={{
