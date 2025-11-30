@@ -1,12 +1,15 @@
 package com.sodam.accountbookservice.domain.service;
 
 import com.sodam.accountbookservice.application.api.dto.AccountBookCreateRequest;
+import com.sodam.accountbookservice.application.api.dto.AccountBookListResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import com.sodam.accountbookservice.domain.model.AccountBook;
 import com.sodam.accountbookservice.domain.repository.AccountBookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -50,5 +53,10 @@ public class AccountBookService {
         }
 
         accountBookRepository.delete(accountBook);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AccountBookListResponse> getAccountBooks(Long userId) {
+        return accountBookRepository.findAccessibleAccountBooks(userId);
     }
 }

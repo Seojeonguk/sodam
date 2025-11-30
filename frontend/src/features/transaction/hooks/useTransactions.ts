@@ -9,12 +9,15 @@ import type {
   StatRequest,
 } from "./../services/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
+import { useAccountBookContext } from "../../accountbook/context/AccountBookContext";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { currentAccountBook } = useAccountBookContext();
 
   const [statReq] = useState<StatRequest>({
     startDate: "",
@@ -31,11 +34,12 @@ export const useTransactions = () => {
     StatPeriodDatasetEntry[]
   >([]);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await transactionApi.getTransactions();
+      const accountId = currentAccountBook?.id ?? 0;
+      const response = await transactionApi.getTransactions(accountId);
       setTransactions(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -46,7 +50,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentAccountBook]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -159,15 +163,15 @@ export const useTransactions = () => {
 
   useEffect(() => {
     void fetchTransactions();
-  }, []);
+  }, [fetchTransactions]);
 
   useEffect(() => {
     void fetchStats();
-  }, [fetchStats]);
+  }, [fetchStats, currentAccountBook]);
 
   useEffect(() => {
     void fetchPeriodStats();
-  }, [fetchPeriodStats]);
+  }, [fetchPeriodStats, currentAccountBook]);
 
   return {
     transactions,

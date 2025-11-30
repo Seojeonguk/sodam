@@ -1,6 +1,7 @@
 package com.sodam.accountbookservice.application.service;
 
 import com.sodam.accountbookservice.application.api.dto.AccountBookCreateRequest;
+import com.sodam.accountbookservice.application.api.dto.AccountBookListResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import com.sodam.accountbookservice.domain.model.AccountBook;
@@ -14,6 +15,8 @@ import com.sodam.accountbookservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -74,5 +77,13 @@ public class AccountBookApplicationService {
 
     public void deleteAccountBook(Long id, String email) {
         accountBookService.deleteAccountBookById(id);
+    }
+
+    public List<AccountBookListResponse> getAccountBooks(String email) {
+        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+
+        Long userId = userResponse.getData().getId();
+
+        return accountBookService.getAccountBooks(userId);
     }
 }
