@@ -49,12 +49,17 @@ function LoginPage() {
     // 현재 URL에서 accessToken 추출
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get("accessToken");
-
+    console.debug(`parameter access token : ${accessToken}`);
     if (accessToken) {
       localStorage.setItem("accessToken", accessToken);
-
-      void navigate("/transactions");
     }
+
+    const savedAccessToken = localStorage.getItem("accessToken");
+    console.debug(`saved access token : ${savedAccessToken}`);
+    if (savedAccessToken) {
+      void navigate("/dashboard");
+    }
+
   }, [navigate]);
 
   return (
