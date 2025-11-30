@@ -34,7 +34,7 @@ export const useTransactions = () => {
     StatPeriodDatasetEntry[]
   >([]);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -50,7 +50,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentAccountBook]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -163,15 +163,15 @@ export const useTransactions = () => {
 
   useEffect(() => {
     void fetchTransactions();
-  }, []);
+  }, [fetchTransactions]);
 
   useEffect(() => {
     void fetchStats();
-  }, [fetchStats]);
+  }, [fetchStats, currentAccountBook]);
 
   useEffect(() => {
     void fetchPeriodStats();
-  }, [fetchPeriodStats]);
+  }, [fetchPeriodStats, currentAccountBook]);
 
   return {
     transactions,
