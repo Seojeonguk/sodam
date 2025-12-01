@@ -30,13 +30,7 @@ public class UserApplicationService {
     public void registerNewUser(RegisterRequest registerRequest) {
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
-        User newUser = User.builder()
-                .email(registerRequest.getEmail())
-                .password(encodedPassword)
-                .name(registerRequest.getName())
-                .role(Role.USER) // 기본 역할 부여
-                .build();
-
+        User newUser = registerRequest.toEntity(encodedPassword, Role.USER);
         userService.registerNewUser(newUser);
     }
 
