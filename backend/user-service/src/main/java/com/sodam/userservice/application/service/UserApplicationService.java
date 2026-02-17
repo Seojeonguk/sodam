@@ -8,6 +8,9 @@ import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.service.UserServiceImpl;
+import com.sodam.userservice.infrastructure.clients.AccountBookServiceClient;
+import com.sodam.userservice.infrastructure.dto.request.AccountBookCreateRequest;
+import com.sodam.userservice.infrastructure.dto.response.AccountBookResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,12 +29,27 @@ public class UserApplicationService {
     private final PasswordEncoder passwordEncoder;
     private final UserServiceImpl userService;
 
+    private final AccountBookServiceClient accountBookServiceClient;
+
     @Transactional
     public void registerNewUser(RegisterRequest registerRequest) {
+        // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
+        // 신규 유저 생성
         User newUser = registerRequest.toEntity(encodedPassword, Role.USER);
-        userService.registerNewUser(newUser);
+        User createdUser = userService.registerNewUser(newUser);
+        log.info("신규 유저 생성 완료. id : {}, 이메일 : {}", createdUser.getId(), createdUser.getEmail());
+
+        // 가계부 생성
+        String accountBookName = "기본 가계부";
+        AccountBookCreateRequest createRequest = AccountBookCreateRequest.builder()
+                .name(accountBookName)
+                .userId(createdUser.getId())
+                .build();
+
+        AccountBookResponse createdAccountBook = accountBookServiceClient.createAccountBook(createRequest);
+        log.debug("가계부 응답 : {}", createdAccountBook);
     }
 
     @Transactional

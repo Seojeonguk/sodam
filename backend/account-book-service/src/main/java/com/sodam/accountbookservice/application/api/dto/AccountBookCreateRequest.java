@@ -7,6 +7,5 @@ import lombok.Data;
 public class AccountBookCreateRequest {
     private String name;
 
-    @JsonIgnore
     private Long userId;
 }
