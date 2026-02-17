@@ -32,6 +32,18 @@ const LoginApi = {
       throw error;
     }
   },
+  logout: async (): Promise<CommonResponse<void>> => {
+    try {
+      const response = await api.post<CommonResponse<void>>(
+        `${AUTH_BASE_URL}/logout`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if the API call fails, we should proceed with client-side logout
+      throw error;
+    }
+  },
 };
 
 export default LoginApi;
