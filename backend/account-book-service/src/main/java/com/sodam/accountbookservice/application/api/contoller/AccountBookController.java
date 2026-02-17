@@ -24,7 +24,7 @@ public class AccountBookController {
     }
 
     @PostMapping
-    public ResponseEntity<AccountBookResponse> createAccountBook(@Valid @RequestBody AccountBookCreateRequest request, @RequestHeader("X-User-Email") String email) {
+    public ResponseEntity<AccountBookResponse> createAccountBook(@Valid @RequestBody AccountBookCreateRequest request, @RequestHeader(value = "X-User-Email", required = false) String email) {
         return ResponseEntity.ok(service.createAccountBook(request, email));
     }
 

@@ -13,6 +13,7 @@ import com.sodam.accountbookservice.infrastructure.ApiResponse;
 import com.sodam.accountbookservice.infrastructure.UserDto;
 import com.sodam.accountbookservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,22 +30,30 @@ public class AccountBookApplicationService {
 
     @Transactional
     public AccountBookResponse createAccountBook(AccountBookCreateRequest request, String email) {
+        if (request.getUserId() == null && Strings.isEmpty(email)) {
+            throw new IllegalArgumentException("사용자 정보가 존재하지 않습니다.");
+        }
 
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-        request.setUserId(userResponse.getData().getId());
+        Long userId = request.getUserId();
+        if (userId == null) {
+            ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+            request.setUserId(userResponse.getData().getId());
+            userId = userResponse.getData().getId();
+        }
 
         AccountBook accountBook = accountBookService.createAccountBook(request);
 
         AccountBookMember accountBookMember = AccountBookMember.builder()
                 .accountBookId(accountBook.getId())
-                .createdBy(userResponse.getData().getId())
-                .updatedBy(userResponse.getData().getId())
+                .createdBy(userId)
+                .updatedBy(userId)
                 .authority(Authority.OWNER)
                 .isAvailable("Y")
+                .userId(userId)
                 .build();
 
         AccountBookMember createdAccountBookMember = accountBookMemberService.createAccountBookMember(accountBookMember);
-        if(createdAccountBookMember == null) {
+        if (createdAccountBookMember == null) {
             throw new IllegalArgumentException("생성된 가계부 권한이 없습니다.");
         }
 

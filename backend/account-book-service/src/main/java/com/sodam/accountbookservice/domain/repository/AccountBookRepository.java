@@ -26,7 +26,10 @@ public interface AccountBookRepository extends JpaRepository<AccountBook, Long> 
         FROM AccountBookMember abm
         JOIN AccountBook ab ON abm.accountBookId = ab.id
         WHERE abm.userId = :userId
-          AND CURRENT_TIMESTAMP BETWEEN abm.availableFrom AND abm.availableTo
+          AND (
+            CURRENT_TIMESTAMP BETWEEN abm.availableFrom AND abm.availableTo AND abm.authority != 'OWNER'
+            OR abm.authority = 'OWNER'
+          )
         ORDER BY abm.createdAt DESC
     """)
     List<AccountBookListResponse> findAccessibleAccountBooks(@Param("userId") Long userId);
