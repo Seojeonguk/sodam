@@ -1,5 +1,7 @@
-import { IconButton, Toolbar, Typography, styled, Box } from "@mui/material";
+import { IconButton, Toolbar, Typography, styled, Box, Tooltip } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import LogoutIcon from "@mui/icons-material/Logout";
+import LoginApi from "../../features/login/services/LoginApi";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
@@ -30,13 +32,13 @@ const StyledAppBar = styled(MuiAppBar, {
   }),
   ...(open &&
     isDesktop && {
-      width: `calc(100% - ${DRAWER_WIDTH}px)`,
-      marginLeft: `${DRAWER_WIDTH}px`,
-      transition: theme.transitions.create(["margin", "width"], {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
+    width: `calc(100% - ${DRAWER_WIDTH}px)`,
+    marginLeft: `${DRAWER_WIDTH}px`,
+    transition: theme.transitions.create(["margin", "width"], {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
     }),
+  }),
 }));
 
 function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
@@ -46,6 +48,20 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
 
   const handleLogoClick = () => {
     void nav("/dashboard");
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm("로그아웃 하시겠습니까?")) {
+      try {
+        await LoginApi.logout();
+      } catch (error) {
+        console.error("Logout API failed", error);
+        // Fallback to client-side logout even if API fails
+      } finally {
+        localStorage.removeItem("accessToken");
+        void nav("/");
+      }
+    }
   };
 
   return (
@@ -65,7 +81,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" component="div">
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           <Box
             component="span"
             sx={{ cursor: "pointer", display: "inline-block" }}
@@ -74,6 +90,12 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
             💰 소담
           </Box>
         </Typography>
+
+        <Tooltip title="로그아웃">
+          <IconButton color="inherit" onClick={() => void handleLogout()}>
+            <LogoutIcon />
+          </IconButton>
+        </Tooltip>
       </Toolbar>
     </StyledAppBar>
   );

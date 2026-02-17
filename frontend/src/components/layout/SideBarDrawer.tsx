@@ -26,6 +26,8 @@ import { useIsDesktop } from "../../hooks/useIsDesktop";
 import { ExpandMore } from "@mui/icons-material";
 import { useAccountBookContext } from "../../features/accountbook/context/AccountBookContext";
 import type { AccountBookListResponse } from "../../features/accountbook/services/accountbook.types";
+import LoginApi from "../../features/login/services/LoginApi";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -167,6 +169,31 @@ function SideBarDrawerComponent({
               </ListItemButton>
             </ListItem>
           ))}
+          <Divider sx={{ my: 1 }} />
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                void (async () => {
+                  if (window.confirm("로그아웃 하시겠습니까?")) {
+                    try {
+                      await LoginApi.logout();
+                    } catch (error) {
+                      console.error("Logout API failed", error);
+                    } finally {
+                      localStorage.removeItem("accessToken");
+                      void navigate("/");
+                      if (!isDesktop) handleDrawerClose();
+                    }
+                  }
+                })();
+              }}
+            >
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="로그아웃" />
+            </ListItemButton>
+          </ListItem>
         </List>
 
         <Divider />
