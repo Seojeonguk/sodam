@@ -26,6 +26,11 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    instance-id: localhost:${spring.application.instance_id:${server.port}}
+    hostname: account-book-service
+    prefer-ip-address: true
+    non-secure-port: 10005
 
 logging:
   level:
