@@ -163,6 +163,14 @@ function LoginPage() {
           >
             구글 로그인
           </Button>
+
+          <Button
+            variant="text"
+            fullWidth
+            onClick={() => void navigate("/signup")}
+          >
+            회원가입
+          </Button>
         </Box>
       </Box>
     </Container>

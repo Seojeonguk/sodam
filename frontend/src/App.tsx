@@ -10,11 +10,13 @@ import { DRAWER_WIDTH } from "./constants/layout";
 import { useIsDesktop } from "./hooks/useIsDesktop";
 import DashboardPage from "./features/dashboard/DashboardPage.tsx";
 import { AccountBookProvider } from "./features/accountbook/context/AccountBookContext";
+import SignupPage from "./pages/SignupPage";
 
 const AppRoutes = memo(function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/transactions" element={<TransactionPage />} />
       <Route path="/category" element={<CategoryPage />} />
