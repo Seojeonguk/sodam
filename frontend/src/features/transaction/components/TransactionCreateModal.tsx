@@ -26,6 +26,7 @@ import type {
   CategoryListItemResponse,
   CategoryListResponse,
 } from "../services/category.types";
+import { useAccountBookContext } from "../../accountbook/context/AccountBookContext";
 
 // 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
@@ -63,6 +64,8 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const { currentAccountBook } = useAccountBookContext();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -120,6 +123,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
 
     try {
       const newTransaction: TransactionCreateRequestDto = {
+        accountBookSeq: currentAccountBook?.id ?? 0,
         type: type,
         amount: parseFloat(amount), // 숫자로 변환
         categorySeq: category,
