@@ -90,7 +90,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   };
 
   const handleDelete = () => {
-    if (transaction && window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
+    if (transaction) {
       onDeleteRequest(transaction.seq);
       onClose(); // 삭제 요청 후 모달 닫기
     }
