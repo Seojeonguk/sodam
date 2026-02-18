@@ -14,7 +14,7 @@ public class TransactionListItemResponse {
     private Long seq;
     private BigDecimal amount;
     private String description;
-    private LocalDate transactionDate;
+    private String transactionDate;
     private TransactionType type;
     private String categoryName;
 

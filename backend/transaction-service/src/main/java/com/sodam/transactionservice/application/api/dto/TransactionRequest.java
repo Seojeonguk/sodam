@@ -30,8 +30,7 @@ public class TransactionRequest {
     private String description;
 
     @NotNull(message = "거래 발생일은 필수입니다.")
-    @PastOrPresent(message = "거래 발생일은 현재 또는 과거 날짜여야 합니다.")
-    private LocalDate transactionDate;
+    private String transactionDate;
 
     @NotNull(message = "거래 유형은 필수입니다.")
     private TransactionType type;
