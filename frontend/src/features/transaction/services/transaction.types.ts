@@ -28,6 +28,7 @@ export interface TransactionResponseDto {
 }
 
 export interface TransactionCreateRequestDto {
+  accountBookSeq: number;
   type: "INCOME" | "EXPENSE"; // 소득 또는 지출
   amount: number; // 금액
   categorySeq: number | null; // 카테고리 (예: '식비', '월급')
