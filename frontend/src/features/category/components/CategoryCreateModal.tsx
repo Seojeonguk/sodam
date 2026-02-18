@@ -13,6 +13,11 @@ import { ChromePicker } from "react-color";
 import categoryApi from "../services/categoryApi";
 import axios, { type AxiosError } from "axios";
 
+// 랜덤 색상 생성 유틸리티
+const getRandomColor = () => {
+  return "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0");
+};
+
 // 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
   position: "absolute",
@@ -39,7 +44,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
 }) => {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [color, setColor] = useState<string>("#1976d2");
+  const [color, setColor] = useState<string>(getRandomColor());
   const [displayColorPicker, setDisplayColorPicker] = useState<boolean>(false);
 
   // API 호출 상태 관리
@@ -50,7 +55,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   const handleClose = () => {
     setName("");
     setDescription("");
-    setColor("#1976d2");
+    setColor(getRandomColor());
     setDisplayColorPicker(false);
     setLoading(false);
     setError(null);
