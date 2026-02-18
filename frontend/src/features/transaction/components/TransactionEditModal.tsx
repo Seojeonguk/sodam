@@ -139,9 +139,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         updatedTransaction
       );
       setSuccess("거래가 성공적으로 수정되었습니다!");
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
+      handleClose();
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };

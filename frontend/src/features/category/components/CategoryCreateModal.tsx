@@ -76,9 +76,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
         color: color || undefined,
       });
       setSuccess("카테고리가 성공적으로 추가되었습니다.");
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
+      handleClose();
     } catch (err) {
       const axiosError = err as AxiosError<{ message?: string }>;
       if (axios.isAxiosError(axiosError) && axiosError.response) {
