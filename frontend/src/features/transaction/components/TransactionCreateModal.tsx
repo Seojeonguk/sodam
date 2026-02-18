@@ -133,10 +133,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
 
       await transactionApi.createTransaction(newTransaction);
       setSuccess("거래가 성공적으로 추가되었습니다!");
-      // 성공 후 모달 닫기 (약간의 딜레이 후)
-      setTimeout(() => {
-        handleClose();
-      }, 1500); // 1.5초 후 모달 닫기
+      handleClose();
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
 
