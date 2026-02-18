@@ -135,6 +135,7 @@ function LoginPage() {
           <Typography>{errorMsg}</Typography>
 
           <Button
+            type="submit"
             variant="contained"
             color="primary"
             fullWidth
