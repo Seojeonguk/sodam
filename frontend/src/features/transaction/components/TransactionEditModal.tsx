@@ -131,7 +131,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         amount: parseFloat(amount),
         categorySeq: categorySeq,
         description: description,
-        transactionDate: transactionDate.format("YYYYMMDDHHmmss"),
+        transactionDate: transactionDate?.second(0)?.format("YYYYMMDDHHmmss"),
       };
 
       await transactionApi.updateTransaction(
