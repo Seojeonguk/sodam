@@ -7,6 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "account_book_member")
@@ -29,21 +30,39 @@ public class AccountBookMember {
 
     private String isAvailable;
 
-    private LocalDateTime availableFrom;
+    @Column(name = "available_from", length = 14)
+    private String availableFrom;
 
-    private LocalDateTime availableTo;
+    @Column(name = "available_to", length = 14)
+    private String availableTo;
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", updatable = false, nullable = false, length = 14)
+    private String createdAt;
 
     @Column(name = "created_by")
     private Long createdBy;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false, length = 14)
+    private String updatedAt;
 
     @Column(name = "updated_by")
     private Long updatedBy;
+
+    @PrePersist
+    public void prePersist() {
+        String now = now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = now();
+    }
+
+    private String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+    }
 }
