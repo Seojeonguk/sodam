@@ -9,5 +9,5 @@ import java.time.LocalDateTime;
 @Builder
 public class AccountBookResponse {
     private String name;
-    private LocalDateTime updatedAt;
+    private String updatedAt;
 }
