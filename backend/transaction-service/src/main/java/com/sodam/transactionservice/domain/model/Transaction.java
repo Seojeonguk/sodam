@@ -112,16 +112,15 @@ public class Transaction {
     public void prePersist() {
         String now = now();
         this.createdAt = now;
-        this.updatedAt = now;   // ✅ 처음 저장 시에도 세팅
+        this.updatedAt = now;
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = now(); // ✅ 수정 시 갱신
+        this.updatedAt = now();
     }
 
     private String now() {
-        return LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
 }
