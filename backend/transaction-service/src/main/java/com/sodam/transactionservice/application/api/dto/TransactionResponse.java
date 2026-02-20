@@ -21,11 +21,11 @@ public class TransactionResponse {
     private Long categorySeq;
     private BigDecimal amount;
     private String description;
-    private LocalDate transactionDate;
+    private String transactionDate;
     private TransactionType type;
     private Integer satisfactionRating;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String createdAt;
+    private String updatedAt;
 
     public static TransactionResponse from(Transaction transaction) {
         return TransactionResponse.builder()

@@ -128,7 +128,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
         amount: parseFloat(amount), // 숫자로 변환
         categorySeq: category,
         description: description,
-        transactionDate: transactionDate.toISOString(), // ISO 8601 문자열로 변환
+        transactionDate: transactionDate?.second(0)?.format("YYYYMMDDHHmmss"),
       };
 
       await transactionApi.createTransaction(newTransaction);

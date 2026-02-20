@@ -10,27 +10,22 @@ import java.util.List;
 
 public interface AccountBookRepository extends JpaRepository<AccountBook, Long> {
 
-    @Query("""
-        SELECT new com.sodam.accountbookservice.application.api.dto.AccountBookListResponse(
+    @Query(value = """
+        SELECT
             ab.id,
             ab.name,
-            case
-                when abm.authority = 'OWNER' then true
-                else false
-            end,
-            case
-                when abm.authority = 'VIEWER' then false
-                else true
-            end
-        )
-        FROM AccountBookMember abm
-        JOIN AccountBook ab ON abm.accountBookId = ab.id
-        WHERE abm.userId = :userId
+            IF(abm.authority = 'OWNER', true, false),
+            IF(abm.authority = 'VIEWER', false, true)
+        FROM account_book_member abm
+        JOIN account_book ab ON abm.account_book_id = ab.id
+        WHERE abm.user_id = :userId
           AND (
-            CURRENT_TIMESTAMP BETWEEN abm.availableFrom AND abm.availableTo AND abm.authority != 'OWNER'
+            DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')
+                BETWEEN abm.available_from AND abm.available_to
+            AND abm.authority != 'OWNER'
             OR abm.authority = 'OWNER'
           )
-        ORDER BY abm.createdAt DESC
-    """)
+        ORDER BY abm.created_at DESC
+    """, nativeQuery = true)
     List<AccountBookListResponse> findAccessibleAccountBooks(@Param("userId") Long userId);
 }

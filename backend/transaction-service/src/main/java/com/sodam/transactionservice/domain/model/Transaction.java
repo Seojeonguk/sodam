@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "transaction")
@@ -37,8 +38,8 @@ public class Transaction {
     @Column(length = 255)
     private String description;
 
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDate transactionDate;
+    @Column(name = "transaction_date", nullable = false, length = 14)
+    private String transactionDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -48,16 +49,16 @@ public class Transaction {
     private Integer satisfactionRating;
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", updatable = false, nullable = false, length = 14)
+    private String createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false, length = 14)
+    private String updatedAt;
 
     @Builder
     public Transaction(Long accountBookSeq, Long userSeq, Long categorySeq,
-                       BigDecimal amount, String description, LocalDate transactionDate,
+                       BigDecimal amount, String description, String transactionDate,
                        TransactionType type, Integer satisfactionRating) {
 
         if (amount == null || transactionDate == null || type == null) {
@@ -105,5 +106,21 @@ public class Transaction {
         this.type = request.getType();
         this.satisfactionRating = request.getSatisfactionRating();
         this.categorySeq = request.getCategorySeq();
+    }
+
+    @PrePersist
+    public void prePersist() {
+        String now = now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = now();
+    }
+
+    private String now() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
 }
