@@ -29,7 +29,7 @@ export const HighlightedCategoriesSection = ({
         최근에 가장 많이 사용된 순으로 정렬된 상위 카테고리입니다.
       </Typography>
       {!hasCategories ? (
-        <Typography color="text.secondary">
+        <Typography sx={{ width: "100%", height: 320, display: "flex", alignItems: "center", justifyContent: "center" }} color="text.secondary">
           카테고리 데이터가 없습니다.
         </Typography>
       ) : (

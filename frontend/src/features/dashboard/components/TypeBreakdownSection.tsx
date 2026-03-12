@@ -28,34 +28,40 @@ export const TypeBreakdownSection = ({
       <Typography variant="h6" fontWeight={600} mb={2} paddingLeft={3}>
         유형별 비중
       </Typography>
-      <PieChart
-        height={320}
-        series={[
-          {
-            innerRadius: 40,
-            outerRadius: 120,
-            data: [
-              {
-                id: 0,
-                value: totalIncome,
-                label: "수입",
-                color: theme.palette.success.main,
-              },
-              {
-                id: 1,
-                value: totalExpense,
-                label: "지출",
-                color: theme.palette.error.main,
-              },
-            ],
-          },
-        ]}
-        slotProps={{
-          legend: {
-            position: { vertical: "middle" },
-          },
-        }}
-      />
+      {totalIncome === 0 && totalExpense === 0 ? (
+        <Typography sx={{ width: "100%", height: 320, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          수입 및 지출 내역이 없습니다.
+        </Typography>
+      ) : (
+        <PieChart
+          height={320}
+          series={[
+            {
+              innerRadius: 40,
+              outerRadius: 120,
+              data: [
+                {
+                  id: 0,
+                  value: totalIncome,
+                  label: "수입",
+                  color: theme.palette.success.main,
+                },
+                {
+                  id: 1,
+                  value: totalExpense,
+                  label: "지출",
+                  color: theme.palette.error.main,
+                },
+              ],
+            },
+          ]}
+          slotProps={{
+            legend: {
+              position: { vertical: "middle" },
+            },
+          }}
+        />
+      )}
     </Paper>
   );
 };

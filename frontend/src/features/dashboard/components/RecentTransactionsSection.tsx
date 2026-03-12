@@ -32,11 +32,9 @@ export const RecentTransactionsSection = ({
         최신 데이터 기반으로 가장 최근에 기록된 거래입니다.
       </Typography>
       {!hasTransactions ? (
-        <Box sx={{ textAlign: "center", py: 5 }}>
-          <Typography color="text.secondary">
-            아직 거래 데이터가 없습니다.
-          </Typography>
-        </Box>
+        <Typography sx={{ width: "100%", height: 320, display: "flex", alignItems: "center", justifyContent: "center" }} color="text.secondary">
+          아직 거래 데이터가 없습니다.
+        </Typography>
       ) : (
         <Stack divider={<Divider flexItem />} spacing={2}>
           {transactions.map((tx) => (
