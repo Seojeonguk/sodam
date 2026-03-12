@@ -145,52 +145,69 @@ function TransactionPage() {
             <Typography variant="h5" component="h2" mb={2}>
               수입
             </Typography>
-            <PieChart
-              series={[
-                {
-                  data: incomeStats,
-                },
-              ]}
-              width={150}
-              height={150}
-            />
+            {incomeStats && incomeStats.length > 0 ? (
+              <PieChart
+                series={[
+                  {
+                    data: incomeStats,
+                  },
+                ]}
+                width={150}
+                height={150}
+              />) : (
+              <Typography sx={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                수입 내역이 없습니다.
+              </Typography>
+            )}
           </Box>
 
           <Box>
             <Typography variant="h5" component="h2" mb={2}>
               지출
             </Typography>
-            <PieChart
-              series={[
-                {
-                  data: expenseStats,
-                },
-              ]}
-              width={150}
-              height={150}
-            />
+            {expenseStats && expenseStats.length > 0 ? (
+              <PieChart
+                series={[
+                  {
+                    data: expenseStats,
+                  },
+                ]}
+                width={150}
+                height={150}
+              />) : (
+              <Typography sx={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                지출 내역이 없습니다.
+              </Typography>
+            )}
           </Box>
         </Box>
 
         <Box>
           <Typography>차트</Typography>
-          <BarChart
-            dataset={statPeriodDataset}
-            xAxis={[
-              {
-                dataKey: "period",
-                scaleType: "band",
-                label: "기간",
-                height: 50,
-              },
-            ]}
-            series={[
-              { dataKey: "income", label: "수입" },
-              { dataKey: "expense", label: "지출" },
-            ]}
-            height={300}
-            grid={{ horizontal: true }}
-          />
+          {
+            statPeriodDataset.length === 0 ? (
+              <Typography sx={{ width: "100%", height: 320, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                수입 및 지출 내역이 없습니다.
+              </Typography>
+            ) : (
+              <BarChart
+                dataset={statPeriodDataset}
+                xAxis={[
+                  {
+                    dataKey: "period",
+                    scaleType: "band",
+                    label: "기간",
+                    height: 50,
+                  },
+                ]}
+                series={[
+                  { dataKey: "income", label: "수입" },
+                  { dataKey: "expense", label: "지출" },
+                ]}
+                height={300}
+                grid={{ horizontal: true }}
+              />
+            )}
         </Box>
       </Box>
 
