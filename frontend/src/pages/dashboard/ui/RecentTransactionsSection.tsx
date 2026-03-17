@@ -2,8 +2,8 @@ import { Avatar, Box, Divider, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import dayjs from "dayjs";
-import type { TransactionListItemResponse } from "../../../../entities/transaction/api/transaction.types";
-import { formatCurrency } from "../../../../shared/lib/format";
+import type { TransactionListItemResponse } from "../../../entities/transaction/api/transaction.types";
+import { formatCurrency } from "../../../shared/lib/format";
 
 interface RecentTransactionsSectionProps {
   transactions: TransactionListItemResponse[];

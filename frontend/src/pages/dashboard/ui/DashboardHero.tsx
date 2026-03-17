@@ -1,7 +1,7 @@
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
-import { formatCurrency } from "../../../../shared/lib/format";
+import { formatCurrency } from "../../../shared/lib/format";
 
 interface DashboardHeroProps {
   netBalance: number;

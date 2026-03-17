@@ -7,14 +7,14 @@ import {
 import { useMemo } from "react";
 import { useTransactions } from "../../../entities/transaction/model/useTransactions";
 import { useCategories } from "../../../entities/category/model/useCategories";
-import { DashboardHero } from "./components/DashboardHero";
-import { SummaryCards } from "./components/SummaryCards";
-import { MonthlyTrendSection } from "./components/MonthlyTrendSection";
-import { TypeBreakdownSection } from "./components/TypeBreakdownSection";
-import { RecentTransactionsSection } from "./components/RecentTransactionsSection";
-import { HighlightedCategoriesSection } from "./components/HighlightedCategoriesSection";
-import { DashboardLoadingState } from "./components/DashboardLoadingState";
-import { DashboardErrorState } from "./components/DashboardErrorState";
+import { DashboardHero } from "./DashboardHero";
+import { SummaryCards } from "./SummaryCards";
+import { MonthlyTrendSection } from "./MonthlyTrendSection";
+import { TypeBreakdownSection } from "./TypeBreakdownSection";
+import { RecentTransactionsSection } from "./RecentTransactionsSection";
+import { HighlightedCategoriesSection } from "./HighlightedCategoriesSection";
+import { DashboardLoadingState } from "./DashboardLoadingState";
+import { DashboardErrorState } from "./DashboardErrorState";
 
 function DashboardPage() {
   const {

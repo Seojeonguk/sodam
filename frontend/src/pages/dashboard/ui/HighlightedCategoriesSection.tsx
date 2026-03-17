@@ -1,6 +1,6 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import type { CategoryListItemResponse } from "../../../../entities/transaction/api/category.types";
+import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
 interface HighlightedCategoriesSectionProps {
   categories: CategoryListItemResponse[];
