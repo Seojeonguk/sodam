@@ -5,4 +5,6 @@ import lombok.Data;
 @Data
 public class StatRequest {
     private Long userSeq;
+    private String startDate;
+    private String endDate;
 }

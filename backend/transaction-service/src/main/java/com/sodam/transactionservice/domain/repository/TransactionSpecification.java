@@ -20,11 +20,17 @@ public class TransactionSpecification {
             );
 
             Optional.ofNullable(searchRequest.getStartDate()).ifPresent(sDate ->
-                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("transactionDate"), sDate))
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                            root.get("transactionDate"),
+                            normalizeStartDate(sDate)
+                    ))
             );
 
             Optional.ofNullable(searchRequest.getEndDate()).ifPresent(eDate ->
-                    predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("transactionDate"), eDate))
+                    predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                            root.get("transactionDate"),
+                            normalizeEndDate(eDate)
+                    ))
             );
 
             Optional.ofNullable(searchRequest.getUserId()).ifPresent(userSeq ->
@@ -33,5 +39,25 @@ public class TransactionSpecification {
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private static String normalizeStartDate(String date) {
+        if (date.length() == 8) {
+            return date + "000000";
+        }
+        if (date.length() == 12) {
+            return date + "00";
+        }
+        return date;
+    }
+
+    private static String normalizeEndDate(String date) {
+        if (date.length() == 8) {
+            return date + "235959";
+        }
+        if (date.length() == 12) {
+            return date + "59";
+        }
+        return date;
     }
 }

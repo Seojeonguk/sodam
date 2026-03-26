@@ -10,6 +10,7 @@ import type {
 } from "../api/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
+import dayjs, { type Dayjs } from "dayjs";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
@@ -19,17 +20,14 @@ export const useTransactions = () => {
 
   const { currentAccountBook } = useAccountBookContext();
 
-  const [statReq] = useState<StatRequest>({
-    startDate: "",
-    endDate: "",
+  const [dateRange, setDateRange] = useState<{ startDate: Dayjs; endDate: Dayjs }>({
+    startDate: dayjs().startOf("month"),
+    endDate: dayjs().endOf("month"),
   });
+
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
 
-  const [statPeriodReq] = useState<StatPeriodRequest>({
-    startDate: "",
-    endDate: "",
-  });
   const [statPeriodDataset, setStatPeriodDataset] = useState<
     StatPeriodDatasetEntry[]
   >([]);
@@ -39,7 +37,9 @@ export const useTransactions = () => {
     setError(null);
     try {
       const accountId = currentAccountBook?.id ?? 0;
-      const response = await transactionApi.getTransactions(accountId);
+      const startDate = dateRange.startDate.format("YYYYMMDD");
+      const endDate = dateRange.endDate.format("YYYYMMDD");
+      const response = await transactionApi.getTransactions(accountId, startDate, endDate);
       setTransactions(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -50,7 +50,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBook]);
+  }, [currentAccountBook, dateRange]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -80,7 +80,11 @@ export const useTransactions = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await statApi.getStats(statReq);
+      const request: StatRequest = {
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
+      };
+      const response = await statApi.getStats(request);
 
       console.debug("전체 통계 정보 : ", response);
 
@@ -122,11 +126,16 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [statReq]);
+  }, [dateRange]);
 
   const fetchPeriodStats = useCallback(async () => {
     try {
-      const response = await statApi.getPeriodStats(statPeriodReq);
+      const request: StatPeriodRequest = {
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
+      };
+
+      const response = await statApi.getPeriodStats(request);
 
       console.debug("전체 월별 통계 정보 : ", response);
 
@@ -159,7 +168,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [statPeriodReq]);
+  }, [dateRange]);
 
   useEffect(() => {
     void fetchTransactions();
@@ -184,6 +193,8 @@ export const useTransactions = () => {
     fetchStats,
     fetchPeriodStats,
     statPeriodDataset,
+    dateRange,
+    setDateRange,
   };
 };
 
