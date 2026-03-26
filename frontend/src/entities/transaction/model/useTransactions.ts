@@ -10,6 +10,7 @@ import type {
 } from "../api/stat.types";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
+import dayjs, { type Dayjs } from "dayjs";
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
@@ -19,10 +20,8 @@ export const useTransactions = () => {
 
   const { currentAccountBook } = useAccountBookContext();
 
-  const [statReq] = useState<StatRequest>({
-    startDate: "",
-    endDate: "",
-  });
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
+
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
 
@@ -39,7 +38,9 @@ export const useTransactions = () => {
     setError(null);
     try {
       const accountId = currentAccountBook?.id ?? 0;
-      const response = await transactionApi.getTransactions(accountId);
+      const startDate = selectedMonth.startOf("month").format("YYYYMMDD");
+      const endDate = selectedMonth.endOf("month").format("YYYYMMDD");
+      const response = await transactionApi.getTransactions(accountId, startDate, endDate);
       setTransactions(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -50,7 +51,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBook]);
+  }, [currentAccountBook, selectedMonth]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -80,7 +81,11 @@ export const useTransactions = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await statApi.getStats(statReq);
+      const request: StatRequest = {
+        startDate: selectedMonth.startOf("month").format("YYYYMMDD"),
+        endDate: selectedMonth.endOf("month").format("YYYYMMDD"),
+      };
+      const response = await statApi.getStats(request);
 
       console.debug("전체 통계 정보 : ", response);
 
@@ -122,10 +127,11 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [statReq]);
+  }, [selectedMonth]);
 
   const fetchPeriodStats = useCallback(async () => {
     try {
+      // Period stats might use a wider range like past 6 months. For now we use the empty or default req
       const response = await statApi.getPeriodStats(statPeriodReq);
 
       console.debug("전체 월별 통계 정보 : ", response);
@@ -184,6 +190,8 @@ export const useTransactions = () => {
     fetchStats,
     fetchPeriodStats,
     statPeriodDataset,
+    selectedMonth,
+    setSelectedMonth,
   };
 };
 

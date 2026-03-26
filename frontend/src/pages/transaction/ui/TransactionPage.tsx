@@ -1,7 +1,7 @@
-import { Box, Typography, Button, Container, Paper } from "@mui/material";
+import { Box, Typography, Button, Container, Paper, IconButton } from "@mui/material";
 import TransactionList from "../../../entities/transaction/ui/TransactionList";
 import { useTransactions } from "../../../entities/transaction/model/useTransactions";
-import { AddCircle } from "@mui/icons-material";
+import { AddCircle, ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useState } from "react";
 import TransactionCreateModal from "../../../features/transaction/ui/TransactionCreateModal";
 import TransactionDetailModal from "../../../features/transaction/ui/TransactionDetailModal";
@@ -29,6 +29,8 @@ function TransactionPage() {
     fetchStats,
     statPeriodDataset,
     fetchPeriodStats,
+    selectedMonth,
+    setSelectedMonth,
   } = useTransactions();
 
   const handleOpenCreateModal = () => {
@@ -121,6 +123,18 @@ function TransactionPage() {
         <Typography variant="h4" component="h1">
           📊 내 가계부
         </Typography>
+
+        <Box display="flex" alignItems="center" gap={1}>
+          <IconButton onClick={() => setSelectedMonth(prev => prev.subtract(1, 'month'))}>
+            <ChevronLeft />
+          </IconButton>
+          <Typography variant="h6">
+            {selectedMonth.format('YYYY년 M월')}
+          </Typography>
+          <IconButton onClick={() => setSelectedMonth(prev => prev.add(1, 'month'))}>
+            <ChevronRight />
+          </IconButton>
+        </Box>
 
         <Button
           variant="contained"

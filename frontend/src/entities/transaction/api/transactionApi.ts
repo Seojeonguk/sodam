@@ -10,13 +10,21 @@ const TRANSACTION_BASE_URL = "/transactions";
 
 const transactionApi = {
   // 거래 목록 조회
-  getTransactions: async (accountId: number): Promise<TransactionListResponse> => {
-    const response =
-      await api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
+  getTransactions: async (
+    accountId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<TransactionListResponse> => {
+    const response = await api.get<TransactionListResponse>(
+      TRANSACTION_BASE_URL,
+      {
         params: {
           accountBookSeq: accountId,
+          startDate,
+          endDate,
         },
-      });
+      }
+    );
     return response.data;
   },
 

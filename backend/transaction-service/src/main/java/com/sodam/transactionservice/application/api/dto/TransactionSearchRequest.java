@@ -12,6 +12,6 @@ import java.time.LocalDate;
 public class TransactionSearchRequest {
     private Long userId;
     private Long accountBookSeq;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
 }
