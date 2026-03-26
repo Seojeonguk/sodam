@@ -14,6 +14,7 @@ interface AccountBookContextType {
     setCurrentAccountBook: (accountBook: AccountBookListResponse) => void;
     loading: boolean;
     error: string | null;
+    fetchAccountBooks: () => Promise<void>;
 }
 
 const AccountBookContext = createContext<AccountBookContextType | undefined>(
@@ -21,13 +22,20 @@ const AccountBookContext = createContext<AccountBookContextType | undefined>(
 );
 
 export function AccountBookProvider({ children }: { children: ReactNode }) {
-    const { accountBooks, loading, error } = useAccountBooks();
+    const { accountBooks, loading, error, fetchAccountBooks } = useAccountBooks();
     const [currentAccountBook, setCurrentAccountBook] =
         useState<AccountBookListResponse | null>(null);
 
     useEffect(() => {
-        if (accountBooks.length > 0 && !currentAccountBook) {
-            setCurrentAccountBook(accountBooks[0]);
+        if (accountBooks.length === 0) {
+            if (currentAccountBook !== null) {
+                setCurrentAccountBook(null);
+            }
+        } else {
+            const exists = currentAccountBook && accountBooks.some(b => b.id === currentAccountBook.id);
+            if (!exists) {
+                setCurrentAccountBook(accountBooks[0]);
+            }
         }
     }, [accountBooks, currentAccountBook]);
 
@@ -39,6 +47,7 @@ export function AccountBookProvider({ children }: { children: ReactNode }) {
                 setCurrentAccountBook,
                 loading,
                 error,
+                fetchAccountBooks,
             }}
         >
             {children}

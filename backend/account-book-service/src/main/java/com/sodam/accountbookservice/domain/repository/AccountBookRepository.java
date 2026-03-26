@@ -14,8 +14,8 @@ public interface AccountBookRepository extends JpaRepository<AccountBook, Long> 
         SELECT
             ab.id,
             ab.name,
-            IF(abm.authority = 'OWNER', true, false),
-            IF(abm.authority = 'VIEWER', false, true)
+            IF(abm.authority = 'OWNER', 1, 0),
+            IF(abm.authority = 'VIEWER', 0, 1)
         FROM account_book_member abm
         JOIN account_book ab ON abm.account_book_id = ab.id
         WHERE abm.user_id = :userId

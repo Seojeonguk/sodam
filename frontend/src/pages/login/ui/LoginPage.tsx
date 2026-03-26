@@ -4,8 +4,10 @@ import LoginApi from "../../../features/auth/api/LoginApi";
 import type { LoginRequestDto } from "../../../features/auth/api/login.types";
 import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import { useNavigate } from "react-router-dom";
+import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 function LoginPage() {
+  const { fetchAccountBooks } = useAccountBookContext();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -29,6 +31,8 @@ function LoginPage() {
       const accessToken = res.data?.accessToken;
 
       localStorage.setItem("accessToken", accessToken);
+
+      await fetchAccountBooks();
 
       void navigate("/dashboard");
     }
@@ -56,6 +60,7 @@ function LoginPage() {
       if (urlAccessToken) {
         console.debug(`parameter access token : ${urlAccessToken}`);
         localStorage.setItem("accessToken", urlAccessToken);
+        await fetchAccountBooks();
         // URL 파라미터 제거 (선택사항, 깔끔한 URL을 위해)
         window.history.replaceState({}, document.title, window.location.pathname);
       }
