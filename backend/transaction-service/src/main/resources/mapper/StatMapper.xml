@@ -18,6 +18,7 @@
         WHERE
             1=1
             and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
+            and tr.transaction_date between #{startDate, javaType = String, jdbcType = VARCHAR} and #{endDate, javaType = String, jdbcType = VARCHAR}
         GROUP BY
             tr.category_seq, tr.type
     </select>
@@ -36,6 +37,7 @@
         WHERE
             1=1
           and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
+          and tr.transaction_date between #{startDate, javaType = String, jdbcType = VARCHAR} and #{endDate, javaType = String, jdbcType = VARCHAR}
         GROUP BY
             TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type
     </select>

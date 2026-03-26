@@ -5,7 +5,6 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
-  Divider,
   Typography,
   Box,
 } from "@mui/material";
@@ -35,17 +34,40 @@ const TransactionList: React.FC<TransactionListProps> = ({
   }
 
   return (
-    <List>
-      {transactions.transactions.map((transaction, index) => (
+    <List sx={{ p: 0 }}>
+      {transactions.transactions.map((transaction) => (
         <React.Fragment key={transaction.seq}>
-          <ListItem onClick={() => onViewDetail(transaction.seq)}>
+          <ListItem 
+            onClick={() => onViewDetail(transaction.seq)}
+            sx={{
+              mb: 2,
+              bgcolor: "white",
+              borderRadius: "16px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
+              transition: "all 0.2s ease",
+              border: "1px solid #F1F5F9",
+              cursor: "pointer",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                borderColor: "#E2E8F0"
+              }
+            }}
+          >
             <ListItemAvatar>
               <Avatar
                 sx={{
                   bgcolor:
                     transaction.type === "INCOME"
-                      ? "success.main"
-                      : "error.main",
+                      ? "#E6F4EA" // Pastel green
+                      : "#FCE8E6", // Pastel red
+                  color:
+                    transaction.type === "INCOME"
+                      ? "#1E8E3E"
+                      : "#D93025",
+                  width: 48,
+                  height: 48,
+                  mr: 2
                 }}
               >
                 {transaction.type === "INCOME" ? (
@@ -59,15 +81,17 @@ const TransactionList: React.FC<TransactionListProps> = ({
               primary={
                 <Typography
                   variant="body1"
-                  fontWeight="bold"
+                  fontWeight="800"
+                  fontSize="1.1rem"
                   sx={{
                     color:
                       transaction.type === "INCOME"
-                        ? "success.dark"
-                        : "error.dark",
+                        ? "#1E8E3E"
+                        : "#D93025",
+                    mb: 0.5
                   }}
                 >
-                  {transaction.amount.toLocaleString("ko-KR")}원
+                  {transaction.type === "INCOME" ? "+" : "-"}{transaction.amount.toLocaleString("ko-KR")}원
                 </Typography>
               }
               secondary={
@@ -103,9 +127,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
               }
             />
           </ListItem>
-          {index < transactions.transactions.length - 1 && (
-            <Divider component="li" variant="inset" />
-          )}
         </React.Fragment>
       ))}
     </List>

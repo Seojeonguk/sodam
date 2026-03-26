@@ -20,7 +20,7 @@ const statApi = {
   ): Promise<StatPeriodResponse[]> => {
     const response = await api.get<StatPeriodResponse[]>(
       `${STAT_BASE_URL}/period`,
-      { data: req }
+      { params: req }
     );
     return response.data;
   },

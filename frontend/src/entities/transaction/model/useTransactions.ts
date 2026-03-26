@@ -20,15 +20,14 @@ export const useTransactions = () => {
 
   const { currentAccountBook } = useAccountBookContext();
 
-  const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
+  const [dateRange, setDateRange] = useState<{ startDate: Dayjs; endDate: Dayjs }>({
+    startDate: dayjs().startOf("month"),
+    endDate: dayjs().endOf("month"),
+  });
 
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
 
-  const [statPeriodReq] = useState<StatPeriodRequest>({
-    startDate: "",
-    endDate: "",
-  });
   const [statPeriodDataset, setStatPeriodDataset] = useState<
     StatPeriodDatasetEntry[]
   >([]);
@@ -38,8 +37,8 @@ export const useTransactions = () => {
     setError(null);
     try {
       const accountId = currentAccountBook?.id ?? 0;
-      const startDate = selectedMonth.startOf("month").format("YYYYMMDD");
-      const endDate = selectedMonth.endOf("month").format("YYYYMMDD");
+      const startDate = dateRange.startDate.format("YYYYMMDD");
+      const endDate = dateRange.endDate.format("YYYYMMDD");
       const response = await transactionApi.getTransactions(accountId, startDate, endDate);
       setTransactions(response);
     } catch (err) {
@@ -51,7 +50,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBook, selectedMonth]);
+  }, [currentAccountBook, dateRange]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -82,8 +81,8 @@ export const useTransactions = () => {
   const fetchStats = useCallback(async () => {
     try {
       const request: StatRequest = {
-        startDate: selectedMonth.startOf("month").format("YYYYMMDD"),
-        endDate: selectedMonth.endOf("month").format("YYYYMMDD"),
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
       };
       const response = await statApi.getStats(request);
 
@@ -127,12 +126,16 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth]);
+  }, [dateRange]);
 
   const fetchPeriodStats = useCallback(async () => {
     try {
-      // Period stats might use a wider range like past 6 months. For now we use the empty or default req
-      const response = await statApi.getPeriodStats(statPeriodReq);
+      const request: StatPeriodRequest = {
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
+      };
+
+      const response = await statApi.getPeriodStats(request);
 
       console.debug("전체 월별 통계 정보 : ", response);
 
@@ -165,7 +168,7 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [statPeriodReq]);
+  }, [dateRange]);
 
   useEffect(() => {
     void fetchTransactions();
@@ -190,8 +193,8 @@ export const useTransactions = () => {
     fetchStats,
     fetchPeriodStats,
     statPeriodDataset,
-    selectedMonth,
-    setSelectedMonth,
+    dateRange,
+    setDateRange,
   };
 };
 
