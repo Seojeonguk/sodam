@@ -8,6 +8,6 @@ import lombok.Data;
 public class AccountBookListResponse {
     private Long id;
     private String name;
-    private Boolean isOwner;
-    private Boolean canEdit;
+    private Integer isOwner;
+    private Integer canEdit;
 }
