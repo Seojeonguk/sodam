@@ -8,7 +8,9 @@ import com.sodam.transactionservice.domain.repository.TransactionRepository;
 import com.sodam.transactionservice.domain.repository.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,10 +125,16 @@ public class TransactionDomainService {
      */
     @Transactional(readOnly = true)
     public Page<Transaction> getTransactionsByConditions(TransactionSearchRequest searchRequest, Pageable pageable) {
+
+        Pageable sortPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "transactionDate")
+        );
         // Specification을 사용하여 동적으로 쿼리 조건 생성
         return transactionRepository.findAll(
                 TransactionSpecification.searchByConditions(searchRequest),
-                pageable
+                sortPageable
         );
     }
 
