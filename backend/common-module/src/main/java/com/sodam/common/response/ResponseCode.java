@@ -1,4 +1,4 @@
-package com.sodam.userservice.common.api;
+package com.sodam.common.response;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ResponseCode {
-
     // 성공
     SUCCESS("S-00000", "요청이 성공적으로 처리되었습니다."),
 
