@@ -5,6 +5,7 @@ import com.sodam.accountbookservice.application.api.dto.AccountBookListResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookUpdateRequest;
 import com.sodam.accountbookservice.application.service.AccountBookApplicationService;
+import com.sodam.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,28 +20,28 @@ public class AccountBookController {
     private final AccountBookApplicationService service;
 
     @GetMapping()
-    public ResponseEntity<List<AccountBookListResponse>> getAccountBooks(@RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.getAccountBooks(email));
+    public ApiResponse<List<AccountBookListResponse>> getAccountBooks(@RequestHeader("X-User-Email") String email) {
+        return ApiResponse.success(service.getAccountBooks(email));
     }
 
     @PostMapping
-    public ResponseEntity<AccountBookResponse> createAccountBook(@Valid @RequestBody AccountBookCreateRequest request, @RequestHeader(value = "X-User-Email", required = false) String email) {
-        return ResponseEntity.ok(service.createAccountBook(request, email));
+    public ApiResponse<AccountBookResponse> createAccountBook(@Valid @RequestBody AccountBookCreateRequest request, @RequestHeader(value = "X-User-Email", required = false) String email) {
+        return ApiResponse.success(service.createAccountBook(request, email));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AccountBookResponse> updateAccountBook(@PathVariable Long id, @Valid @RequestBody AccountBookUpdateRequest request, @RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.updateAccountBook(id, request, email));
+    public ApiResponse<AccountBookResponse> updateAccountBook(@PathVariable Long id, @Valid @RequestBody AccountBookUpdateRequest request, @RequestHeader("X-User-Email") String email) {
+        return ApiResponse.success(service.updateAccountBook(id, request, email));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountBookResponse> getAccountBook(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.getAccountBook(id, email));
+    public ApiResponse<AccountBookResponse> getAccountBook(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+        return ApiResponse.success(service.getAccountBook(id, email));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAccountBook(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
+    public ApiResponse<Void> deleteAccountBook(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
         service.deleteAccountBook(id, email);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null);
     }
 }

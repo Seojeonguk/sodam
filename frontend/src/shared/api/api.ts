@@ -17,7 +17,8 @@ const BASE_URL =
 
 /** 서버가 반환하는 공통 응답 구조에 맞춘 타입 */
 interface ApiResponse<T> {
-  success: boolean;
+  code: string;
+  message: string;
   data: T;
 }
 
@@ -105,7 +106,20 @@ api.interceptors.request.use(
 
 /** 응답 인터셉터: 401 발생 시 refresh 시도 후 원래 요청 재시도 */
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    const { code, message, data } = response.data;
+    console.debug("code", code, "message", message, "data", data);
+
+    if (!code.startsWith("S")) {
+      return Promise.reject({
+        code,
+        message,
+      });
+    }
+
+    console.debug("return data", data);
+    return response.data;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
@@ -170,7 +184,19 @@ api.interceptors.response.use(
     }
 
     // 401 외의 에러는 그대로 전달 (또는 여기서 공통 에러 처리)
-    return Promise.reject(error);
+    if (error.response?.data) {
+      const res = error.response.data as any;
+
+      return Promise.reject({
+        code: res.code ?? "UNKNOWN",
+        message: res.message ?? "에러 발생",
+      });
+    }
+
+    return Promise.reject({
+      code: "NETWORK_ERROR",
+      message: "네트워크 오류",
+    });
   },
 );
 

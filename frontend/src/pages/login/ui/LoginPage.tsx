@@ -18,23 +18,20 @@ function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const loginRequestDto: LoginRequestDto = {
-      email,
-      password,
-    };
+    try {
+      const data = await LoginApi.login({
+        email,
+        password,
+      });
 
-    const res = await LoginApi.login(loginRequestDto);
-    if (res.code !== "S-00000") {
-      const message = res.message;
-      setErrorMsg(message);
-    } else {
-      const accessToken = res.data?.accessToken;
-
+      const accessToken = data.data.accessToken;
       localStorage.setItem("accessToken", accessToken);
 
       await fetchAccountBooks();
-
       void navigate("/dashboard");
+
+    } catch (e: any) {
+      setErrorMsg(e.message);
     }
   };
 

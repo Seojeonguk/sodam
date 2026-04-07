@@ -40,7 +40,7 @@ export const useTransactions = () => {
       const startDate = dateRange.startDate.format("YYYYMMDD");
       const endDate = dateRange.endDate.format("YYYYMMDD");
       const response = await transactionApi.getTransactions(accountId, startDate, endDate);
-      setTransactions(response);
+      setTransactions(response?.data);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
@@ -88,7 +88,7 @@ export const useTransactions = () => {
 
       console.debug("전체 통계 정보 : ", response);
 
-      const incomeStats: PieValueType[] = response
+      const incomeStats: PieValueType[] = response.data
         .filter((item) => {
           return item.type === "INCOME";
         })
@@ -103,7 +103,7 @@ export const useTransactions = () => {
 
       setIncomeStats(incomeStats);
 
-      const expenseStats: PieValueType[] = response
+      const expenseStats: PieValueType[] = response.data
         .filter((item) => {
           return item.type === "EXPENSE";
         })
@@ -139,7 +139,7 @@ export const useTransactions = () => {
 
       console.debug("전체 월별 통계 정보 : ", response);
 
-      const dataset = response.reduce(
+      const dataset = response.data.reduce(
         (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
           const month = item.transaction_date;
           const found = acc.find((d) => d.period === month);

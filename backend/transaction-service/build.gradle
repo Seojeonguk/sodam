@@ -42,6 +42,8 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
+
+	implementation project(':common-module')
 }
 
 dependencyManagement {

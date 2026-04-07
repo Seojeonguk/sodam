@@ -13,11 +13,12 @@ const SignupApi = {
         data: SignupRequestDto
     ): Promise<CommonResponse<SignupResponseDto>> => {
         try {
-            const response = await api.post<CommonResponse<SignupResponseDto>>(
+            const response = (await api.post<CommonResponse<SignupResponseDto>>(
                 `${AUTH_BASE_URL}/register`,
                 data
-            );
-            return response.data;
+            )) as unknown as CommonResponse<SignupResponseDto>;
+            console.log(`signup response : ${JSON.stringify(response)}`);
+            return response;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const data =

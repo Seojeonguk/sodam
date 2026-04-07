@@ -3,6 +3,7 @@ import type {
   CategoryListResponse,
   CategoryListItemResponse,
 } from "../../transaction/api/category.types";
+import type { CommonResponse } from "../../../shared/api/response.types";
 
 const CATEGORY_BASE_URL = "/categories";
 
@@ -11,11 +12,11 @@ const categoryApi = {
   getCategories: async (
     page = 0,
     size = 100,
-  ): Promise<CategoryListResponse> => {
-    const response = await api.get<CategoryListResponse>(
+  ): Promise<CommonResponse<CategoryListResponse>> => {
+    const response = (await api.get<CommonResponse<CategoryListResponse>>(
       `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
-    );
-    return response.data;
+    )) as unknown as CommonResponse<CategoryListResponse>;
+    return response;
   },
 
   // 카테고리 생성
@@ -23,12 +24,12 @@ const categoryApi = {
     name: string;
     description?: string;
     color?: string;
-  }): Promise<CategoryListItemResponse> => {
-    const response = await api.post<CategoryListItemResponse>(
+  }): Promise<CommonResponse<CategoryListItemResponse>> => {
+    const response = (await api.post<CommonResponse<CategoryListItemResponse>>(
       CATEGORY_BASE_URL,
       data,
-    );
-    return response.data;
+    )) as unknown as CommonResponse<CategoryListItemResponse>;
+    return response;
   },
 
   // 카테고리 삭제
@@ -46,12 +47,12 @@ const categoryApi = {
       description?: string;
       color?: string;
     },
-  ): Promise<CategoryListItemResponse> => {
-    const response = await api.put<CategoryListItemResponse>(
+  ): Promise<CommonResponse<CategoryListItemResponse>> => {
+    const response = (await api.put<CommonResponse<CategoryListItemResponse>>(
       `${CATEGORY_BASE_URL}/${id}`,
       data,
-    );
-    return response.data;
+    )) as unknown as CommonResponse<CategoryListItemResponse>;
+    return response;
   },
 };
 

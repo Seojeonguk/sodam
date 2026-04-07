@@ -1,5 +1,7 @@
 package com.sodam.transactionservice.application.api.controller;
 
+import com.sodam.common.response.ApiResponse;
+import com.sodam.common.response.ResponseCode;
 import com.sodam.transactionservice.application.api.dto.*;
 import com.sodam.transactionservice.application.service.TransactionApplicationService;
 import com.sodam.transactionservice.domain.model.Transaction;
@@ -28,10 +30,10 @@ public class TransactionController {
      * @return 생성된 거래 정보 (응답 DTO)
      */
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request, @RequestHeader("X-User-Email") String email) {
+    public ResponseEntity<ApiResponse<TransactionResponse>> createTransaction(@Valid @RequestBody TransactionRequest request, @RequestHeader("X-User-Email") String email) {
         log.info("거래 생성 요청: {}", request);
         Transaction transaction = transactionApplicationService.createTransaction(request, email);
-        return ResponseEntity.status(HttpStatus.CREATED).body(TransactionResponse.from(transaction));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(TransactionResponse.from(transaction)));
     }
 
     /**
@@ -42,10 +44,10 @@ public class TransactionController {
      * @return 조회된 거래 정보 (응답 DTO)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long id) {
+    public ApiResponse<TransactionResponse> getTransactionById(@PathVariable Long id) {
         log.info("거래 조회 요청 ID: {}", id);
         Transaction transaction = transactionApplicationService.getTransactionById(id);
-        return ResponseEntity.ok(TransactionResponse.from(transaction));
+        return ApiResponse.success(TransactionResponse.from(transaction));
     }
 
     /**
@@ -57,11 +59,11 @@ public class TransactionController {
      * @return 업데이트된 거래 정보 (응답 DTO)
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TransactionResponse> updateTransaction(
+    public ApiResponse<TransactionResponse> updateTransaction(
             @PathVariable Long id, @Valid @RequestBody TransactionRequest request) {
         log.info("거래 [{}] 업데이트 요청: {}", id, request);
         Transaction updatedTransaction = transactionApplicationService.updateTransaction(id, request);
-        return ResponseEntity.ok(TransactionResponse.from(updatedTransaction));
+        return ApiResponse.success(TransactionResponse.from(updatedTransaction));
     }
 
     /**
@@ -72,10 +74,10 @@ public class TransactionController {
      * @return HTTP 204 No Content
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
+    public ApiResponse<Void> deleteTransaction(@PathVariable Long id) {
         log.info("거래 [{}] 삭제 요청", id);
         transactionApplicationService.deleteTransaction(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success(null);
     }
 
     /**
@@ -89,18 +91,18 @@ public class TransactionController {
      * @return 페이지네이션된 거래 목록 (응답 DTO)
      */
     @GetMapping
-    public ResponseEntity<TransactionListResponse> getTransactions(
+    public ApiResponse<TransactionListResponse> getTransactions(
             @ModelAttribute TransactionSearchRequest searchRequest,
             Pageable pageable,
             @RequestHeader("X-User-Email") String email) {
         log.info("거래 목록 조회 요청: 조건 = {}, 페이징 = {}", searchRequest, pageable);
         log.info("거래 목록 조회 요청 사용자 id : {}", email);
 
-        return ResponseEntity.ok(transactionApplicationService.getTransactions(searchRequest, pageable, email));
+        return ApiResponse.success(transactionApplicationService.getTransactions(searchRequest, pageable, email));
     }
 
     @PutMapping("category/move")
-    public ResponseEntity<TransactionMoveCategoryResponse> moveCategory(@RequestParam Long oldCategoryId, @RequestParam Long newCategoryId) {
-        return ResponseEntity.ok(transactionApplicationService.moveCategory(oldCategoryId, newCategoryId));
+    public ApiResponse<TransactionMoveCategoryResponse> moveCategory(@RequestParam Long oldCategoryId, @RequestParam Long newCategoryId) {
+        return ApiResponse.success(transactionApplicationService.moveCategory(oldCategoryId, newCategoryId));
     }
 }
