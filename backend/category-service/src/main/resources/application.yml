@@ -29,6 +29,8 @@ eureka:
 
 logging:
   level:
+    com.example.categoryservice.infrastructure.UserServiceClient: DEBUG
+    feign: DEBUG
     org:
       hibernate:
         orm:

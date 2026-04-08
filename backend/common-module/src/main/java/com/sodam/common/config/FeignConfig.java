@@ -1,4 +1,4 @@
-package com.sodam.accountbookservice.config;
+package com.sodam.common.config;
 
 import feign.Logger;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +9,6 @@ public class FeignConfig {
 
     @Bean
     Logger.Level feignLoggerLevel() {
-        return Logger.Level.FULL; // 요청/응답 로그 확인용
+        return Logger.Level.FULL;
     }
 }
