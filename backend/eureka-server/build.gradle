@@ -34,6 +34,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	implementation 'io.github.openfeign:feign-micrometer'
+
+	implementation project(':common-module')
 }
 
 dependencyManagement {
