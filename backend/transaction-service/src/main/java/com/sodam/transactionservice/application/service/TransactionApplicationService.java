@@ -1,5 +1,6 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.common.response.ApiResponse;
 import com.sodam.transactionservice.application.api.dto.*;
 import com.sodam.transactionservice.domain.model.Transaction;
 import com.sodam.transactionservice.domain.service.TransactionDomainService;
