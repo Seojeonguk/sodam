@@ -11,12 +11,17 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MariaDBDialect
     open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    table: flyway_schema_history_transaction_service
+    locations: classpath:db/migration
   cloud:
     discovery:
       enabled: true
