@@ -1,0 +1,3 @@
+sodam:
+  feign:
+    logger-level: FULL

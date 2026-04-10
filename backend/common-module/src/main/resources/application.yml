@@ -1,6 +1,17 @@
 logging:
   pattern:
     level: "%5p [${spring.application.name}, traceId=%X{traceId}, spanId=%X{spanId}]"
+
+sodam:
+  feign:
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000
+    logger-level: BASIC
+    retry:
+      period-ms: 200
+      max-period-ms: 1000
+      max-attempts: 2
+
 internal:
   service:
     token: ${INTERNAL_SERVICE_TOKEN:sodam-internal-token}

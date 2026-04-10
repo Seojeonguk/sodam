@@ -1,0 +1,5 @@
+sodam:
+  feign:
+    logger-level: BASIC
+    retry:
+      max-attempts: 1
