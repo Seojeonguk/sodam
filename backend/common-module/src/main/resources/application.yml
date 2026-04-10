@@ -1,3 +1,6 @@
 logging:
   pattern:
     level: "%5p [${spring.application.name}, traceId=%X{traceId}, spanId=%X{spanId}]"
+internal:
+  service:
+    token: ${INTERNAL_SERVICE_TOKEN:sodam-internal-token}

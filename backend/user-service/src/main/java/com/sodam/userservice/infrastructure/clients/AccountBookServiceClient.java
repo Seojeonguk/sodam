@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "account-book-service")
 public interface AccountBookServiceClient {
 
-    @PostMapping("/api/account-books")
+    @PostMapping("/internal/account-books")
     AccountBookResponse createAccountBook(AccountBookCreateRequest accountBookCreateRequest);
 
 }

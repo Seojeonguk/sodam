@@ -28,7 +28,7 @@ public class AccountBookController {
     @PostMapping
     public ApiResponse<AccountBookResponse> createAccountBook(
             @Valid @RequestBody AccountBookCreateRequest request,
-            @CurrentUser(required = false) UserContext userContext
+            @CurrentUser UserContext userContext
     ) {
         return ApiResponse.success(service.createAccountBook(request, userContext.email()));
     }

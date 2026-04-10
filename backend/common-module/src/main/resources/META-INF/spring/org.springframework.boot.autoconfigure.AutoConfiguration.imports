@@ -1,2 +1,3 @@
 com.sodam.common.config.CommonExceptionAutoConfiguration
+com.sodam.common.config.CommonInternalServiceAutoConfiguration
 com.sodam.common.config.CommonWebMvcAutoConfiguration
