@@ -9,13 +9,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -36,7 +40,8 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException.class,
             BindException.class,
             MissingServletRequestParameterException.class,
-            MissingRequestHeaderException.class
+            MissingRequestHeaderException.class,
+            MethodArgumentTypeMismatchException.class
     })
     public ResponseEntity<ApiResponse<Void>> handleBadRequestExceptions(Exception ex) {
         if (ex instanceof MethodArgumentNotValidException validationException) {
@@ -45,6 +50,16 @@ public class GlobalExceptionHandler {
 
         if (ex instanceof BindException bindException) {
             return buildErrorResponse(ResponseCode.BAD_REQUEST, extractValidationMessage(bindException.getBindingResult()));
+        }
+
+        if (ex instanceof MethodArgumentTypeMismatchException mismatchException) {
+            String requiredType = mismatchException.getRequiredType() == null
+                    ? "unknown"
+                    : mismatchException.getRequiredType().getSimpleName();
+            return buildErrorResponse(
+                    ResponseCode.BAD_REQUEST,
+                    "Validation failed: " + mismatchException.getName() + " must be of type " + requiredType
+            );
         }
 
         return buildErrorResponse(ResponseCode.BAD_REQUEST, ex.getMessage());
@@ -86,10 +101,21 @@ public class GlobalExceptionHandler {
     }
 
     private String extractValidationMessage(BindingResult bindingResult) {
-        return bindingResult.getFieldErrors().stream()
-                .map(fieldError -> fieldError.getField() + ": "
-                        + Objects.toString(fieldError.getDefaultMessage(), "유효하지 않은 값입니다."))
-                .findFirst()
-                .orElse(ResponseCode.BAD_REQUEST.getMessage());
+        List<String> messages = new ArrayList<>();
+
+        bindingResult.getFieldErrors().forEach(fieldError -> messages.add(
+                fieldError.getField() + ": "
+                        + Objects.toString(fieldError.getDefaultMessage(), "유효하지 않은 값입니다.")
+        ));
+
+        for (ObjectError globalError : bindingResult.getGlobalErrors()) {
+            messages.add(Objects.toString(globalError.getDefaultMessage(), "유효하지 않은 요청입니다."));
+        }
+
+        if (messages.isEmpty()) {
+            return ResponseCode.BAD_REQUEST.getMessage();
+        }
+
+        return "Validation failed: " + String.join(", ", messages);
     }
 }
