@@ -2,9 +2,11 @@ package com.sodam.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
+@ToString
 public class ApiResponse<T> {
     private String code;
     private String message;

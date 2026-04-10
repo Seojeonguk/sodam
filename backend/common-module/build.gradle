@@ -38,6 +38,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
+    compileOnly 'org.springframework:spring-webflux'
     implementation 'org.springframework.security:spring-security-core'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

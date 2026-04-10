@@ -39,10 +39,3 @@ logging:
         orm:
           jdbc:
             bind: TRACE
-  pattern:
-    level: "%5p [${spring.application.name}, traceId=%X{traceId}, spanId=%X{spanId}]"
-
-management:
-  tracing:
-    sampling:
-      probability: 1.0

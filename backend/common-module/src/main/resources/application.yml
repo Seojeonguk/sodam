@@ -1,6 +1,6 @@
 logging:
   pattern:
-    level: "%5p [${spring.application.name}, traceId=%X{traceId}, spanId=%X{spanId}]"
+    level: "%5p [${spring.application.name}, traceId=%X{traceId:-}, spanId=%X{spanId:-}, correlationId=%X{correlationId:-}]"
 
 sodam:
   feign:
@@ -15,3 +15,8 @@ sodam:
 internal:
   service:
     token: ${INTERNAL_SERVICE_TOKEN:sodam-internal-token}
+
+management:
+  tracing:
+    sampling:
+      probability: 0.1

@@ -3,3 +3,8 @@ sodam:
     logger-level: BASIC
     retry:
       max-attempts: 1
+
+management:
+  tracing:
+    sampling:
+      probability: 0.1

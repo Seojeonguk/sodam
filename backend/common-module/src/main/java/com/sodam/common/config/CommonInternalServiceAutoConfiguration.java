@@ -16,7 +16,7 @@ import org.springframework.core.Ordered;
 public class CommonInternalServiceAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(InternalRequestFilter.class)
     public FilterRegistrationBean<InternalRequestFilter> internalRequestFilter(
             InternalServiceProperties properties,
             ObjectMapper objectMapper
