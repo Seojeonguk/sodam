@@ -1,5 +1,6 @@
 package com.sodam.gatewayservice.filter;
 
+import com.sodam.common.security.HeaderNames;
 import com.sodam.gatewayservice.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,15 +33,15 @@ public class JwtAuthGatewayFilter implements GatewayFilter {
         String token = authHeader.substring(7);
 
         if (!jwtUtil.validateToken(token)) {
-            log.error("JWT 토큰 검증에 실패하였습니다.");
+            log.error("JWT 토큰 검증에 실패했습니다.");
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         String email = jwtUtil.getUserEmail(token);
-        log.debug("JWT 토큰 검증 결과 사용자 아이디 정보 : {}", email);
+        log.debug("JWT 토큰 검증 결과 사용자 이메일 정보 : {}", email);
         ServerHttpRequest request = exchange.getRequest().mutate()
-                .header("X-User-Email", String.valueOf(email))
+                .header(HeaderNames.USER_EMAIL, String.valueOf(email))
                 .build();
 
         return chain.filter(exchange.mutate().request(request).build());
