@@ -6,9 +6,9 @@ spring:
     name: user-service
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3310/sodam
-    username: sodam
-    password: 1s2o3d4a5m
+    url: ${DB_URL:jdbc:mariadb://localhost:3310/sodam}
+    username: ${DB_USERNAME:sodam}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -25,18 +25,18 @@ spring:
       client:
         registration:
           google:
-            client-id: "ENC(mE5fsS+OOPJp6dNKdIzC2kEwO3yD5TIWO2f8CoKy31rCZt0ImoUCs7vYqwstSLcrMN10gPi1H/ezIaXdsp7IwtZMq1tfp06q2DyQhX9V1oCOSDecWQ5q+A==)"
-            client-secret: "ENC(fPYGxHDZWj30jx9Lunn8eoMXbk7t6NbXffJm4JT4v5pU7HTPazHef2Ie/Vl9Yv2q)"
-            redirect-uri: "https://junguk7880.site/login/oauth2/code/google"
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${GOOGLE_REDIRECT_URI:https://junguk7880.site/login/oauth2/code/google}
             scope:
               - email
               - profile
           kakao:
-            client-id: "ENC(FFWVwvBw8KQxdaQssq0zOvMF5xQ4nRNPuekf+p3qnf8rcWnfR4S50LTDxeAO+kKs)"
-            client-secret: "ENC(N6dBlbsiLK1+PkSsmJjkwTqdO/1pxNPgE4As8vLpwAqa2CCisa9LK5MMVoOdobGN)"
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "https://junguk7880.site/login/oauth2/code/kakao"
+            redirect-uri: ${KAKAO_REDIRECT_URI:https://junguk7880.site/login/oauth2/code/kakao}
             scope:
               - profile_nickname
               - profile_image
@@ -51,7 +51,7 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
   instance:
     instance-id: localhost:${spring.application.instance_id:${server.port}}
     hostname: user-service
@@ -60,6 +60,6 @@ eureka:
 
 jwt:
   issuer: sodam
-  secret: "yF3y4uLhH7zJv8GkM0x1N6oPq2b5r9TfW4c7e0d3s5a8pA9B8C5E7F9G2I4J6L8M0N2P4Q6R8S0T2U4V6W8X0Y2Z4A6B8C0D3E5F7H9J2K4L6M8N0P2R4S6T8U0V2W4X6Y8Z0"
+  secret: ${JWT_SECRET}
   access-expiration: 900000
   refresh-expiration: 604800000

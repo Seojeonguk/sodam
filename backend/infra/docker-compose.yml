@@ -7,10 +7,10 @@ services:
     ports:
       - "3310:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: s1o2d3a4m5
-      MYSQL_DATABASE: sodam
-      MYSQL_USER: sodam
-      MYSQL_PASSWORD: 1s2o3d4a5m
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sodam}
+      MYSQL_USER: ${DB_USERNAME:-sodam}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - maria-db:/var/lib/mysql
     networks:
@@ -25,8 +25,6 @@ services:
       - "8761:8761"
     networks:
       - spring-network
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 10s
@@ -46,7 +44,10 @@ services:
     networks:
       - spring-network
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      DB_URL: jdbc:mariadb://db:3306/${MYSQL_DATABASE:-sodam}
+      DB_USERNAME: ${DB_USERNAME:-sodam}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 10s
@@ -66,7 +67,17 @@ services:
     networks:
       - spring-network
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      DB_URL: jdbc:mariadb://db:3306/${MYSQL_DATABASE:-sodam}
+      DB_USERNAME: ${DB_USERNAME:-sodam}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://junguk7880.site/login/oauth2/code/google}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-https://junguk7880.site/login/oauth2/code/kakao}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 10s
@@ -86,7 +97,8 @@ services:
     networks:
       - spring-network
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 10s
@@ -106,7 +118,10 @@ services:
     networks:
       - spring-network
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      DB_URL: jdbc:mariadb://db:3306/${MYSQL_DATABASE:-sodam}
+      DB_USERNAME: ${DB_USERNAME:-sodam}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 10s
@@ -126,7 +141,10 @@ services:
     networks:
       - spring-network
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      DB_URL: jdbc:mariadb://db:3306/${MYSQL_DATABASE:-sodam}
+      DB_USERNAME: ${DB_USERNAME:-sodam}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 10s
