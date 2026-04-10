@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients(basePackages = {"com.example.categoryservice.infrastructure"})
 public class CategoryServiceApplication {
 
     public static void main(String[] args) {

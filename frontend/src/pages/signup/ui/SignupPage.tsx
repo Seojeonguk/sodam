@@ -29,6 +29,7 @@ function SignupPage() {
 
         try {
             const res = await SignupApi.signup(signupRequestDto);
+            console.log(`signup response : ${JSON.stringify(res)}`);
             if (res.code === "S-00000") { // Assuming successful code, adjust based on backend
                 alert("회원가입이 완료되었습니다. 로그인해주세요.");
                 navigate("/");

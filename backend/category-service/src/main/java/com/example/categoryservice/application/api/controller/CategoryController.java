@@ -2,9 +2,12 @@ package com.example.categoryservice.application.api.controller;
 
 import com.example.categoryservice.application.api.dto.*;
 import com.example.categoryservice.application.service.CategoryApplicationService;
-import jakarta.ws.rs.QueryParam;
+import com.sodam.common.response.ApiResponse;
+import com.sodam.common.security.CurrentUser;
+import com.sodam.common.security.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,36 +18,45 @@ public class CategoryController {
 
     private final CategoryApplicationService service;
 
-    @PostMapping()
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryCreateRequest category, @RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.createCategory(category, email));
+    @PostMapping
+    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
+            @RequestBody CategoryCreateRequest category,
+            @CurrentUser UserContext userContext
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(service.createCategory(category, userContext.email())));
     }
 
     @GetMapping
-    public ResponseEntity<CategoryListResponse> getCategories(
+    public ApiResponse<CategoryListResponse> getCategories(
             @ModelAttribute CategoryListRequest request,
             Pageable pageable,
-            @RequestHeader("X-User-Email") String email
+            @CurrentUser UserContext userContext
     ) {
-        return ResponseEntity.ok(service.getCategories(request, pageable, email));
+        return ApiResponse.success(service.getCategories(request, pageable, userContext.email()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(
+    public ApiResponse<CategoryResponse> updateCategory(
             @PathVariable Long id,
             @RequestBody CategoryUpdateRequest request,
-            @RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.updateCategory(id, request, email));
+            @CurrentUser UserContext userContext
+    ) {
+        return ApiResponse.success(service.updateCategory(id, request, userContext.email()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
-        return ResponseEntity.ok(service.getCategory(id, email));
+    public ApiResponse<CategoryResponse> getCategory(@PathVariable Long id, @CurrentUser UserContext userContext) {
+        return ApiResponse.success(service.getCategory(id, userContext.email()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @RequestHeader("X-User-Email") String email, @RequestBody CategoryDeleteRequest request) {
-        service.deleteCategory(id, email, request);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> deleteCategory(
+            @PathVariable Long id,
+            @CurrentUser UserContext userContext,
+            @RequestBody CategoryDeleteRequest request
+    ) {
+        service.deleteCategory(id, userContext.email(), request);
+        return ApiResponse.success(null);
     }
 }

@@ -5,6 +5,7 @@ import type {
   TransactionResponseDto,
   TransactionUpdateRequestDto,
 } from "./transaction.types";
+import type { CommonResponse } from "../../../shared/api/response.types";
 
 const TRANSACTION_BASE_URL = "/transactions";
 
@@ -14,8 +15,8 @@ const transactionApi = {
     accountId: number,
     startDate?: string,
     endDate?: string
-  ): Promise<TransactionListResponse> => {
-    const response = await api.get<TransactionListResponse>(
+  ): Promise<CommonResponse<TransactionListResponse>> => {
+    const response = (await api.get<CommonResponse<TransactionListResponse>>(
       TRANSACTION_BASE_URL,
       {
         params: {
@@ -24,8 +25,8 @@ const transactionApi = {
           endDate,
         },
       }
-    );
-    return response.data;
+    )) as unknown as CommonResponse<TransactionListResponse>;
+    return response;
   },
 
   // 거래 생성

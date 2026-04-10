@@ -1,20 +1,23 @@
 package com.sodam.userservice.application.api.controller;
 
+import com.sodam.common.response.ApiResponse;
+import com.sodam.common.response.ResponseCode;
 import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
-import com.sodam.userservice.application.api.dto.UserResponse;
 import com.sodam.userservice.application.service.UserApplicationService;
-import com.sodam.userservice.common.api.ApiResponse;
-import com.sodam.userservice.common.api.ResponseCode;
-import com.sodam.userservice.domain.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,72 +28,34 @@ public class AuthController {
     private final UserApplicationService userService;
 
     @GetMapping("/refresh")
-    public ResponseEntity<ApiResponse<String>> refresh(@RequestParam String userId) {
-        String newToken = userService.refresh(userId);
-
-        return ApiResponse.success("토큰 재발급이 완료되었습니다.", newToken);
+    public ApiResponse<String> refresh(@RequestParam String userId) {
+        return ApiResponse.success("토큰 재발급이 완료되었습니다.", userService.refresh(userId));
     }
 
-    /**
-     * 이메일과 비밀번호를 사용하여 로그인합니다.
-     *
-     * @param loginRequest 로그인 요청 DTO (email, password)
-     * @return JWT 토큰을 포함한 응답
-     */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @RequestBody LoginRequest loginRequest,
-            HttpServletResponse response
-    ) {
-        LoginResponse user = userService.login(loginRequest, response);
-
-        return ApiResponse.success(user);
+    public ApiResponse<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+        return ApiResponse.success(userService.login(loginRequest, response));
     }
 
-    /**
-     * 로그아웃을 처리합니다.
-     * 토큰 기반 인증에서는 클라이언트 측에서 토큰을 삭제하는 것이 핵심입니다.
-     * 이 엔드포인트는 클라이언트에게 토큰 삭제를 유도하는 용도로 사용될 수 있습니다.
-     *
-     * @return 로그아웃 성공 메시지
-     */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-        // 실제 서버에서 할 일은 거의 없음.
-        // 클라이언트는 이 응답을 받고 저장된 토큰을 제거하면 됨.
-        return ResponseEntity.ok("로그아웃되었습니다. 클라이언트의 토큰을 삭제하세요.");
+    public ApiResponse<Void> logout() {
+        return ApiResponse.success("로그아웃되었습니다. 클라이언트의 토큰을 삭제하세요.", null);
     }
 
-    // --- 회원가입 기능 추가 ---
-
-    /**
-     * 새로운 사용자를 등록합니다.
-     *
-     * @param registerRequest 회원가입 요청 DTO (email, password, name)
-     * @return 성공 메시지
-     */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> register(@RequestBody RegisterRequest registerRequest) {
         userService.registerNewUser(registerRequest);
-
-        return ApiResponse.success("회원가입이 완료되었습니다.");
-    }
-
-    @GetMapping("/users/{email}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String email) {
-        UserResponse userInfo = userService.findUserByEmail(email);
-
-        return ApiResponse.success(userInfo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("회원가입이 완료되었습니다."));
     }
 
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<LoginResponse>> reissue(HttpServletRequest request) {
         LoginResponse userInfo = userService.reissue(request);
 
-        if(userInfo == null) {
-            return ApiResponse.failure(ResponseCode.UNAUTHORIZED.getCode(), "Refresh token이 유효하지 않습니다.");
+        if (userInfo == null) {
+            return ResponseEntity.ok(ApiResponse.fail(ResponseCode.UNAUTHORIZED.getCode(), "Refresh token이 유효하지 않습니다."));
         }
 
-        return ApiResponse.success(userInfo);
+        return ResponseEntity.ok(ApiResponse.success(userInfo));
     }
 }

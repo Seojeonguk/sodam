@@ -1,11 +1,11 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.common.response.ApiResponse;
 import com.sodam.transactionservice.application.api.dto.StatPeriodRequest;
 import com.sodam.transactionservice.application.api.dto.StatPeriodResponse;
 import com.sodam.transactionservice.application.api.dto.StatRequest;
 import com.sodam.transactionservice.application.api.dto.StatResponse;
 import com.sodam.transactionservice.domain.service.StatDomainService;
-import com.sodam.transactionservice.infrastructure.ApiResponse;
 import com.sodam.transactionservice.infrastructure.UserDto;
 import com.sodam.transactionservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;

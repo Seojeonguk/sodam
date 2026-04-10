@@ -1,13 +1,14 @@
 package com.sodam.transactionservice.infrastructure;
 
-import com.sodam.transactionservice.config.FeignConfig;
+import com.sodam.common.response.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "user-service", configuration = FeignConfig.class)
+@FeignClient(name = "user-service")
 public interface UserServiceClient {
 
-    @GetMapping("/api/auth/users/{email}")
+    @GetMapping("/internal/users/{email}")
     ApiResponse<UserDto> getUser(@PathVariable("email") String email);
+
 }

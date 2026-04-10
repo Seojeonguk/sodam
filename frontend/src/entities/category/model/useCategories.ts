@@ -15,7 +15,8 @@ export const useCategories = () => {
     setError(null);
     try {
       const response = await categoryApi.getCategories(0, 20);
-      setCategories(response);
+      console.debug(`response : ${JSON.stringify(response)}`);
+      setCategories(response?.data);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);

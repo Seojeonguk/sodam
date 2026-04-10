@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients(basePackages = {"com.sodam.accountbookservice.infrastructure"})
 public class AccountBookServiceApplication {
 
     public static void main(String[] args) {

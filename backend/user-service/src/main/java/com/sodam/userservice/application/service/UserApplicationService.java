@@ -42,7 +42,7 @@ public class UserApplicationService {
         log.info("신규 유저 생성 완료. id : {}, 이메일 : {}", createdUser.getId(), createdUser.getEmail());
 
         // 가계부 생성
-        String accountBookName = "기본 가계부";
+        String accountBookName = "가계부";
         AccountBookCreateRequest createRequest = AccountBookCreateRequest.builder()
                 .name(accountBookName)
                 .userId(createdUser.getId())
@@ -55,8 +55,6 @@ public class UserApplicationService {
     @Transactional
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userService.findUserByEmail(loginRequest.getEmail());
-
-        // 2. 비밀번호 일치 여부 확인
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }

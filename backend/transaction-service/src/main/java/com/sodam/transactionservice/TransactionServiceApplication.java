@@ -7,11 +7,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients(basePackages = {"com.sodam.transactionservice.infrastructure"})
 public class TransactionServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TransactionServiceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TransactionServiceApplication.class, args);
+    }
 
 }

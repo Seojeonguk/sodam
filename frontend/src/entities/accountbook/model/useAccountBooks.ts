@@ -14,7 +14,7 @@ export const useAccountBooks = () => {
   const fetchAccountBooks = async () => {
     try {
       const response = await accountBookApi.getAccountBooks();
-      setAccountBooks(response);
+      setAccountBooks(response.data);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
