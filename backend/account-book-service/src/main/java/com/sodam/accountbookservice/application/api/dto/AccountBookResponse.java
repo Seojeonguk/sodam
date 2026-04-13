@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class AccountBookResponse {
+    private Long id;
     private String name;
     private String updatedAt;
 }

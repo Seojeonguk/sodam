@@ -3,8 +3,6 @@ package com.sodam.userservice.infrastructure.dto.response;
 import lombok.Data;
 
 @Data
-public class AccountBookResponse {
-    private Long id;
+public class ClassificationResponse {
     private String name;
-    private String updatedAt;
 }

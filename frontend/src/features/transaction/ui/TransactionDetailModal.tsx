@@ -146,7 +146,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           <Paper elevation={0} sx={{ p: 2, bgcolor: "background.default" }}>
             <Typography variant="body1" sx={{ mb: 1 }}>
               <Typography component="span" fontWeight="bold">
-                종류:
+                분류:
               </Typography>{" "}
               <Typography
                 component="span"

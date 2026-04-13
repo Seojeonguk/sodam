@@ -9,8 +9,11 @@ import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
 import com.sodam.userservice.domain.service.UserServiceImpl;
 import com.sodam.userservice.infrastructure.clients.AccountBookServiceClient;
+import com.sodam.userservice.infrastructure.clients.ClassificationServiceClient;
 import com.sodam.userservice.infrastructure.dto.request.AccountBookCreateRequest;
+import com.sodam.userservice.infrastructure.dto.request.ClassificationCreateRequest;
 import com.sodam.userservice.infrastructure.dto.response.AccountBookResponse;
+import com.sodam.userservice.infrastructure.dto.response.ClassificationResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +33,7 @@ public class UserApplicationService {
     private final UserServiceImpl userService;
 
     private final AccountBookServiceClient accountBookServiceClient;
+    private final ClassificationServiceClient classificationServiceClient;
 
     @Transactional
     public void registerNewUser(RegisterRequest registerRequest) {
@@ -50,6 +54,24 @@ public class UserApplicationService {
 
         AccountBookResponse createdAccountBook = accountBookServiceClient.createAccountBook(createRequest);
         log.debug("가계부 응답 : {}", createdAccountBook);
+
+        String typeIncome = "INCOME";
+        ClassificationCreateRequest typeIncomeCreateRequest = ClassificationCreateRequest.builder()
+                .name(typeIncome)
+                .accountBookSeq(createdAccountBook.getId())
+                .build();
+
+        ClassificationResponse createdTypeIncomeResponse = classificationServiceClient.createType(typeIncomeCreateRequest);
+        log.debug("신규 타입 수입 응답 : {}", createdTypeIncomeResponse);
+
+        String typeExpense = "EXPENSE";
+        ClassificationCreateRequest typeCreateExpenseRequest = ClassificationCreateRequest.builder()
+                .name(typeExpense)
+                .accountBookSeq(createdAccountBook.getId())
+                .build();
+
+        ClassificationResponse createdTypeExpenseResponse = classificationServiceClient.createType(typeCreateExpenseRequest);
+        log.debug("신규 타입 지출 응답 : {}", createdTypeExpenseResponse);
     }
 
     @Transactional
