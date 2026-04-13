@@ -1,17 +1,18 @@
-import { styled, useTheme } from "@mui/material/styles";
+import { memo, useCallback, useState } from "react";
+import { styled, useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
-  Drawer,
-  CssBaseline,
-  List,
   Divider,
+  Drawer,
   IconButton,
+  List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  Stack,
   Typography,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -19,15 +20,15 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from "@mui/icons-material/Category";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import { memo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LogoutIcon from "@mui/icons-material/Logout";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
-import { ExpandMore } from "@mui/icons-material";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import type { AccountBookListResponse } from "../../../entities/accountbook/api/accountbook.types";
 import LoginApi from "../../../features/auth/api/LoginApi";
-import LogoutIcon from "@mui/icons-material/Logout";
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -38,7 +39,7 @@ interface SideBarDrawerProps {
 const SIDE_MENU_ITEMS = [
   { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
   { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
-  { label: "거래내역", path: "/transactions", icon: <ReceiptLongIcon /> },
+  { label: "거래 내역", path: "/transactions", icon: <ReceiptLongIcon /> },
 ];
 
 const DrawerHeader = styled("div")(({ theme }) => ({
@@ -56,9 +57,10 @@ function SideBarDrawerComponent({
 }: SideBarDrawerProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const isDesktop = useIsDesktop();
-  const { accountBooks, currentAccountBook, setCurrentAccountBook } = useAccountBookContext();
-
+  const { accountBooks, currentAccountBook, setCurrentAccountBook } =
+    useAccountBookContext();
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
 
   const openRepoMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -78,16 +80,16 @@ function SideBarDrawerComponent({
     (path: string) => {
       return () => {
         void navigate(path);
-        if (!isDesktop) handleDrawerClose();
+        if (!isDesktop) {
+          handleDrawerClose();
+        }
       };
     },
-    [navigate, isDesktop, handleDrawerClose]
+    [navigate, isDesktop, handleDrawerClose],
   );
 
   return (
     <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-
       <Drawer
         sx={{
           width: DRAWER_WIDTH,
@@ -95,6 +97,8 @@ function SideBarDrawerComponent({
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
+            px: 1.5,
+            py: 2,
           },
         }}
         variant={isDesktop ? "persistent" : "temporary"}
@@ -103,52 +107,14 @@ function SideBarDrawerComponent({
         onClose={handleDrawerClose}
       >
         <DrawerHeader>
-          {/* 저장소 선택 버튼 */}
-          <Box>
-            <IconButton
-              onClick={openRepoMenu}
-              sx={{ display: "flex", alignItems: "center", borderRadius: 1 }}
-            >
-              <Typography
-                sx={{
-                  maxWidth: 130,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  textAlign: "left",
-                  mr: 0.5,
-                }}
-              >
-                {currentAccountBook?.name}
-              </Typography>
-              <ExpandMore />
-            </IconButton>
-          </Box>
+          <Typography variant="h6" fontWeight={800} sx={{ px: 1 }}>
+            Sodam
+          </Typography>
 
-          {/* 저장소 메뉴 */}
-          <Menu
-            anchorEl={repoAnchor}
-            open={Boolean(repoAnchor)}
-            onClose={closeRepoMenu}
+          <IconButton
+            onClick={toggleDrawer}
+            sx={{ border: "1px solid", borderColor: "divider" }}
           >
-            {accountBooks.map((accountbook: AccountBookListResponse) => (
-              <MenuItem key={accountbook.id} onClick={() => handleSelectAccountBook(accountbook)}>
-                <Typography
-                  sx={{
-                    maxWidth: 200,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {accountbook.name}
-                </Typography>
-              </MenuItem>
-            ))}
-          </Menu>
-
-          {/* Drawer 닫기 */}
-          <IconButton onClick={toggleDrawer}>
             {theme.direction === "ltr" ? (
               <ChevronLeftIcon />
             ) : (
@@ -157,21 +123,190 @@ function SideBarDrawerComponent({
           </IconButton>
         </DrawerHeader>
 
+        <Box sx={{ px: 1, pt: 1, pb: 2 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ px: 1.5, display: "block", mb: 0.8 }}
+          >
+            가계부
+          </Typography>
+          <ListItemButton
+            onClick={openRepoMenu}
+            sx={{
+              minHeight: 52,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
+              backgroundColor: alpha(theme.palette.primary.light, 0.28),
+              justifyContent: "space-between",
+              px: 1.5,
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.primary.light, 0.42),
+              },
+            }}
+          >
+            <Stack alignItems="flex-start" spacing={0.2}>
+              <Typography
+                sx={{
+                  maxWidth: 170,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  textAlign: "left",
+                  fontWeight: 700,
+                }}
+              >
+                {currentAccountBook?.name ?? "가계부를 선택해 주세요"}
+              </Typography>
+            </Stack>
+            <ExpandMoreIcon fontSize="small" />
+          </ListItemButton>
+
+          <Menu
+            anchorEl={repoAnchor}
+            open={Boolean(repoAnchor)}
+            onClose={closeRepoMenu}
+            transformOrigin={{ horizontal: "left", vertical: "top" }}
+            anchorOrigin={{ horizontal: "left", vertical: "bottom" }}
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 1,
+                  minWidth: 232,
+                  overflow: "hidden",
+                  borderRadius: 1.5,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.96),
+                  backdropFilter: "blur(18px)",
+                  boxShadow: "0 10px 24px rgba(31, 41, 55, 0.1)",
+                  p: 0.5,
+                },
+              },
+              list: {
+                sx: {
+                  p: 0,
+                },
+              },
+            }}
+          >
+            <Box sx={{ px: 1.2, py: 0.8 }}>
+              <Typography variant="overline" color="text.secondary">
+                Account Books
+              </Typography>
+            </Box>
+            {accountBooks.map((accountBook: AccountBookListResponse) => {
+              const isSelected = currentAccountBook?.id === accountBook.id;
+
+              return (
+                <MenuItem
+                  key={accountBook.id}
+                  onClick={() => handleSelectAccountBook(accountBook)}
+                  sx={{
+                    minHeight: 44,
+                    borderRadius: 1,
+                    px: 1.2,
+                    mb: 0.3,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: isSelected
+                      ? alpha(theme.palette.primary.main, 0.16)
+                      : "transparent",
+                    "&:hover": {
+                      backgroundColor: isSelected
+                        ? alpha(theme.palette.primary.main, 0.22)
+                        : alpha(theme.palette.primary.main, 0.08),
+                    },
+                  }}
+                >
+                  <Stack spacing={0.1} sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        maxWidth: 170,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        fontWeight: isSelected ? 800 : 600,
+                        color: "text.primary",
+                      }}
+                    >
+                      {accountBook.name}
+                    </Typography>
+                  </Stack>
+                  {isSelected ? (
+                    <CheckRoundedIcon
+                      sx={{ color: theme.palette.primary.dark, fontSize: 18 }}
+                    />
+                  ) : null}
+                </MenuItem>
+              );
+            })}
+          </Menu>
+        </Box>
+
         <Divider />
 
-        {/* Side 메뉴 */}
-        <List>
+        <List sx={{ px: 1, py: 1.5 }}>
           {SIDE_MENU_ITEMS.map((item) => (
             <ListItem key={item.label} disablePadding>
-              <ListItemButton onClick={createNavigateHandler(item.path)}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
+              {(() => {
+                const isActive = location.pathname === item.path;
+
+                return (
+              <ListItemButton
+                onClick={createNavigateHandler(item.path)}
+                sx={{
+                  minHeight: 48,
+                  borderRadius: 2,
+                  mb: 0.5,
+                  backgroundColor: isActive
+                    ? alpha(theme.palette.primary.main, 0.16)
+                    : "transparent",
+                  border: "1px solid",
+                  borderColor: isActive
+                    ? alpha(theme.palette.primary.main, 0.3)
+                    : "transparent",
+                  "&:hover": {
+                    backgroundColor: isActive
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.primary.main, 0.1),
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    color: isActive ? "primary.dark" : "text.secondary",
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: isActive ? 800 : 700,
+                    color: isActive ? "text.primary" : "text.secondary",
+                  }}
+                />
               </ListItemButton>
+                );
+              })()}
             </ListItem>
           ))}
-          <Divider sx={{ my: 1 }} />
+        </List>
+
+        <Box sx={{ mt: "auto", px: 1, pt: 1 }}>
+          <Divider sx={{ mb: 1 }} />
           <ListItem disablePadding>
             <ListItemButton
+              sx={{
+                minHeight: 48,
+                borderRadius: 2,
+                color: "text.secondary",
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.secondary.main, 0.12),
+                },
+              }}
               onClick={() => {
                 void (async () => {
                   if (window.confirm("로그아웃 하시겠습니까?")) {
@@ -182,21 +317,24 @@ function SideBarDrawerComponent({
                     } finally {
                       localStorage.removeItem("accessToken");
                       void navigate("/");
-                      if (!isDesktop) handleDrawerClose();
+                      if (!isDesktop) {
+                        handleDrawerClose();
+                      }
                     }
                   }
                 })();
               }}
             >
-              <ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>
                 <LogoutIcon />
               </ListItemIcon>
-              <ListItemText primary="로그아웃" />
+              <ListItemText
+                primary="로그아웃"
+                primaryTypographyProps={{ fontWeight: 700 }}
+              />
             </ListItemButton>
           </ListItem>
-        </List>
-
-        <Divider />
+        </Box>
       </Drawer>
     </Box>
   );
