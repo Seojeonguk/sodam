@@ -179,15 +179,15 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
         )}
 
         <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="type-select-label">종류</InputLabel>
+          <InputLabel id="type-select-label">분류</InputLabel>
           <Select
             labelId="type-select-label"
             id="type-select"
             value={type}
-            label="종류"
+            label="분류"
             onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
               setType(e.target.value);
-              setCategory(null); // 종류 변경 시 카테고리 초기화
+              setCategory(null); // 분류 변경 시 카테고리 초기화
             }}
           >
             <MenuItem value="EXPENSE">지출</MenuItem>
