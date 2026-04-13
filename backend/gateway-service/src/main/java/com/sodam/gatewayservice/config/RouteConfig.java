@@ -24,7 +24,7 @@ public class RouteConfig {
                 .route("transaction-service", r -> r.path("/api/transactions/**", "/api/stat/**")
                         .filters(f -> f.filter(jwtAuthGatewayFilter))
                         .uri("lb://transaction-service"))
-                .route("category-service", r->r.path("/api/categories/**")
+                .route("category-service", r->r.path("/api/categories/**", "/api/classifications/**")
                         .filters(f -> f.filter(jwtAuthGatewayFilter))
                         .uri("lb://category-service"))
                 .route("account-book-service", r->r.path("/api/account-books/**")

@@ -1,34 +1,32 @@
 import React, { useEffect, useState } from "react";
 import {
-  Modal,
+  Alert,
   Box,
-  Typography,
-  TextField,
   Button,
+  CircularProgress,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  CircularProgress,
-  Alert,
+  Modal,
+  Select,
+  TextField,
+  Typography,
   type SelectChangeEvent,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import axios, { AxiosError } from "axios";
 import dayjs, { Dayjs } from "dayjs";
 
-import transactionApi from "../../../entities/transaction/api/transactionApi"; // 거래 API 서비스 임포트
-import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types"; // DTO 임포트
-import axios, { AxiosError } from "axios"; // AxiosError 타입 체크를 위해 임포트
-import api from "../../../shared/api/api";
-import type {
-  CategoryListItemResponse,
-  CategoryListResponse,
-} from "../../../entities/transaction/api/category.types";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import categoryApi from "../../../entities/category/api/categoryApi";
+import classificationApi from "../../../entities/category/api/classificationApi";
+import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
+import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
+import transactionApi from "../../../entities/transaction/api/transactionApi";
+import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types";
 
-// 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
   position: "absolute",
   top: "50%",
@@ -42,25 +40,29 @@ const style = {
   borderRadius: "8px",
 } as const;
 
-// TransactionCreateModal 컴포넌트가 받을 props 정의
 interface TransactionCreateModalProps {
   isOpen: boolean;
-  onClose: () => void; // 모달이 닫힐 때 호출될 콜백 (부모에서 데이터 새로고침 등을 할 수 있음)
+  onClose: () => void;
 }
+
+const classificationLabelMap: Record<"INCOME" | "EXPENSE", string> = {
+  INCOME: "수입",
+  EXPENSE: "지출",
+};
 
 const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  // 폼 필드 상태 관리
-  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE"); // 기본값 지출
+  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [classifications, setClassifications] = useState<ClassificationResponse[]>(
+    [],
+  );
   const [amount, setAmount] = useState<string>("");
-  const [category, setCategory] = useState<number | null>(null);
+  const [category, setCategory] = useState<number | "">("");
   const [description, setDescription] = useState<string>("");
-  const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs()); // dayjs 객체
+  const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs());
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
-
-  // API 호출 상태 관리
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -68,54 +70,83 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const { currentAccountBook } = useAccountBookContext();
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchModalOptions = async () => {
+      if (!currentAccountBook?.id) {
+        setClassifications([]);
+        return;
+      }
+
       try {
-        const response = await api.get<CategoryListResponse>(
-          `/categories?page=0&size=10`,
-        );
-        const data = response.data;
-        setCategories(data.categories);
+        const [classificationResponse, categoryResponse] = await Promise.all([
+          classificationApi.getClassifications(currentAccountBook.id),
+          categoryApi.getCategories(0, 100),
+        ]);
+
+        const fetchedClassifications = classificationResponse.data;
+        setClassifications(fetchedClassifications);
+        setCategories(categoryResponse.data.categories);
+
+        if (fetchedClassifications.length > 0) {
+          setType((currentType) =>
+            fetchedClassifications.some(
+              (classification) => classification.name === currentType,
+            )
+              ? currentType
+              : fetchedClassifications[0].name,
+          );
+        }
       } catch (error) {
         const err = error as AxiosError<{ message?: string }>;
 
         if (axios.isAxiosError(err) && err.response) {
           setError(
-            `카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`,
+            `분류 또는 카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`,
           );
         } else {
-          setError("카테고리 목록 조회 중 예상치 못한 오류가 발생했습니다.");
+          setError(
+            "분류 또는 카테고리 목록 조회 중 예상치 못한 오류가 발생했습니다.",
+          );
         }
       }
     };
 
-    void fetchCategories(); // 👈 eslint no-floating-promises 해결
-  }, []);
+    if (!isOpen) {
+      return;
+    }
+
+    void fetchModalOptions();
+  }, [currentAccountBook?.id, isOpen]);
 
   const handleClose = () => {
-    // 모달 닫기 전 상태 초기화
     setType("EXPENSE");
+    setClassifications([]);
     setAmount("");
-    setCategory(null);
+    setCategory("");
     setDescription("");
     setTransactionDate(dayjs());
     setLoading(false);
     setError(null);
     setSuccess(null);
-    onClose(); // 부모 컴포넌트의 onClose 호출
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // 이전 에러 초기화
-    setSuccess(null); // 이전 성공 메시지 초기화
+    setError(null);
+    setSuccess(null);
 
-    // 유효성 검사 (간단한 예시)
     if (!amount || parseFloat(amount) <= 0) {
-      setError("금액을 올바르게 입력해주세요.");
+      setError("금액을 올바르게 입력해 주세요.");
       return;
     }
+
     if (!transactionDate) {
-      setError("거래 날짜를 선택해주세요.");
+      setError("거래 날짜를 선택해 주세요.");
+      return;
+    }
+
+    if (category === "") {
+      setError("카테고리를 선택해 주세요.");
       return;
     }
 
@@ -124,21 +155,20 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     try {
       const newTransaction: TransactionCreateRequestDto = {
         accountBookSeq: currentAccountBook?.id ?? 0,
-        type: type,
-        amount: parseFloat(amount), // 숫자로 변환
+        type,
+        amount: parseFloat(amount),
         categorySeq: category,
-        description: description,
-        transactionDate: transactionDate?.second(0)?.format("YYYYMMDDHHmmss"),
+        description,
+        transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
       };
 
       await transactionApi.createTransaction(newTransaction);
-      setSuccess("거래가 성공적으로 추가되었습니다!");
+      setSuccess("거래가 성공적으로 추가되었습니다.");
       handleClose();
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
 
       if (axios.isAxiosError(err) && err.response) {
-        // 백엔드에서 보낸 구체적인 에러 메시지가 있다면
         setError(
           `거래 추가 실패: ${err.response.data?.message ?? err.message}`,
         );
@@ -164,7 +194,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           component="h2"
           mb={3}
         >
-          새 거래 추가
+          거래 추가
         </Typography>
 
         {error && (
@@ -187,11 +217,15 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             label="분류"
             onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
               setType(e.target.value);
-              setCategory(null); // 분류 변경 시 카테고리 초기화
+              setCategory("");
             }}
           >
-            <MenuItem value="EXPENSE">지출</MenuItem>
-            <MenuItem value="INCOME">수입</MenuItem>
+            {classifications.map((classification) => (
+              <MenuItem key={classification.id} value={classification.name}>
+                {classificationLabelMap[classification.name] ??
+                  classification.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
 

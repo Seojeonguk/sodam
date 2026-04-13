@@ -58,6 +58,7 @@ public class AccountBookApplicationService {
         }
 
         return AccountBookResponse.builder()
+                .id(accountBook.getId())
                 .name(accountBook.getName())
                 .updatedAt(accountBook.getUpdatedAt())
                 .build();
@@ -70,6 +71,7 @@ public class AccountBookApplicationService {
         AccountBook accountBook = accountBookService.updateAccountBook(id, request);
 
         return AccountBookResponse.builder()
+                .id(accountBook.getId())
                 .name(accountBook.getName())
                 .updatedAt(accountBook.getUpdatedAt())
                 .build();
@@ -79,6 +81,7 @@ public class AccountBookApplicationService {
         AccountBook accountBook = accountBookService.getAccountBookById(id);
 
         return AccountBookResponse.builder()
+                .id(accountBook.getId())
                 .name(accountBook.getName())
                 .updatedAt(accountBook.getUpdatedAt())
                 .build();
