@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
-import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
 import transactionApi from "../api/transactionApi";
 import statApi from "../api/statApi";
@@ -11,6 +10,7 @@ import type {
   StatRequest,
 } from "../api/stat.types";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 interface StatPeriodDatasetEntry {
   [key: string]: string | number;
@@ -18,6 +18,44 @@ interface StatPeriodDatasetEntry {
   income: number;
   expense: number;
 }
+
+const getRandomColor = () =>
+  `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+
+const buildPieStats = (
+  type: "INCOME" | "EXPENSE",
+  items: Awaited<ReturnType<typeof statApi.getStats>>,
+): PieValueType[] =>
+  items
+    .filter((item) => item.type === type)
+    .map((item, index) => ({
+      id: index,
+      value: item.total,
+      label: item.name,
+      color: getRandomColor(),
+    }));
+
+const buildPeriodDataset = (
+  response: StatPeriodResponse[],
+): StatPeriodDatasetEntry[] =>
+  response.reduce((accumulator: StatPeriodDatasetEntry[], item) => {
+    const period = item.transaction_date;
+    const found = accumulator.find((entry) => entry.period === period);
+    const typeKey = item.type.toLowerCase() as "income" | "expense";
+
+    if (found) {
+      found[typeKey] = item.total;
+      return accumulator;
+    }
+
+    accumulator.push({
+      period,
+      income: typeKey === "income" ? item.total : 0,
+      expense: typeKey === "expense" ? item.total : 0,
+    });
+
+    return accumulator;
+  }, []);
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
@@ -40,188 +78,82 @@ export const useTransactions = () => {
     },
   );
 
-  const getRandomColor = () =>
-    `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+  const resetTransactionState = useCallback(() => {
+    setTransactions(null);
+    setIncomeStats([]);
+    setExpenseStats([]);
+    setStatPeriodDataset([]);
+    setError(null);
+    setLoading(false);
+  }, []);
 
-  const fetchTransactions = useCallback(async () => {
+  const refreshTransactionData = useCallback(async () => {
     if (!currentAccountBookId) {
-      setTransactions(null);
-      setError(null);
-      setLoading(false);
+      resetTransactionState();
       return;
     }
 
     setLoading(true);
     setError(null);
 
+    const startDate = dateRange.startDate.format("YYYYMMDD");
+    const endDate = dateRange.endDate.format("YYYYMMDD");
+
+    const statRequest: StatRequest = { startDate, endDate };
+    const statPeriodRequest: StatPeriodRequest = { startDate, endDate };
+
     try {
-      const startDate = dateRange.startDate.format("YYYYMMDD");
-      const endDate = dateRange.endDate.format("YYYYMMDD");
-      const response = await transactionApi.getTransactions(
-        currentAccountBookId,
-        startDate,
-        endDate,
+      const [nextTransactions, nextStats, nextPeriodStats] = await Promise.all([
+        transactionApi.getTransactions(currentAccountBookId, startDate, endDate),
+        statApi.getStats(statRequest),
+        statApi.getPeriodStats(statPeriodRequest),
+      ]);
+
+      setTransactions(nextTransactions);
+      setIncomeStats(buildPieStats("INCOME", nextStats));
+      setExpenseStats(buildPieStats("EXPENSE", nextStats));
+      setStatPeriodDataset(buildPeriodDataset(nextPeriodStats));
+    } catch (nextError) {
+      setError(
+        getServerErrorMessage(
+          nextError,
+          "거래 및 통계 데이터를 불러오는 중 오류가 발생했습니다.",
+        ),
       );
-
-      setTransactions(response);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("거래 내역을 불러오는 중 오류가 발생했습니다.");
-      }
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBookId, dateRange]);
+  }, [currentAccountBookId, dateRange.endDate, dateRange.startDate, resetTransactionState]);
 
-  const fetchStats = useCallback(async () => {
-    if (!currentAccountBookId) {
-      setIncomeStats([]);
-      setExpenseStats([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const request: StatRequest = {
-        startDate: dateRange.startDate.format("YYYYMMDD"),
-        endDate: dateRange.endDate.format("YYYYMMDD"),
-      };
-      const response = await statApi.getStats(request);
-
-      const nextIncomeStats: PieValueType[] = response
-        .filter((item) => item.type === "INCOME")
-        .map((item, idx) => ({
-          id: idx,
-          value: item.total,
-          label: item.name,
-          color: getRandomColor(),
-        }));
-
-      const nextExpenseStats: PieValueType[] = response
-        .filter((item) => item.type === "EXPENSE")
-        .map((item, idx) => ({
-          id: idx,
-          value: item.total,
-          label: item.name,
-          color: getRandomColor(),
-        }));
-
-      setIncomeStats(nextIncomeStats);
-      setExpenseStats(nextExpenseStats);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("통계를 불러오는 중 오류가 발생했습니다.");
+  const deleteTransaction = useCallback(
+    async (seq: number) => {
+      try {
+        await transactionApi.deleteTransaction(seq);
+        await refreshTransactionData();
+      } catch (nextError) {
+        throw new Error(
+          getServerErrorMessage(
+            nextError,
+            "거래 삭제 중 오류가 발생했습니다.",
+          ),
+        );
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [currentAccountBookId, dateRange]);
-
-  const fetchPeriodStats = useCallback(async () => {
-    if (!currentAccountBookId) {
-      setStatPeriodDataset([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const request: StatPeriodRequest = {
-        startDate: dateRange.startDate.format("YYYYMMDD"),
-        endDate: dateRange.endDate.format("YYYYMMDD"),
-      };
-      const response = await statApi.getPeriodStats(request);
-
-      const dataset = response.reduce(
-        (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
-          const period = item.transaction_date;
-          const found = acc.find((entry) => entry.period === period);
-          const typeKey = item.type.toLowerCase() as "income" | "expense";
-
-          if (found) {
-            found[typeKey] = item.total;
-            return acc;
-          }
-
-          acc.push({
-            period,
-            income: typeKey === "income" ? item.total : 0,
-            expense: typeKey === "expense" ? item.total : 0,
-          });
-
-          return acc;
-        },
-        [],
-      );
-
-      setStatPeriodDataset(dataset);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("기간별 통계를 불러오는 중 오류가 발생했습니다.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [currentAccountBookId, dateRange]);
-
-  const deleteTransaction = async (seq: number) => {
-    try {
-      await transactionApi.deleteTransaction(seq);
-
-      setTransactions((prev) => {
-        if (prev === null) {
-          return null;
-        }
-
-        return {
-          ...prev,
-          transactions: prev.transactions.filter((tx) => tx.seq !== seq),
-        };
-      });
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        alert(`삭제 실패: ${err.message}`);
-      } else {
-        alert("거래 삭제 중 오류가 발생했습니다.");
-      }
-    }
-  };
+    },
+    [refreshTransactionData],
+  );
 
   useEffect(() => {
-    void fetchTransactions();
-  }, [fetchTransactions]);
-
-  useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
-
-  useEffect(() => {
-    void fetchPeriodStats();
-  }, [fetchPeriodStats]);
+    void refreshTransactionData();
+  }, [refreshTransactionData]);
 
   return {
     transactions,
     loading,
     error,
-    refetchTransactions: fetchTransactions,
+    refreshTransactionData,
     deleteTransaction,
     incomeStats,
     expenseStats,
-    fetchStats,
-    fetchPeriodStats,
     statPeriodDataset,
     dateRange,
     setDateRange,

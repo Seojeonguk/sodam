@@ -86,13 +86,11 @@ function CategoryPage() {
 
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
-    void refetchCategories();
   };
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setSelectedCategory(null);
-    void refetchCategories();
   };
 
   const handleDeleteCategory = (id: number) => {
@@ -642,12 +640,14 @@ function CategoryPage() {
       <CategoryCreateModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
+        onSuccess={refetchCategories}
       />
 
       <CategoryEditModal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         category={selectedCategory}
+        onSuccess={refetchCategories}
       />
 
       <CategoryReplaceModal
@@ -663,7 +663,6 @@ function CategoryPage() {
               try {
                 await deleteCategory(deleteTargetCategoryId, replacementId);
                 handleCloseReplaceModal();
-                void refetchCategories();
               } catch (err) {
                 alert(
                   `카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`,

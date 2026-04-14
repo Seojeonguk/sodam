@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
 import classificationApi from "../api/classificationApi";
 import type { ClassificationResponse } from "../api/classification.types";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export const useClassifications = (accountBookId?: number | null) => {
   const [classifications, setClassifications] = useState<ClassificationResponse[]>(
@@ -10,39 +10,11 @@ export const useClassifications = (accountBookId?: number | null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchClassifications = async () => {
-      if (!accountBookId) {
-        setClassifications([]);
-        setError(null);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await classificationApi.getClassifications(accountBookId);
-        setClassifications(response);
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          setError(err.message);
-        } else {
-          setError("분류를 불러오는 중 오류가 발생했습니다.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchClassifications();
-  }, [accountBookId]);
-
-  const refetchClassifications = async () => {
+  const fetchClassifications = useCallback(async () => {
     if (!accountBookId) {
       setClassifications([]);
       setError(null);
+      setLoading(false);
       return;
     }
 
@@ -52,21 +24,26 @@ export const useClassifications = (accountBookId?: number | null) => {
     try {
       const response = await classificationApi.getClassifications(accountBookId);
       setClassifications(response);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("분류를 불러오는 중 오류가 발생했습니다.");
-      }
+    } catch (nextError) {
+      setError(
+        getServerErrorMessage(
+          nextError,
+          "분류를 불러오는 중 오류가 발생했습니다.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountBookId]);
+
+  useEffect(() => {
+    void fetchClassifications();
+  }, [fetchClassifications]);
 
   return {
     classifications,
     loading,
     error,
-    refetchClassifications,
+    refetchClassifications: fetchClassifications,
   };
 };
