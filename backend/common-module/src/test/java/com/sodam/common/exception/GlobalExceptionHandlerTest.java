@@ -5,8 +5,9 @@ import com.sodam.common.response.ResponseCode;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.FeignException;
+import feign.RetryableException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Date;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -120,6 +121,31 @@ class GlobalExceptionHandlerTest {
         );
 
         ResponseEntity<ApiResponse<Void>> response = handler.handleFeignException(exception);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(502);
+        assertThat(response.getBody().getCode()).isEqualTo("E-00006");
+    }
+
+    @Test
+    @DisplayName("retryable exception maps to bad gateway")
+    void handleRetryableException_returnsBadGateway() {
+        RetryableException exception = new RetryableException(
+                503,
+                "upstream unavailable",
+                Request.HttpMethod.GET,
+                new RuntimeException("boom"),
+                new Date(),
+                Request.create(
+                        Request.HttpMethod.GET,
+                        "http://localhost/users",
+                        java.util.Map.of(),
+                        null,
+                        StandardCharsets.UTF_8,
+                        new RequestTemplate()
+                )
+        );
+
+        ResponseEntity<ApiResponse<Void>> response = handler.handleRetryableException(exception);
 
         assertThat(response.getStatusCode().value()).isEqualTo(502);
         assertThat(response.getBody().getCode()).isEqualTo("E-00006");

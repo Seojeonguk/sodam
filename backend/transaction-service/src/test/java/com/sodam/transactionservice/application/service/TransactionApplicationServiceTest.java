@@ -1,5 +1,6 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.common.exception.CustomException;
 import com.sodam.common.response.ApiResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse;
@@ -176,7 +177,8 @@ class TransactionApplicationServiceTest {
                 .thenReturn(ApiResponse.success(null));
 
         assertThatThrownBy(() -> transactionApplicationService.createTransaction(request, "user@example.com"))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("user-service");
     }
 
     @Test
@@ -192,8 +194,6 @@ class TransactionApplicationServiceTest {
                 .thenReturn(ApiResponse.success(userDto));
         when(transactionDomainService.getTransactionsByConditions(any(TransactionSearchRequest.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
-        when(categoryServiceClient.getCategoriesByIds(List.of()))
-                .thenReturn(List.of());
 
         TransactionListResponse response =
                 transactionApplicationService.getTransactions(searchRequest, pageable, "user@example.com");
@@ -203,13 +203,46 @@ class TransactionApplicationServiceTest {
     }
 
     @Test
+    @DisplayName("get transactions tolerates null category response")
+    void getTransactions_toleratesNullCategoryResponse() {
+        TransactionSearchRequest searchRequest = new TransactionSearchRequest();
+        Pageable pageable = PageRequest.of(0, 20);
+
+        UserDto userDto = new UserDto();
+        userDto.setId(5L);
+
+        Transaction transaction = Transaction.builder()
+                .accountBookSeq(10L)
+                .userSeq(5L)
+                .categorySeq(30L)
+                .amount(BigDecimal.valueOf(15000))
+                .transactionDate("20260414120000")
+                .type(TransactionType.EXPENSE)
+                .build();
+        ReflectionTestUtils.setField(transaction, "seq", 103L);
+
+        when(userServiceClient.getUser("user@example.com"))
+                .thenReturn(ApiResponse.success(userDto));
+        when(transactionDomainService.getTransactionsByConditions(any(TransactionSearchRequest.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(transaction), pageable, 1));
+        when(categoryServiceClient.getCategoriesByIds(List.of(30L)))
+                .thenReturn(null);
+
+        TransactionListResponse response =
+                transactionApplicationService.getTransactions(searchRequest, pageable, "user@example.com");
+
+        assertThat(response.getTransactions()).hasSize(1);
+        assertThat(response.getTransactions().get(0).getCategoryName()).isEqualTo("Unknown category");
+    }
+
+    @Test
     @DisplayName("moveCategory returns updated count in response body")
     void moveCategory_returnsUpdatedCount() {
         when(transactionDomainService.moveCategory(1L, 2L)).thenReturn(4);
 
         TransactionMoveCategoryResponse response = transactionApplicationService.moveCategory(1L, 2L);
 
-        assertThat(response.getCode()).isEqualTo("S-0000");
+        assertThat(response.getCode()).isEqualTo("S-00000");
         assertThat(response.getData()).isEqualTo(4);
     }
 

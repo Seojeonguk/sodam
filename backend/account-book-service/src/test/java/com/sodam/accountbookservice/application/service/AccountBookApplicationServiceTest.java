@@ -1,5 +1,6 @@
 package com.sodam.accountbookservice.application.service;
 
+import com.sodam.common.exception.CustomException;
 import com.sodam.accountbookservice.application.api.dto.AccountBookCreateRequest;
 import com.sodam.accountbookservice.application.api.dto.AccountBookListResponse;
 import com.sodam.accountbookservice.application.api.dto.AccountBookResponse;
@@ -223,5 +224,31 @@ class AccountBookApplicationServiceTest {
         accountBookApplicationService.deleteAccountBook(13L, "user@example.com");
 
         verify(accountBookService).deleteAccountBookById(13L);
+    }
+
+    @Test
+    @DisplayName("createAccountBook throws custom exception when user response data is missing")
+    void createAccountBook_throwsWhenUserResponseDataMissing() {
+        AccountBookCreateRequest request = new AccountBookCreateRequest();
+        request.setName("main");
+
+        when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(null));
+
+        assertThatThrownBy(() -> accountBookApplicationService.createAccountBook(request, "user@example.com"))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("user-service");
+    }
+
+    @Test
+    @DisplayName("getAccountBooks throws custom exception when user id is missing")
+    void getAccountBooks_throwsWhenUserIdMissing() {
+        UserDto userDto = new UserDto();
+        userDto.setEmail("user@example.com");
+
+        when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(userDto));
+
+        assertThatThrownBy(() -> accountBookApplicationService.getAccountBooks("user@example.com"))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("user id");
     }
 }

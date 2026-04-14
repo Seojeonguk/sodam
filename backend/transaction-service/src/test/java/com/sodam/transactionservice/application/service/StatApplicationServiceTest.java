@@ -1,5 +1,6 @@
 package com.sodam.transactionservice.application.service;
 
+import com.sodam.common.exception.CustomException;
 import com.sodam.common.response.ApiResponse;
 import com.sodam.transactionservice.application.api.dto.StatPeriodRequest;
 import com.sodam.transactionservice.application.api.dto.StatPeriodResponse;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,5 +88,17 @@ class StatApplicationServiceTest {
         assertThat(captor.getValue().getUserSeq()).isEqualTo(11L);
         assertThat(result).extracting(StatPeriodResponse::getTransaction_date)
                 .containsExactly("20260414");
+    }
+
+    @Test
+    @DisplayName("getStat throws custom exception when user response data is missing")
+    void getStat_throwsWhenUserResponseDataMissing() {
+        StatRequest request = new StatRequest();
+
+        when(userServiceClient.getUser("tester@example.com")).thenReturn(ApiResponse.success(null));
+
+        assertThatThrownBy(() -> statApplicationService.getStat(request, "tester@example.com"))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("user-service");
     }
 }

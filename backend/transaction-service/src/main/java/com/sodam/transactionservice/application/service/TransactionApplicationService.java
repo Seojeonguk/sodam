@@ -1,10 +1,18 @@
 package com.sodam.transactionservice.application.service;
 
-import com.sodam.common.response.ApiResponse;
-import com.sodam.transactionservice.application.api.dto.*;
+import com.sodam.common.integration.ExternalResponseValidator;
+import com.sodam.common.response.ResponseCode;
+import com.sodam.transactionservice.application.api.dto.TransactionListItemResponse;
+import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
+import com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse;
+import com.sodam.transactionservice.application.api.dto.TransactionRequest;
+import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
 import com.sodam.transactionservice.domain.service.TransactionDomainService;
-import com.sodam.transactionservice.infrastructure.*;
+import com.sodam.transactionservice.infrastructure.CategoryListItemResponse;
+import com.sodam.transactionservice.infrastructure.CategoryServiceClient;
+import com.sodam.transactionservice.infrastructure.UserDto;
+import com.sodam.transactionservice.infrastructure.UserServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,97 +34,58 @@ public class TransactionApplicationService {
     private final UserServiceClient userServiceClient;
     private final CategoryServiceClient categoryServiceClient;
 
-    /**
-     * 새로운 거래를 생성합니다.
-     *
-     * @param request 거래 생성 요청 DTO
-     * @return 생성된 거래 엔티티
-     */
     @Transactional
     public Transaction createTransaction(TransactionRequest request, String email) {
-
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        log.info("사용자 응답 정보 : {}", userResponse);
-
-        Long id = userResponse.getData().getId();
-
-        log.info("사용자 id : {}" ,id);
-
-        request.setUserSeq(id);
-
+        request.setUserSeq(resolveUserId(email));
         return transactionDomainService.createTransaction(request);
     }
 
-    /**
-     * 특정 거래를 ID로 조회합니다.
-     *
-     * @param transactionSeq 거래 PK
-     * @return 조회된 거래 엔티티
-     */
     @Transactional(readOnly = true)
     public Transaction getTransactionById(Long transactionSeq) {
         return transactionDomainService.getTransactionById(transactionSeq);
     }
 
-    /**
-     * 거래 정보를 업데이트합니다.
-     *
-     * @param transactionSeq 업데이트할 거래의 PK
-     * @param request        거래 수정 요청 DTO
-     * @return 업데이트된 거래 엔티티
-     */
     @Transactional
     public Transaction updateTransaction(Long transactionSeq, TransactionRequest request) {
         return transactionDomainService.updateTransaction(transactionSeq, request);
     }
 
-    /**
-     * 특정 거래를 삭제합니다.
-     *
-     * @param transactionSeq 삭제할 거래의 PK
-     */
     @Transactional
     public void deleteTransaction(Long transactionSeq) {
         transactionDomainService.deleteTransaction(transactionSeq);
     }
 
-    /**
-     * 특정 가계부의 거래 목록을 조건에 따라 페이지네이션하여 조회합니다.
-     * startDate와 endDate는 선택적입니다.
-     *
-     * @param searchRequest 조회 조건을 담은 DTO
-     * @param pageable      페이지네이션 정보
-     * @return 조건에 맞는 페이지네이션된 거래 목록 (Page<Transaction> 객체)
-     */
     @Transactional(readOnly = true)
     public TransactionListResponse getTransactions(TransactionSearchRequest searchRequest, Pageable pageable, String email) {
-
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        log.info("사용자 응답 정보 : {}", userResponse);
-
-        Long id = userResponse.getData().getId();
-
-        log.info("사용자 id : {}" ,id);
-
-        searchRequest.setUserId(id);
+        searchRequest.setUserId(resolveUserId(email));
 
         Page<Transaction> transactions = transactionDomainService.getTransactionsByConditions(searchRequest, pageable);
 
         List<Long> categoryIds = transactions.getContent().stream()
-                        .map(Transaction::getCategorySeq)
-                        .distinct()
-                        .toList();
+                .map(Transaction::getCategorySeq)
+                .distinct()
+                .toList();
 
-        List<CategoryListItemResponse> categories = categoryServiceClient.getCategoriesByIds(categoryIds);
+        List<CategoryListItemResponse> categories = categoryIds.isEmpty()
+                ? List.of()
+                : categoryServiceClient.getCategoriesByIds(categoryIds);
+
+        if (categories == null) {
+            log.warn("Category service returned null category list. categoryCount={}", categoryIds.size());
+            categories = List.of();
+        }
 
         Map<Long, String> categoryNames = categories.stream()
+                .filter(Objects::nonNull)
+                .filter(category -> category.getId() != null)
                 .collect(Collectors.toMap(CategoryListItemResponse::getId, CategoryListItemResponse::getName));
 
         return TransactionListResponse.builder()
                 .transactions(transactions.getContent().stream()
-                        .map(transaction -> TransactionListItemResponse.from(transaction, categoryNames.getOrDefault(transaction.getCategorySeq(), "기타")))
+                        .map(transaction -> TransactionListItemResponse.from(
+                                transaction,
+                                categoryNames.getOrDefault(transaction.getCategorySeq(), "Unknown category")
+                        ))
                         .toList())
                 .pageNumber(transactions.getNumber())
                 .pageSize(transactions.getSize())
@@ -128,12 +98,18 @@ public class TransactionApplicationService {
     public TransactionMoveCategoryResponse moveCategory(Long oldCategoryId, Long newCategoryId) {
         Integer updatedCnt = transactionDomainService.moveCategory(oldCategoryId, newCategoryId);
 
-        log.info("카테고리 값 {}건 업데이트 완료. {} -> {}", updatedCnt, oldCategoryId, newCategoryId);
+        log.info("Moved transaction category. updatedCount={}, oldCategoryId={}, newCategoryId={}",
+                updatedCnt, oldCategoryId, newCategoryId);
 
-        TransactionMoveCategoryResponse transactionMoveCategoryResponse = new TransactionMoveCategoryResponse();
-        transactionMoveCategoryResponse.setCode("S-0000");
-        transactionMoveCategoryResponse.setMessage("업데이트 성공");
-        transactionMoveCategoryResponse.setData(updatedCnt);
-        return transactionMoveCategoryResponse;
+        TransactionMoveCategoryResponse response = new TransactionMoveCategoryResponse();
+        response.setCode(ResponseCode.SUCCESS.getCode());
+        response.setMessage("Category move completed");
+        response.setData(updatedCnt);
+        return response;
+    }
+
+    private Long resolveUserId(String email) {
+        UserDto user = ExternalResponseValidator.requireData(userServiceClient.getUser(email), "user-service");
+        return ExternalResponseValidator.requireField(user, UserDto::getId, "user-service", "user id");
     }
 }

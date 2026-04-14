@@ -1,12 +1,18 @@
 package com.example.categoryservice.application.service;
 
-import com.example.categoryservice.application.api.dto.*;
+import com.example.categoryservice.application.api.dto.CategoryCreateRequest;
+import com.example.categoryservice.application.api.dto.CategoryDeleteRequest;
+import com.example.categoryservice.application.api.dto.CategoryListItemResponse;
+import com.example.categoryservice.application.api.dto.CategoryListRequest;
+import com.example.categoryservice.application.api.dto.CategoryListResponse;
+import com.example.categoryservice.application.api.dto.CategoryResponse;
+import com.example.categoryservice.application.api.dto.CategoryUpdateRequest;
 import com.example.categoryservice.domain.model.Category;
 import com.example.categoryservice.domain.service.CategoryService;
 import com.example.categoryservice.infrastructure.TransactionServiceClient;
 import com.example.categoryservice.infrastructure.UserDto;
 import com.example.categoryservice.infrastructure.UserServiceClient;
-import com.sodam.common.response.ApiResponse;
+import com.sodam.common.integration.ExternalResponseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +27,7 @@ public class CategoryApplicationService {
     private final TransactionServiceClient transactionServiceClient;
 
     public CategoryResponse createCategory(CategoryCreateRequest request, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        Long id = userResponse.getData().getId();
-        request.setUserSeq(id);
+        request.setUserSeq(resolveUserId(email));
 
         Category category = categoryService.createCategory(request);
 
@@ -36,10 +39,7 @@ public class CategoryApplicationService {
     }
 
     public CategoryListResponse getCategories(CategoryListRequest request, Pageable pageable, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        Long id = userResponse.getData().getId();
-        request.setUserSeq(id);
+        request.setUserSeq(resolveUserId(email));
 
         Page<Category> categories = categoryService.getCategoriesByConditions(request, pageable);
 
@@ -55,9 +55,7 @@ public class CategoryApplicationService {
     }
 
     public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        Long userId = userResponse.getData().getId();
+        Long userId = resolveUserId(email);
 
         Category updatedCategory = categoryService.updateCategory(id, request, userId);
 
@@ -69,9 +67,7 @@ public class CategoryApplicationService {
     }
 
     public CategoryResponse getCategory(Long id, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        Long userId = userResponse.getData().getId();
+        Long userId = resolveUserId(email);
 
         Category category = categoryService.getCategoryById(id, userId);
 
@@ -83,12 +79,18 @@ public class CategoryApplicationService {
     }
 
     public void deleteCategory(Long id, String email, CategoryDeleteRequest request) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+        Long userId = resolveUserId(email);
 
-        Long userId = userResponse.getData().getId();
-
-        transactionServiceClient.moveCategory(id, request.getReplaceCategoryId());
+        ExternalResponseValidator.requireData(
+                transactionServiceClient.moveCategory(id, request.getReplaceCategoryId()),
+                "transaction-service"
+        );
 
         categoryService.deleteCategory(id, userId);
+    }
+
+    private Long resolveUserId(String email) {
+        UserDto user = ExternalResponseValidator.requireData(userServiceClient.getUser(email), "user-service");
+        return ExternalResponseValidator.requireField(user, UserDto::getId, "user-service", "user id");
     }
 }
