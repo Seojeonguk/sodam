@@ -39,8 +39,8 @@ function LoginPage() {
       localStorage.setItem("accessToken", accessToken);
       await fetchAccountBooks();
       void navigate("/dashboard");
-    } catch (e: any) {
-      setErrorMsg(e.message);
+    } catch (error: unknown) {
+      setErrorMsg(error instanceof Error ? error.message : "로그인에 실패했습니다.");
     }
   };
 
@@ -291,7 +291,9 @@ function LoginPage() {
                       backgroundColor: alpha(theme.palette.secondary.main, 0.12),
                     },
                   }}
-                  onClick={() => void navigate("/signup")}
+                onClick={() => {
+                  void navigate("/signup");
+                }}
                 >
                   회원가입
                 </Button>

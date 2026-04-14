@@ -16,10 +16,10 @@ import type { SignupRequestDto } from "../../../features/auth/api/signup.types";
 
 function SignupPage() {
   const theme = useTheme();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [name, setName] = useState<string>("");
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,17 +38,21 @@ function SignupPage() {
     };
 
     try {
-      const res = await SignupApi.signup(signupRequestDto);
-      if (res.code === "S-00000") {
+      const response = await SignupApi.signup(signupRequestDto);
+
+      if (response.code === "S-00000") {
         alert("회원가입이 완료되었습니다. 로그인해 주세요.");
-        navigate("/");
-      } else {
-        setErrorMsg(res.message || "회원가입에 실패했습니다.");
+        void navigate("/");
+        return;
       }
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "회원가입 중 오류가 발생했습니다.";
-      setErrorMsg(message);
+
+      setErrorMsg(response.message ?? "회원가입에 실패했습니다.");
+    } catch (error: unknown) {
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "회원가입 중 오류가 발생했습니다.",
+      );
     }
   };
 
@@ -80,7 +84,7 @@ function SignupPage() {
             </Typography>
             <Typography variant="h4">회원가입</Typography>
             <Typography color="text.secondary">
-              가계부를 함께 쓰기 위한 기본 정보를 입력해 주세요.
+              가계부를 시작하기 위한 기본 정보를 입력해 주세요.
             </Typography>
           </Stack>
 
@@ -91,7 +95,9 @@ function SignupPage() {
             flexDirection="column"
             gap={2}
             position="relative"
-            onSubmit={(e) => void handleSubmit(e)}
+            onSubmit={(event) => {
+              void handleSubmit(event);
+            }}
           >
             <TextField
               label="이메일"
@@ -117,7 +123,12 @@ function SignupPage() {
               가입하기
             </Button>
 
-            <Button variant="text" onClick={() => navigate("/")}>
+            <Button
+              variant="text"
+              onClick={() => {
+                void navigate("/");
+              }}
+            >
               로그인으로 돌아가기
             </Button>
           </Box>

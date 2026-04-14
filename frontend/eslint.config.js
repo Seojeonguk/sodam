@@ -8,6 +8,18 @@ import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   {
+    ignores: [
+      ".vite/**",
+      "dist/**",
+      "dist-ssr/**",
+      "node_modules/**",
+      ".history/**",
+      "**/*.jsconfig.json",
+      "eslint.config.js",
+      ".prettierrc.cjs",
+    ],
+  },
+  {
     ...pluginJs.configs.recommended,
   },
   {
@@ -29,9 +41,18 @@ export default tseslint.config(
         ...globals.browser,
       },
     },
+    rules: {
+      "no-undef": "off",
+      "no-unused-vars": "off",
+    },
   },
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
     plugins: {
       react: pluginReact,
       "react-hooks": pluginReactHooks,
@@ -61,6 +82,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ["src/entities/accountbook/model/AccountBookContext.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
     ...prettierConfig,
   },
   {
@@ -76,14 +103,5 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/ban-ts-comment": "warn",
     },
-  },
-  {
-    ignores: [
-      "dist/",
-      "node_modules/",
-      "**/*.jsconfig.json",
-      "eslint.config.js",
-      ".prettierrc.cjs",
-    ],
   },
 );
