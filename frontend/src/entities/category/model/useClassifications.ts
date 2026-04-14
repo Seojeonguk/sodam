@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-
 import classificationApi from "../api/classificationApi";
 import type { ClassificationResponse } from "../api/classification.types";
 
@@ -25,7 +24,7 @@ export const useClassifications = (accountBookId?: number | null) => {
 
       try {
         const response = await classificationApi.getClassifications(accountBookId);
-        setClassifications(response.data);
+        setClassifications(response);
       } catch (err) {
         if (axios.isAxiosError(err)) {
           setError(err.message);
@@ -52,7 +51,7 @@ export const useClassifications = (accountBookId?: number | null) => {
 
     try {
       const response = await classificationApi.getClassifications(accountBookId);
-      setClassifications(response.data);
+      setClassifications(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
