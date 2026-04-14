@@ -5,9 +5,9 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
+import { API_BASE_URL } from "../config/app";
 
-const BASE_URL =
-  import.meta.env.VITE_API_TRANSACTION_BASE_URL ?? "http://localhost:10003/api";
+const BASE_URL = API_BASE_URL;
 
 export interface ApiResponse<T> {
   code: string;

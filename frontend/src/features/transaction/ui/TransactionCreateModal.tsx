@@ -26,6 +26,10 @@ import type { ClassificationResponse } from "../../../entities/category/api/clas
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types";
+import {
+  CATEGORY_SELECTION_PAGE_SIZE,
+  DEFAULT_PAGE_INDEX,
+} from "../../../shared/config/app";
 
 const style = {
   position: "absolute",
@@ -95,7 +99,10 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       try {
         const [fetchedClassifications, fetchedCategories] = await Promise.all([
           classificationApi.getClassifications(currentAccountBook.id),
-          categoryApi.getCategories(0, 100),
+          categoryApi.getCategories(
+            DEFAULT_PAGE_INDEX,
+            CATEGORY_SELECTION_PAGE_SIZE,
+          ),
         ]);
 
         setClassifications(fetchedClassifications);
