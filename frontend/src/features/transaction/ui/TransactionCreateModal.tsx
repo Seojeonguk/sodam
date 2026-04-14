@@ -43,6 +43,7 @@ const style = {
 interface TransactionCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => Promise<void>;
 }
 
 const classificationLabelMap: Record<"INCOME" | "EXPENSE", string> = {
@@ -66,6 +67,7 @@ const getApiErrorMessage = (payload: unknown): string | null => {
 const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   isOpen,
   onClose,
+  onSuccess,
 }) => {
   const { currentAccountBook } = useAccountBookContext();
 
@@ -178,6 +180,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       };
 
       await transactionApi.createTransaction(newTransaction);
+      await onSuccess();
       setSuccess("거래가 성공적으로 추가되었습니다.");
       handleClose();
       } catch (err: unknown) {

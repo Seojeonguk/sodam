@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
 import categoryApi from "../api/categoryApi";
 import type { CategoryListResponse } from "../../transaction/api/category.types";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<CategoryListResponse | null>(null);
@@ -24,29 +24,34 @@ export const useCategories = () => {
     try {
       const response = await categoryApi.getCategories(0, 20);
       setCategories(response);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("카테고리를 불러오는 중 오류가 발생했습니다.");
-      }
+    } catch (nextError) {
+      setError(
+        getServerErrorMessage(
+          nextError,
+          "카테고리를 불러오는 중 오류가 발생했습니다.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
   }, [currentAccountBook?.id]);
 
-  const deleteCategory = async (id: number, replacementId: number) => {
-    try {
-      await categoryApi.deleteCategory(id, replacementId);
-      await fetchCategories();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        throw new Error(err.message);
+  const deleteCategory = useCallback(
+    async (id: number, replacementId: number) => {
+      try {
+        await categoryApi.deleteCategory(id, replacementId);
+        await fetchCategories();
+      } catch (nextError) {
+        throw new Error(
+          getServerErrorMessage(
+            nextError,
+            "카테고리 삭제 중 오류가 발생했습니다.",
+          ),
+        );
       }
-
-      throw new Error("카테고리 삭제 중 오류가 발생했습니다.");
-    }
-  };
+    },
+    [fetchCategories],
+  );
 
   useEffect(() => {
     void fetchCategories();

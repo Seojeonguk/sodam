@@ -42,6 +42,7 @@ const style = {
 interface CategoryCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => Promise<void>;
 }
 
 type CreateMode = "single" | "bulk";
@@ -49,6 +50,7 @@ type CreateMode = "single" | "bulk";
 const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   isOpen,
   onClose,
+  onSuccess,
 }) => {
   const [mode, setMode] = useState<CreateMode>("single");
   const [name, setName] = useState("");
@@ -107,6 +109,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       description: description || undefined,
       color: color || undefined,
     });
+    await onSuccess();
 
     if (keepCreating) {
       setSuccess("카테고리를 저장했습니다. 다음 카테고리를 바로 추가해 보세요.");
@@ -130,6 +133,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
         color: getRandomColor(),
       });
     }
+    await onSuccess();
 
     setSuccess(
       `${parsedBulkNames.length}개의 카테고리를 한 번에 추가했습니다.`,

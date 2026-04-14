@@ -1,31 +1,31 @@
-// src/features/Transaction/components/TransactionEditModal.tsx
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Modal,
+  Alert,
   Box,
-  Typography,
-  TextField,
   Button,
+  CircularProgress,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Modal,
+  Select,
+  TextField,
+  Typography,
   type SelectChangeEvent,
-  CircularProgress,
-  Alert,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import dayjs, { Dayjs } from "dayjs";
-
+import dayjs, { type Dayjs } from "dayjs";
+import axios from "axios";
+import categoryApi from "../../../entities/category/api/categoryApi";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
+import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import type {
   TransactionResponseDto,
   TransactionUpdateRequestDto,
 } from "../../../entities/transaction/api/transaction.types";
-import axios from "axios";
+import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 const style = {
   position: "absolute" as const,
@@ -42,115 +42,129 @@ const style = {
 
 interface TransactionEditModalProps {
   isOpen: boolean;
-  transactionToEdit: TransactionResponseDto | null; // 수정할 거래 데이터 (초기값 설정용)
+  transactionToEdit: TransactionResponseDto | null;
   onClose: () => void;
+  onSuccess: () => Promise<void>;
 }
 
 const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
   isOpen,
   transactionToEdit,
   onClose,
+  onSuccess,
 }) => {
-  // 폼 필드 상태 관리 (초기값은 transactionToEdit에서 가져옴)
-  const [type, setType] = useState<"INCOME" | "EXPENSE">(
-    transactionToEdit?.type ?? "EXPENSE"
-  );
-  const [amount, setAmount] = useState<string>(
-    transactionToEdit?.amount.toString() ?? ""
-  );
-  const [categorySeq, setCategorySeq] = useState<number | undefined>(
-    transactionToEdit?.categorySeq
-  );
-  const [description, setDescription] = useState<string>(
-    transactionToEdit?.description ?? ""
-  );
-  const [transactionDate, setTransactionDate] = useState<Dayjs | null>(
-    transactionToEdit?.transactionDate
-      ? dayjs(transactionToEdit.transactionDate)
-      : dayjs()
-  );
-
-  const [loading, setLoading] = useState<boolean>(false);
+  const { currentAccountBook } = useAccountBookContext();
+  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [amount, setAmount] = useState("");
+  const [categorySeq, setCategorySeq] = useState<number | "">("");
+  const [description, setDescription] = useState("");
+  const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs());
+  const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  // transactionToEdit이 변경될 때마다 폼 필드 초기화
   useEffect(() => {
-    if (transactionToEdit) {
-      setType(transactionToEdit.type);
-      setAmount(transactionToEdit.amount.toString());
-      setCategorySeq(transactionToEdit.categorySeq);
-      setDescription(transactionToEdit.description || "");
-      setTransactionDate(dayjs(transactionToEdit.transactionDate));
-    } else {
-      // transactionToEdit이 null이면 (새 모달이 열릴 때 등) 폼 필드 초기화
+    if (!transactionToEdit) {
       setType("EXPENSE");
       setAmount("");
-      setCategorySeq(undefined);
+      setCategorySeq("");
       setDescription("");
       setTransactionDate(dayjs());
+      setCategories([]);
+      setError(null);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    setType(transactionToEdit.type);
+    setAmount(transactionToEdit.amount.toString());
+    setCategorySeq(transactionToEdit.categorySeq ?? "");
+    setDescription(transactionToEdit.description ?? "");
+    setTransactionDate(dayjs(transactionToEdit.transactionDate));
     setError(null);
-    setSuccess(null);
+    setLoading(false);
   }, [transactionToEdit]);
 
-  const categories =
-    type === "EXPENSE"
-      ? ["식비", "교통비", "문화생활", "통신비", "월세", "기타지출"]
-      : ["월급", "부수입", "용돈", "환급", "기타수입"];
+  useEffect(() => {
+    const fetchModalOptions = async () => {
+      if (!isOpen || !currentAccountBook?.id) {
+        setCategories([]);
+        return;
+      }
+
+      try {
+        const fetchedCategories = await categoryApi.getCategories(0, 100);
+        setCategories(fetchedCategories.categories ?? []);
+      } catch (nextError) {
+        if (axios.isAxiosError(nextError)) {
+          setError(nextError.message);
+        } else {
+          setError("카테고리 목록을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+    };
+
+    void fetchModalOptions();
+  }, [currentAccountBook?.id, isOpen]);
 
   const handleClose = () => {
-    onClose(); // 부모 컴포넌트의 onClose 호출
+    setError(null);
+    setLoading(false);
+    onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!transactionToEdit?.seq) {
-      // 수정할 거래 ID가 없으면 에러
       setError("수정할 거래를 찾을 수 없습니다.");
       return;
     }
-    if (!amount || parseFloat(amount) <= 0) {
-      setError("금액을 올바르게 입력해주세요.");
+
+    if (!amount || Number.parseFloat(amount) <= 0) {
+      setError("금액을 올바르게 입력해 주세요.");
       return;
     }
+
     if (!transactionDate) {
-      setError("거래 날짜를 선택해주세요.");
+      setError("거래 날짜를 선택해 주세요.");
+      return;
+    }
+
+    if (categorySeq === "") {
+      setError("카테고리를 선택해 주세요.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const updatedTransaction: TransactionUpdateRequestDto = {
-        type: type,
-        amount: parseFloat(amount),
-        categorySeq: categorySeq,
-        description: description,
-        transactionDate: transactionDate?.second(0)?.format("YYYYMMDDHHmmss"),
+      const payload: TransactionUpdateRequestDto = {
+        type,
+        amount: Number.parseFloat(amount),
+        categorySeq,
+        description,
+        transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
       };
 
-      await transactionApi.updateTransaction(
-        transactionToEdit.seq,
-        updatedTransaction
-      );
-      setSuccess("거래가 성공적으로 수정되었습니다!");
+      await transactionApi.updateTransaction(transactionToEdit.seq, payload);
+      await onSuccess();
       handleClose();
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response) {
-        const data = err.response.data as { message?: string };
-        setError(`거래 수정 실패: ${data.message ?? err.message}`);
+    } catch (nextError) {
+      if (axios.isAxiosError(nextError)) {
+        setError(nextError.message);
       } else {
-        setError("거래 수정 중 예상치 못한 오류가 발생했습니다.");
+        setError("거래 수정 중 오류가 발생했습니다.");
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (!transactionToEdit) {
+    return null;
+  }
 
   return (
     <Modal
@@ -159,7 +173,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       aria-labelledby="transaction-edit-modal-title"
       aria-describedby="transaction-edit-modal-description"
     >
-      <Box sx={style} component="form" onSubmit={(e) => void handleSubmit(e)}>
+      <Box sx={style} component="form" onSubmit={(event) => void handleSubmit(event)}>
         <Typography
           id="transaction-edit-modal-title"
           variant="h5"
@@ -169,28 +183,22 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
           거래 수정
         </Typography>
 
-        {error && (
+        {error ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
+        ) : null}
 
-        {/* CreateModal과 동일한 폼 필드들 */}
         <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="type-select-label">분류</InputLabel>
+          <InputLabel id="type-select-label">유형</InputLabel>
           <Select
             labelId="type-select-label"
             id="type-select"
             value={type}
-            label="분류"
-            onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
-              setType(e.target.value);
-              setCategorySeq(undefined);
+            label="유형"
+            onChange={(event: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
+              setType(event.target.value);
+              setCategorySeq("");
             }}
           >
             <MenuItem value="EXPENSE">지출</MenuItem>
@@ -203,7 +211,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
           label="금액"
           type="number"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(event) => setAmount(event.target.value)}
           margin="normal"
           required
           sx={{ mb: 2 }}
@@ -216,11 +224,12 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
             id="category-select"
             value={categorySeq}
             label="카테고리"
-            onChange={(e) => setCategorySeq(e.target.value)}
+            onChange={(event) => setCategorySeq(Number(event.target.value))}
+            required
           >
-            {categories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
               </MenuItem>
             ))}
           </Select>
@@ -230,7 +239,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
           fullWidth
           label="내용 (선택 사항)"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(event) => setDescription(event.target.value)}
           margin="normal"
           multiline
           rows={2}

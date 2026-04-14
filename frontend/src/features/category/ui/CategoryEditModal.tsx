@@ -33,12 +33,14 @@ interface CategoryEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   category: CategoryListItemResponse | null;
+  onSuccess: () => Promise<void>;
 }
 
 const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   isOpen,
   onClose,
   category,
+  onSuccess,
 }) => {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -81,6 +83,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
         description: description || undefined,
         color: color || undefined,
       });
+      await onSuccess();
       setSuccess("카테고리가 성공적으로 수정되었습니다.");
       handleClose();
     } catch (err) {

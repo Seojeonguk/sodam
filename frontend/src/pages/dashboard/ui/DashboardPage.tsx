@@ -45,6 +45,7 @@ function DashboardPage() {
     statPeriodDataset,
     dateRange,
     setDateRange,
+    refreshTransactionData,
   } = useTransactions();
   const {
     categories,
@@ -255,7 +256,14 @@ function DashboardPage() {
 
       {isLoading && <DashboardLoadingState />}
 
-      {!isLoading && error && <DashboardErrorState message={error} />}
+      {!isLoading && error && (
+        <DashboardErrorState
+          message={error}
+          onRetry={() => {
+            void refreshTransactionData();
+          }}
+        />
+      )}
 
       {!isLoading && !error && (
         <Stack spacing={3}>
