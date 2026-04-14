@@ -23,6 +23,8 @@ interface ApiErrorPayload {
   message: string;
 }
 
+let accessToken: string | null = null;
+
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
@@ -44,7 +46,24 @@ const onRefreshed = (token: string): void => {
   refreshSubscribers = [];
 };
 
-async function requestNewAccessToken(): Promise<string> {
+export const getAccessToken = (): string | null => accessToken;
+
+export const setAccessToken = (token: string | null): void => {
+  accessToken = token;
+
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    return;
+  }
+
+  delete api.defaults.headers.common.Authorization;
+};
+
+export const clearAccessToken = (): void => {
+  setAccessToken(null);
+};
+
+export async function requestNewAccessToken(): Promise<string> {
   const url = `${BASE_URL}/auth/reissue`;
   const response = await axios.post<ApiResponse<ReissueData>>(
     url,
@@ -62,13 +81,23 @@ async function requestNewAccessToken(): Promise<string> {
     throw new Error("Invalid refresh response");
   }
 
-  localStorage.setItem("accessToken", accessToken);
+  setAccessToken(accessToken);
   return accessToken;
+}
+
+export async function restoreSession(): Promise<boolean> {
+  try {
+    await requestNewAccessToken();
+    return true;
+  } catch {
+    clearAccessToken();
+    return false;
+  }
 }
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -117,7 +146,6 @@ api.interceptors.response.use(
       try {
         const newToken = await requestNewAccessToken();
 
-        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
         onRefreshed(newToken);
 
         if (originalRequest.headers) {
@@ -126,7 +154,7 @@ api.interceptors.response.use(
 
         return await api(originalRequest);
       } catch (refreshError: unknown) {
-        localStorage.removeItem("accessToken");
+        clearAccessToken();
         throw refreshError instanceof Error
           ? refreshError
           : new Error("Unable to refresh token");

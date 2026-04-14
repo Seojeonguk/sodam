@@ -17,6 +17,8 @@ import { useNavigate } from "react-router-dom";
 import LoginApi from "../../../features/auth/api/LoginApi";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
+import { clearAccessToken } from "../../../shared/api/api";
+import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -53,6 +55,7 @@ const StyledAppBar = styled(MuiAppBar, {
 function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   const isDesktop = useIsDesktop();
   const nav = useNavigate();
+  const { resetAccountBooks } = useAccountBookContext();
 
   const handleLogoClick = () => {
     void nav("/dashboard");
@@ -65,7 +68,8 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
       } catch (error) {
         console.error("Logout API failed", error);
       } finally {
-        localStorage.removeItem("accessToken");
+        clearAccessToken();
+        resetAccountBooks();
         void nav("/");
       }
     }

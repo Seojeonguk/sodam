@@ -38,8 +38,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
-        return ApiResponse.success("로그아웃되었습니다. 클라이언트의 토큰을 삭제하세요.", null);
+    public ApiResponse<Void> logout(HttpServletResponse response) {
+        userService.logout(response);
+        return ApiResponse.success("로그아웃되었습니다.", null);
     }
 
     @PostMapping("/register")
@@ -53,7 +54,9 @@ public class AuthController {
         LoginResponse userInfo = userService.reissue(request);
 
         if (userInfo == null) {
-            return ResponseEntity.ok(ApiResponse.fail(ResponseCode.UNAUTHORIZED.getCode(), "Refresh token이 유효하지 않습니다."));
+            return ResponseEntity.ok(
+                    ApiResponse.fail(ResponseCode.UNAUTHORIZED.getCode(), "Refresh token이 유효하지 않습니다.")
+            );
         }
 
         return ResponseEntity.ok(ApiResponse.success(userInfo));

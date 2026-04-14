@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AccountBookListResponse } from "../api/accountbook.types";
 import accountBookApi from "../api/accountBookApi";
 import axios from "axios";
@@ -8,13 +8,16 @@ export const useAccountBooks = () => {
     []
   );
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAccountBooks = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
       const response = await accountBookApi.getAccountBooks();
-      setAccountBooks(response.data);
+      setAccountBooks(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
@@ -26,14 +29,17 @@ export const useAccountBooks = () => {
     }
   };
 
-  useEffect(() => {
-    void fetchAccountBooks();
-  }, []);
+  const resetAccountBooks = () => {
+    setAccountBooks([]);
+    setError(null);
+    setLoading(false);
+  };
 
   return {
     accountBooks,
     loading,
     error,
     fetchAccountBooks,
+    resetAccountBooks,
   };
 };
