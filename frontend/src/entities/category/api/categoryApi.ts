@@ -1,35 +1,33 @@
 import api from "../../../shared/api/api";
 import type {
-  CategoryListResponse,
   CategoryListItemResponse,
+  CategoryListResponse,
 } from "../../transaction/api/category.types";
 
 const CATEGORY_BASE_URL = "/categories";
+
+interface CategoryUpsertRequest {
+  name: string;
+  description?: string;
+  color?: string;
+}
 
 const categoryApi = {
   getCategories: async (
     page = 0,
     size = 100,
-  ): Promise<CategoryListResponse> => {
-    const response = (await api.get<CategoryListResponse>(
+  ): Promise<CategoryListResponse> =>
+    api.get<CategoryListResponse>(
       `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
-    )) as CategoryListResponse;
+    ),
 
-    return response;
-  },
-
-  createCategory: async (data: {
-    name: string;
-    description?: string;
-    color?: string;
-  }): Promise<CategoryListItemResponse> => {
-    const response = (await api.post<CategoryListItemResponse>(
+  createCategory: async (
+    data: CategoryUpsertRequest,
+  ): Promise<CategoryListItemResponse> =>
+    api.post<CategoryListItemResponse, CategoryUpsertRequest>(
       CATEGORY_BASE_URL,
       data,
-    )) as CategoryListItemResponse;
-
-    return response;
-  },
+    ),
 
   deleteCategory: async (id: number, replacementId: number): Promise<void> => {
     await api.delete(`${CATEGORY_BASE_URL}/${id}`, {
@@ -39,19 +37,12 @@ const categoryApi = {
 
   updateCategory: async (
     id: number,
-    data: {
-      name: string;
-      description?: string;
-      color?: string;
-    },
-  ): Promise<CategoryListItemResponse> => {
-    const response = (await api.put<CategoryListItemResponse>(
+    data: CategoryUpsertRequest,
+  ): Promise<CategoryListItemResponse> =>
+    api.put<CategoryListItemResponse, CategoryUpsertRequest>(
       `${CATEGORY_BASE_URL}/${id}`,
       data,
-    )) as CategoryListItemResponse;
-
-    return response;
-  },
+    ),
 };
 
 export default categoryApi;

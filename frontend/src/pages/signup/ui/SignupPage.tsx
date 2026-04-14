@@ -16,14 +16,15 @@ import type { SignupRequestDto } from "../../../features/auth/api/signup.types";
 
 function SignupPage() {
   const theme = useTheme();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setErrorMsg("");
 
     if (!email || !password || !name) {
@@ -38,15 +39,9 @@ function SignupPage() {
     };
 
     try {
-      const response = await SignupApi.signup(signupRequestDto);
-
-      if (response.code === "S-00000") {
-        alert("회원가입이 완료되었습니다. 로그인해 주세요.");
-        void navigate("/");
-        return;
-      }
-
-      setErrorMsg(response.message ?? "회원가입에 실패했습니다.");
+      await SignupApi.signup(signupRequestDto);
+      alert("회원가입이 완료되었습니다. 로그인해 주세요.");
+      void navigate("/");
     } catch (error: unknown) {
       setErrorMsg(
         error instanceof Error
@@ -78,6 +73,7 @@ function SignupPage() {
               filter: "blur(16px)",
             }}
           />
+
           <Stack spacing={1} mb={4} position="relative">
             <Typography variant="overline" color="text.secondary">
               CREATE ACCOUNT
@@ -103,18 +99,18 @@ function SignupPage() {
               label="이메일"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(nextEvent) => setEmail(nextEvent.target.value)}
             />
             <TextField
               label="비밀번호"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(nextEvent) => setPassword(nextEvent.target.value)}
             />
             <TextField
               label="이름"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(nextEvent) => setName(nextEvent.target.value)}
             />
 
             {errorMsg ? <Alert severity="error">{errorMsg}</Alert> : null}

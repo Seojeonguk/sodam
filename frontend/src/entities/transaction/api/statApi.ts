@@ -9,27 +9,17 @@ import type {
 const STAT_BASE_URL = "/stat";
 
 const statApi = {
-  getStats: async (data: StatRequest): Promise<StatResponse[]> => {
-    const response = (await api.get<StatResponse[]>(
-      STAT_BASE_URL,
-      {
-        params: data,
-      },
-    )) as StatResponse[];
-
-    return response;
-  },
+  getStats: async (data: StatRequest): Promise<StatResponse[]> =>
+    api.get<StatResponse[]>(STAT_BASE_URL, {
+      params: data,
+    }),
 
   getPeriodStats: async (
-    req: StatPeriodRequest,
-  ): Promise<StatPeriodResponse[]> => {
-    const response = (await api.get<StatPeriodResponse[]>(
-      `${STAT_BASE_URL}/period`,
-      { params: req },
-    )) as StatPeriodResponse[];
-
-    return response;
-  },
+    request: StatPeriodRequest,
+  ): Promise<StatPeriodResponse[]> =>
+    api.get<StatPeriodResponse[]>(`${STAT_BASE_URL}/period`, {
+      params: request,
+    }),
 };
 
 export default statApi;

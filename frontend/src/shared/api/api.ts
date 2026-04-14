@@ -1,6 +1,7 @@
 import axios, {
   type AxiosError,
   type AxiosInstance,
+  type AxiosRequestConfig,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
@@ -8,7 +9,7 @@ import axios, {
 const BASE_URL =
   import.meta.env.VITE_API_TRANSACTION_BASE_URL ?? "http://localhost:10003/api";
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   code: string;
   message: string;
   data: T;
@@ -18,14 +19,28 @@ interface ReissueData {
   accessToken: string;
 }
 
-interface ApiErrorPayload {
+export interface ApiErrorPayload {
   code: string;
   message: string;
 }
 
-let accessToken: string | null = null;
+export class ApiClientError extends Error {
+  code: string;
 
-const api: AxiosInstance = axios.create({
+  constructor({ code, message }: ApiErrorPayload) {
+    super(message);
+    this.name = "ApiClientError";
+    this.code = code;
+  }
+}
+
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let accessToken: string | null = null;
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+const http: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
   headers: {
@@ -34,16 +49,37 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-const subscribeTokenRefresh = (cb: (token: string) => void): void => {
-  refreshSubscribers.push(cb);
+const subscribeTokenRefresh = (callback: (token: string) => void): void => {
+  refreshSubscribers.push(callback);
 };
 
 const onRefreshed = (token: string): void => {
-  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers.forEach((callback) => callback(token));
   refreshSubscribers = [];
+};
+
+const unwrapResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
+  const { code, message, data } = response.data;
+
+  if (!code.startsWith("S")) {
+    throw new ApiClientError({ code, message });
+  }
+
+  return data;
+};
+
+const toApiClientError = (
+  error: AxiosError<ApiResponse<unknown> | ApiErrorPayload>,
+): ApiClientError => {
+  const payload = error.response?.data;
+
+  return new ApiClientError({
+    code: payload?.code ?? "NETWORK_ERROR",
+    message:
+      payload?.message ??
+      error.message ??
+      "Network request failed.",
+  });
 };
 
 export const getAccessToken = (): string | null => accessToken;
@@ -52,11 +88,11 @@ export const setAccessToken = (token: string | null): void => {
   accessToken = token;
 
   if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    http.defaults.headers.common.Authorization = `Bearer ${token}`;
     return;
   }
 
-  delete api.defaults.headers.common.Authorization;
+  delete http.defaults.headers.common.Authorization;
 };
 
 export const clearAccessToken = (): void => {
@@ -64,9 +100,8 @@ export const clearAccessToken = (): void => {
 };
 
 export async function requestNewAccessToken(): Promise<string> {
-  const url = `${BASE_URL}/auth/reissue`;
   const response = await axios.post<ApiResponse<ReissueData>>(
-    url,
+    `${BASE_URL}/auth/reissue`,
     {},
     {
       withCredentials: true,
@@ -76,13 +111,16 @@ export async function requestNewAccessToken(): Promise<string> {
     },
   );
 
-  const accessToken = response.data.data.accessToken;
-  if (!accessToken) {
-    throw new Error("Invalid refresh response");
+  const nextToken = response.data.data.accessToken;
+  if (!nextToken) {
+    throw new ApiClientError({
+      code: "INVALID_REFRESH_RESPONSE",
+      message: "Invalid refresh response",
+    });
   }
 
-  setAccessToken(accessToken);
-  return accessToken;
+  setAccessToken(nextToken);
+  return nextToken;
 }
 
 export async function restoreSession(): Promise<boolean> {
@@ -95,7 +133,7 @@ export async function restoreSession(): Promise<boolean> {
   }
 }
 
-api.interceptors.request.use(
+http.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = getAccessToken();
     if (token && config.headers) {
@@ -106,20 +144,10 @@ api.interceptors.request.use(
   async (error: AxiosError) => Promise.reject(error),
 );
 
-api.interceptors.response.use(
-  <T>(response: AxiosResponse<ApiResponse<T>>) => {
-    const { code, message, data } = response.data;
-
-    if (!code.startsWith("S")) {
-      throw new Error(message);
-    }
-
-    return data;
-  },
+http.interceptors.response.use(
+  (response) => response,
   async (error: AxiosError<ApiResponse<unknown>>) => {
-    const originalRequest = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
-      | undefined;
+    const originalRequest = error.config as RetriableRequestConfig | undefined;
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (isRefreshing) {
@@ -129,11 +157,14 @@ api.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${token}`;
             }
 
-            api(originalRequest).then(resolve).catch((retryError: unknown) => {
+            http(originalRequest).then(resolve).catch((retryError: unknown) => {
               reject(
                 retryError instanceof Error
                   ? retryError
-                  : new Error("Retry request failed"),
+                  : new ApiClientError({
+                      code: "RETRY_REQUEST_FAILED",
+                      message: "Retry request failed",
+                    }),
               );
             });
           });
@@ -145,36 +176,54 @@ api.interceptors.response.use(
 
       try {
         const newToken = await requestNewAccessToken();
-
         onRefreshed(newToken);
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
 
-        return await api(originalRequest);
+        return await http(originalRequest);
       } catch (refreshError: unknown) {
         clearAccessToken();
         throw refreshError instanceof Error
           ? refreshError
-          : new Error("Unable to refresh token");
+          : new ApiClientError({
+              code: "REFRESH_FAILED",
+              message: "Unable to refresh token",
+            });
       } finally {
         isRefreshing = false;
       }
     }
 
-    const payload = error.response?.data;
-    const message =
-      payload?.message ??
-      (error.message || "네트워크 오류가 발생했습니다.");
-    const code = payload?.code ?? "NETWORK_ERROR";
-
-    return Promise.reject(
-      Object.assign(new Error(message), {
-        code,
-      } satisfies ApiErrorPayload),
-    );
+    return Promise.reject(toApiClientError(error));
   },
 );
+
+const api = {
+  get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return http.get<ApiResponse<T>>(url, config).then(unwrapResponse);
+  },
+
+  post<T, B = unknown>(
+    url: string,
+    data?: B,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return http.post<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+  },
+
+  put<T, B = unknown>(
+    url: string,
+    data?: B,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return http.put<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+  },
+
+  delete<T = void>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return http.delete<ApiResponse<T>>(url, config).then(unwrapResponse);
+  },
+};
 
 export default api;

@@ -1,7 +1,7 @@
 import api from "../../../shared/api/api";
 import type {
-  TransactionListResponse,
   TransactionCreateRequestDto,
+  TransactionListResponse,
   TransactionResponseDto,
   TransactionUpdateRequestDto,
 } from "./transaction.types";
@@ -13,50 +13,36 @@ const transactionApi = {
     accountId: number,
     startDate?: string,
     endDate?: string,
-  ): Promise<TransactionListResponse> => {
-    const response = (await api.get<TransactionListResponse>(
-      TRANSACTION_BASE_URL,
-      {
-        params: {
-          accountBookSeq: accountId,
-          startDate,
-          endDate,
-        },
+  ): Promise<TransactionListResponse> =>
+    api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
+      params: {
+        accountBookSeq: accountId,
+        startDate,
+        endDate,
       },
-    )) as TransactionListResponse;
-
-    return response;
-  },
+    }),
 
   createTransaction: async (
     data: TransactionCreateRequestDto,
-  ): Promise<TransactionResponseDto> => {
-    const response = await api.post<TransactionResponseDto>(
+  ): Promise<TransactionResponseDto> =>
+    api.post<TransactionResponseDto, TransactionCreateRequestDto>(
       TRANSACTION_BASE_URL,
       data,
-    );
-    return response;
-  },
+    ),
 
   getTransactionBySeq: async (
     seq: number | null,
-  ): Promise<TransactionResponseDto> => {
-    const response = await api.get<TransactionResponseDto>(
-      `${TRANSACTION_BASE_URL}/${seq}`,
-    );
-    return response;
-  },
+  ): Promise<TransactionResponseDto> =>
+    api.get<TransactionResponseDto>(`${TRANSACTION_BASE_URL}/${seq}`),
 
   updateTransaction: async (
     seq: number,
     data: TransactionUpdateRequestDto,
-  ): Promise<TransactionResponseDto> => {
-    const response = await api.put<TransactionResponseDto>(
+  ): Promise<TransactionResponseDto> =>
+    api.put<TransactionResponseDto, TransactionUpdateRequestDto>(
       `${TRANSACTION_BASE_URL}/${seq}`,
       data,
-    );
-    return response;
-  },
+    ),
 
   deleteTransaction: async (seq: number): Promise<void> => {
     await api.delete(`${TRANSACTION_BASE_URL}/${seq}`);
