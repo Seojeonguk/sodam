@@ -7,12 +7,14 @@ interface DashboardHeroProps {
   netBalance: number;
   totalIncome: number;
   totalExpense: number;
+  standards: string[];
 }
 
 export const DashboardHero = ({
   netBalance,
   totalIncome,
   totalExpense,
+  standards,
 }: DashboardHeroProps) => {
   const theme = useTheme();
 
@@ -22,7 +24,7 @@ export const DashboardHero = ({
       sx={{
         p: { xs: 3, md: 4 },
         mb: 4,
-        borderRadius: 4,
+        borderRadius: 3,
         color: "common.white",
         position: "relative",
         overflow: "hidden",
@@ -50,27 +52,27 @@ export const DashboardHero = ({
       <Stack spacing={3} position="relative">
         <Box>
           <Typography variant="overline" sx={{ letterSpacing: 2 }}>
-            FINANCE DASHBOARD
+            DASHBOARD OVERVIEW
           </Typography>
           <Typography
             variant="h4"
             component="h1"
             fontWeight={700}
             mb={1}
-            sx={{ fontSize: { xs: "1rem", md: "2rem" } }}
+            sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}
           >
-            💡 한눈에 보는 지출 & 수입 흐름
+            이번 가계부 현황을 기준과 함께 살펴보세요
           </Typography>
           <Typography
             variant="body1"
             sx={{
-              maxWidth: 640,
-              opacity: 0.9,
-              fontSize: { xs: "0.8rem", md: "1rem" },
+              maxWidth: 680,
+              opacity: 0.92,
+              fontSize: { xs: "0.92rem", md: "1rem" },
             }}
           >
-            최근 거래, 카테고리, 월별 추이를 묶어 재무 흐름을 빠르게 파악하세요.
-            주요 지표를 기반으로 오늘의 결정을 뒷받침해 드립니다.
+            숫자만 보여주는 대신, 각 카드와 차트가 어떤 기준으로 집계됐는지
+            같이 확인할 수 있도록 정리했습니다.
           </Typography>
         </Box>
 
@@ -85,15 +87,15 @@ export const DashboardHero = ({
             </Typography>
             <Box>
               <Typography variant="subtitle2">
-                {netBalance >= 0 ? "순이익" : "순지출"}
+                {netBalance >= 0 ? "순이익 기준" : "순지출 기준"}
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                수입 대비 지출
+              <Typography variant="caption" sx={{ opacity: 0.84 }}>
+                수입 합계 대비 지출 합계
               </Typography>
             </Box>
           </Stack>
           <Box flexGrow={1} />
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
             <Chip
               icon={<ArrowUpward />}
               label={`수입 ${formatCurrency(totalIncome)}`}
@@ -118,6 +120,30 @@ export const DashboardHero = ({
             />
           </Stack>
         </Stack>
+
+        <Box>
+          <Typography
+            variant="caption"
+            sx={{ display: "block", opacity: 0.84, mb: 1.2 }}
+          >
+            집계 기준
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
+            {standards.map((standard) => (
+              <Chip
+                key={standard}
+                label={standard}
+                sx={{
+                  color: "common.white",
+                  borderColor: alpha("#fff", 0.3),
+                  borderWidth: 1,
+                  borderStyle: "solid",
+                  backgroundColor: alpha("#fff", 0.1),
+                }}
+              />
+            ))}
+          </Stack>
+        </Box>
       </Stack>
     </Paper>
   );
