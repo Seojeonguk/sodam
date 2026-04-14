@@ -58,6 +58,6 @@ public class FeignConfig {
     @Bean
     RequestInterceptor internalServiceFeignInterceptor(Environment environment, InternalServiceProperties properties) {
         String applicationName = environment.getProperty("spring.application.name", "unknown-service");
-        return new InternalServiceFeignInterceptor(applicationName, properties.tokenOrDefault());
+        return new InternalServiceFeignInterceptor(applicationName, properties.token());
     }
 }

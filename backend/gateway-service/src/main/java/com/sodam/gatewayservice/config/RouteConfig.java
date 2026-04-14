@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 @RequiredArgsConstructor
@@ -16,6 +17,9 @@ public class RouteConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                .route("internal-api-block", r -> r.path("/internal/**")
+                        .filters(f -> f.setStatus(HttpStatus.NOT_FOUND))
+                        .uri("no://op"))
                 .route("user-service-no-filter", r -> r.path("/api/auth/login", "/api/auth/logout", "/api/auth/register", "/oauth2/authorization/**", "/login/oauth2/**", "/api/auth/reissue")
                         .uri("lb://user-service"))
                 .route("user-service-with-filter", r -> r.path("/api/auth/**")

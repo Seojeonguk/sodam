@@ -14,7 +14,7 @@ sodam:
 
 internal:
   service:
-    token: ${INTERNAL_SERVICE_TOKEN:sodam-internal-token}
+    token: ${INTERNAL_SERVICE_TOKEN:}
 
 management:
   tracing:

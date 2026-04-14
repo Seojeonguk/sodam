@@ -22,7 +22,7 @@ public class CommonInternalServiceAutoConfiguration {
             ObjectMapper objectMapper
     ) {
         FilterRegistrationBean<InternalRequestFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new InternalRequestFilter(properties.tokenOrDefault(), objectMapper));
+        registrationBean.setFilter(new InternalRequestFilter(properties.token(), objectMapper));
         registrationBean.addUrlPatterns("/internal/*");
         registrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registrationBean;
