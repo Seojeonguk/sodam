@@ -70,7 +70,10 @@ function DashboardPage() {
   const isLoading = txLoading || categoryLoading;
   const error = txError ?? categoryError;
 
-  const allTransactions = transactions?.transactions ?? [];
+  const allTransactions = useMemo(
+    () => transactions?.transactions ?? [],
+    [transactions],
+  );
   const totalTransactions = allTransactions.length;
 
   const totalIncome = useMemo(
