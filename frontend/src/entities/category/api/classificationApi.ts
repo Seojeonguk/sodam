@@ -6,13 +6,10 @@ const CLASSIFICATION_BASE_URL = "/classifications";
 const classificationApi = {
   getClassifications: async (
     accountBookSeq: number,
-  ): Promise<ClassificationResponse[]> => {
-    const response = (await api.get<ClassificationResponse[]>(
+  ): Promise<ClassificationResponse[]> =>
+    api.get<ClassificationResponse[]>(
       `${CLASSIFICATION_BASE_URL}?accountBookSeq=${accountBookSeq}`,
-    )) as ClassificationResponse[];
-
-    return response;
-  },
+    ),
 };
 
 export default classificationApi;
