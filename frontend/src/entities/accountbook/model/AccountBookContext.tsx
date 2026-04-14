@@ -15,6 +15,7 @@ interface AccountBookContextType {
     loading: boolean;
     error: string | null;
     fetchAccountBooks: () => Promise<void>;
+    resetAccountBooks: () => void;
 }
 
 const AccountBookContext = createContext<AccountBookContextType | undefined>(
@@ -22,7 +23,7 @@ const AccountBookContext = createContext<AccountBookContextType | undefined>(
 );
 
 export function AccountBookProvider({ children }: { children: ReactNode }) {
-    const { accountBooks, loading, error, fetchAccountBooks } = useAccountBooks();
+    const { accountBooks, loading, error, fetchAccountBooks, resetAccountBooks } = useAccountBooks();
     const [currentAccountBook, setCurrentAccountBook] =
         useState<AccountBookListResponse | null>(null);
 
@@ -48,6 +49,7 @@ export function AccountBookProvider({ children }: { children: ReactNode }) {
                 loading,
                 error,
                 fetchAccountBooks,
+                resetAccountBooks,
             }}
         >
             {children}

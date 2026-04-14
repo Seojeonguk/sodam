@@ -29,6 +29,7 @@ import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import type { AccountBookListResponse } from "../../../entities/accountbook/api/accountbook.types";
 import LoginApi from "../../../features/auth/api/LoginApi";
+import { clearAccessToken } from "../../../shared/api/api";
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -59,7 +60,7 @@ function SideBarDrawerComponent({
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useIsDesktop();
-  const { accountBooks, currentAccountBook, setCurrentAccountBook } =
+  const { accountBooks, currentAccountBook, setCurrentAccountBook, resetAccountBooks } =
     useAccountBookContext();
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
 
@@ -315,7 +316,8 @@ function SideBarDrawerComponent({
                     } catch (error) {
                       console.error("Logout API failed", error);
                     } finally {
-                      localStorage.removeItem("accessToken");
+                      clearAccessToken();
+                      resetAccountBooks();
                       void navigate("/");
                       if (!isDesktop) {
                         handleDrawerClose();

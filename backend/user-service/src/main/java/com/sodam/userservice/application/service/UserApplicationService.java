@@ -28,55 +28,50 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class UserApplicationService {
 
+    private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+    private static final int REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserServiceImpl userService;
-
     private final AccountBookServiceClient accountBookServiceClient;
     private final ClassificationServiceClient classificationServiceClient;
 
     @Transactional
     public void registerNewUser(RegisterRequest registerRequest) {
-        // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
-
-        // 신규 유저 생성
         User newUser = registerRequest.toEntity(encodedPassword, Role.USER);
         User createdUser = userService.registerNewUser(newUser);
-        log.info("신규 유저 생성 완료. id : {}, 이메일 : {}", createdUser.getId(), createdUser.getEmail());
 
-        // 가계부 생성
-        String accountBookName = "가계부";
+        log.info("신규 유저 생성 완료. id: {}, email: {}", createdUser.getId(), createdUser.getEmail());
+
         AccountBookCreateRequest createRequest = AccountBookCreateRequest.builder()
-                .name(accountBookName)
+                .name("가계부")
                 .userId(createdUser.getId())
                 .build();
 
         AccountBookResponse createdAccountBook = accountBookServiceClient.createAccountBook(createRequest);
-        log.debug("가계부 응답 : {}", createdAccountBook);
+        log.debug("가계부 생성 응답: {}", createdAccountBook);
 
-        String typeIncome = "INCOME";
-        ClassificationCreateRequest typeIncomeCreateRequest = ClassificationCreateRequest.builder()
-                .name(typeIncome)
+        ClassificationCreateRequest incomeRequest = ClassificationCreateRequest.builder()
+                .name("INCOME")
                 .accountBookSeq(createdAccountBook.getId())
                 .build();
+        ClassificationResponse createdIncome = classificationServiceClient.createType(incomeRequest);
+        log.debug("기본 수입 유형 생성 응답: {}", createdIncome);
 
-        ClassificationResponse createdTypeIncomeResponse = classificationServiceClient.createType(typeIncomeCreateRequest);
-        log.debug("신규 타입 수입 응답 : {}", createdTypeIncomeResponse);
-
-        String typeExpense = "EXPENSE";
-        ClassificationCreateRequest typeCreateExpenseRequest = ClassificationCreateRequest.builder()
-                .name(typeExpense)
+        ClassificationCreateRequest expenseRequest = ClassificationCreateRequest.builder()
+                .name("EXPENSE")
                 .accountBookSeq(createdAccountBook.getId())
                 .build();
-
-        ClassificationResponse createdTypeExpenseResponse = classificationServiceClient.createType(typeCreateExpenseRequest);
-        log.debug("신규 타입 지출 응답 : {}", createdTypeExpenseResponse);
+        ClassificationResponse createdExpense = classificationServiceClient.createType(expenseRequest);
+        log.debug("기본 지출 유형 생성 응답: {}", createdExpense);
     }
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userService.findUserByEmail(loginRequest.getEmail());
+
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
@@ -84,13 +79,7 @@ public class UserApplicationService {
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true); // HTTPS 환경 권장
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-        refreshCookie.setAttribute("SameSite", "None");
-        response.addCookie(refreshCookie);
+        addRefreshTokenCookie(response, refreshToken);
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -125,21 +114,16 @@ public class UserApplicationService {
 
     @Transactional(readOnly = true)
     public LoginResponse reissue(HttpServletRequest request) {
-        // 쿠키에서 refreshToken 추출
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
-            log.error("유효하지 않은 토큰 정보. refresh token : {}", refreshToken);
+            log.error("유효하지 않은 refresh token 입니다. token: {}", refreshToken);
             return null;
         }
 
-        // refreshToken에서 이메일 추출
         String email = jwtTokenProvider.getUserEmail(refreshToken);
-
-        // 유저 검증 (선택적)
         userService.findUserByEmail(email);
 
-        // 새 accessToken 발급
         String newAccessToken = jwtTokenProvider.generateAccessToken(email);
 
         return LoginResponse.builder()
@@ -147,19 +131,40 @@ public class UserApplicationService {
                 .build();
     }
 
+    @Transactional
+    public void logout(HttpServletResponse response) {
+        Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, "");
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setAttribute("SameSite", "None");
+        response.addCookie(refreshCookie);
+    }
+
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            log.error("쿠키 정보가 존재하지 않음.");
+            log.error("쿠키 정보가 존재하지 않습니다.");
             return null;
         }
 
         for (Cookie cookie : request.getCookies()) {
-            if ("refreshToken".equals(cookie.getName())) {
+            if (REFRESH_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
 
-        log.error("쿠키 내 refresh token 확인 불가.");
+        log.error("refresh token 쿠키를 찾지 못했습니다.");
         return null;
+    }
+
+    private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
+        refreshCookie.setAttribute("SameSite", "None");
+        response.addCookie(refreshCookie);
     }
 }

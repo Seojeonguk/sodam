@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -14,75 +14,83 @@ import {
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import LoginApi from "../../../features/auth/api/LoginApi";
-import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
+import { restoreSession, setAccessToken } from "../../../shared/api/api";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 function LoginPage() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { fetchAccountBooks } = useAccountBookContext();
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const moveToDashboard = useCallback(async () => {
+    await fetchAccountBooks();
+    void navigate("/dashboard");
+  }, [fetchAccountBooks, navigate]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMsg("");
+    setIsSubmitting(true);
 
     try {
-      const data = await LoginApi.login({
+      const response = await LoginApi.login({
         email,
         password,
       });
 
-      const accessToken = data.data.accessToken;
-      localStorage.setItem("accessToken", accessToken);
-      await fetchAccountBooks();
-      void navigate("/dashboard");
+      setAccessToken(response.accessToken);
+      await moveToDashboard();
     } catch (error: unknown) {
-      setErrorMsg(error instanceof Error ? error.message : "로그인에 실패했습니다.");
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "로그인에 실패했습니다. 다시 시도해 주세요.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleKakaoLoginBtn = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleKakaoLoginBtn = () => {
     window.location.href = "https://junguk7880.site/oauth2/authorization/kakao";
   };
 
-  const handleGoogleLoginBtn = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLoginBtn = () => {
     window.location.href = "https://junguk7880.site/oauth2/authorization/google";
   };
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const urlAccessToken = params.get("accessToken");
+    let isMounted = true;
 
-      if (urlAccessToken) {
-        localStorage.setItem("accessToken", urlAccessToken);
-        await fetchAccountBooks();
-        window.history.replaceState({}, document.title, window.location.pathname);
+    void (async () => {
+      const restored = await restoreSession();
+
+      if (!isMounted) {
+        return;
       }
 
-      const savedAccessToken = localStorage.getItem("accessToken");
-
-      if (savedAccessToken) {
+      if (restored) {
         try {
-          await accountBookApi.getAccountBooks();
-          void navigate("/dashboard");
+          await moveToDashboard();
           return;
         } catch (error) {
-          console.error("Auto login failed:", error);
-          localStorage.removeItem("accessToken");
+          console.error("Session restore failed", error);
         }
       }
 
       setIsLoading(false);
-    };
+    })();
 
-    void checkAuth();
-  }, [fetchAccountBooks, navigate]);
+    return () => {
+      isMounted = false;
+    };
+  }, [moveToDashboard]);
 
   if (isLoading) {
     return (
@@ -172,16 +180,16 @@ function LoginPage() {
                   가계부를 더 차분하고 선명하게.
                 </Typography>
                 <Typography variant="body1" sx={{ maxWidth: 460 }}>
-                  지금의 부드러운 민트와 핑크 톤은 그대로 두고, 기록과 통계를
-                  한눈에 정리해 주는 가계부 경험을 만들었습니다.
+                  수입과 지출을 한눈에 정리하고, 계정별 흐름과 통계를 안정적으로
+                  이어서 관리할 수 있는 개인 자산 공간입니다.
                 </Typography>
               </Box>
 
               <Stack spacing={2.5}>
                 {[
-                  "한 화면에서 수입, 지출, 카테고리를 빠르게 확인",
-                  "부드러운 컬러 대비로 오래 봐도 부담 없는 인터페이스",
-                  "모바일과 데스크톱 모두 안정적인 간격과 정보 밀도",
+                  "유형과 카테고리를 빠르게 나눠서 거래를 정리합니다.",
+                  "자동 로그인과 재발급 흐름을 단순하게 유지합니다.",
+                  "데스크톱과 모바일 모두에서 같은 감각으로 이어집니다.",
                 ].map((item) => (
                   <Paper
                     key={item}
@@ -211,7 +219,7 @@ function LoginPage() {
               <Stack spacing={1} mb={4}>
                 <Typography variant="h4">로그인</Typography>
                 <Typography color="text.secondary">
-                  반가워요. 계정에 접속해서 오늘의 가계부를 이어서 관리해보세요.
+                  계정에 다시 연결해서 오늘의 가계부 흐름을 이어가세요.
                 </Typography>
               </Stack>
 
@@ -220,7 +228,7 @@ function LoginPage() {
                 display="flex"
                 flexDirection="column"
                 gap={2}
-                onSubmit={(e) => void handleSubmit(e)}
+                onSubmit={(event) => void handleSubmit(event)}
               >
                 <Stack spacing={1.5}>
                   <Typography variant="body2" fontWeight={700}>
@@ -229,7 +237,8 @@ function LoginPage() {
                   <TextField
                     placeholder="name@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
                   />
                 </Stack>
 
@@ -238,10 +247,11 @@ function LoginPage() {
                     비밀번호
                   </Typography>
                   <TextField
-                    placeholder="비밀번호를 입력해 주세요"
+                    placeholder="비밀번호를 입력해 주세요."
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
                   />
                 </Stack>
 
@@ -252,8 +262,9 @@ function LoginPage() {
                   variant="contained"
                   color="primary"
                   sx={{ mt: 1 }}
+                  disabled={isSubmitting}
                 >
-                  로그인
+                  {isSubmitting ? "로그인 중..." : "로그인"}
                 </Button>
 
                 <Divider sx={{ my: 1.5 }}>또는</Divider>
@@ -291,9 +302,9 @@ function LoginPage() {
                       backgroundColor: alpha(theme.palette.secondary.main, 0.12),
                     },
                   }}
-                onClick={() => {
-                  void navigate("/signup");
-                }}
+                  onClick={() => {
+                    void navigate("/signup");
+                  }}
                 >
                   회원가입
                 </Button>
