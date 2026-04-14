@@ -5,27 +5,29 @@ import type {
   StatRequest,
   StatResponse,
 } from "./stat.types";
-import type { CommonResponse } from "../../../shared/api/response.types";
 
 const STAT_BASE_URL = "/stat";
 
 const statApi = {
-  getStats: async (data: StatRequest): Promise<CommonResponse<StatResponse[]>> => {
-    const response = (await api.get<CommonResponse<StatResponse[]>>(
+  getStats: async (data: StatRequest): Promise<StatResponse[]> => {
+    const response = (await api.get<StatResponse[]>(
       STAT_BASE_URL,
       {
         params: data,
-      }
-    )) as unknown as CommonResponse<StatResponse[]>;
+      },
+    )) as StatResponse[];
+
     return response;
   },
+
   getPeriodStats: async (
-    req: StatPeriodRequest
-  ): Promise<CommonResponse<StatPeriodResponse[]>> => {
-    const response = (await api.get<CommonResponse<StatPeriodResponse[]>>(
+    req: StatPeriodRequest,
+  ): Promise<StatPeriodResponse[]> => {
+    const response = (await api.get<StatPeriodResponse[]>(
       `${STAT_BASE_URL}/period`,
-      { params: req }
-    )) as unknown as CommonResponse<StatPeriodResponse[]>;
+      { params: req },
+    )) as StatPeriodResponse[];
+
     return response;
   },
 };

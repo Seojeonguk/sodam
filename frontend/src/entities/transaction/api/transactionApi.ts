@@ -5,18 +5,16 @@ import type {
   TransactionResponseDto,
   TransactionUpdateRequestDto,
 } from "./transaction.types";
-import type { CommonResponse } from "../../../shared/api/response.types";
 
 const TRANSACTION_BASE_URL = "/transactions";
 
 const transactionApi = {
-  // 거래 목록 조회
   getTransactions: async (
     accountId: number,
     startDate?: string,
-    endDate?: string
-  ): Promise<CommonResponse<TransactionListResponse>> => {
-    const response = (await api.get<CommonResponse<TransactionListResponse>>(
+    endDate?: string,
+  ): Promise<TransactionListResponse> => {
+    const response = (await api.get<TransactionListResponse>(
       TRANSACTION_BASE_URL,
       {
         params: {
@@ -24,12 +22,12 @@ const transactionApi = {
           startDate,
           endDate,
         },
-      }
-    )) as unknown as CommonResponse<TransactionListResponse>;
+      },
+    )) as TransactionListResponse;
+
     return response;
   },
 
-  // 거래 생성
   createTransaction: async (
     data: TransactionCreateRequestDto,
   ): Promise<TransactionResponseDto> => {
@@ -37,7 +35,7 @@ const transactionApi = {
       TRANSACTION_BASE_URL,
       data,
     );
-    return response.data;
+    return response;
   },
 
   getTransactionBySeq: async (
@@ -46,7 +44,7 @@ const transactionApi = {
     const response = await api.get<TransactionResponseDto>(
       `${TRANSACTION_BASE_URL}/${seq}`,
     );
-    return response.data;
+    return response;
   },
 
   updateTransaction: async (
@@ -57,7 +55,7 @@ const transactionApi = {
       `${TRANSACTION_BASE_URL}/${seq}`,
       data,
     );
-    return response.data;
+    return response;
   },
 
   deleteTransaction: async (seq: number): Promise<void> => {

@@ -16,8 +16,8 @@ import {
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import axios, { AxiosError } from "axios";
-import dayjs, { Dayjs } from "dayjs";
+import axios from "axios";
+import dayjs, { type Dayjs } from "dayjs";
 
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import categoryApi from "../../../entities/category/api/categoryApi";
@@ -50,10 +50,25 @@ const classificationLabelMap: Record<"INCOME" | "EXPENSE", string> = {
   EXPENSE: "지출",
 };
 
+const getApiErrorMessage = (payload: unknown): string | null => {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "message" in payload &&
+    typeof payload.message === "string"
+  ) {
+    return payload.message;
+  }
+
+  return null;
+};
+
 const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { currentAccountBook } = useAccountBookContext();
+
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [classifications, setClassifications] = useState<ClassificationResponse[]>(
     [],
@@ -67,24 +82,22 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { currentAccountBook } = useAccountBookContext();
-
   useEffect(() => {
     const fetchModalOptions = async () => {
       if (!currentAccountBook?.id) {
         setClassifications([]);
+        setCategories([]);
         return;
       }
 
       try {
-        const [classificationResponse, categoryResponse] = await Promise.all([
+        const [fetchedClassifications, fetchedCategories] = await Promise.all([
           classificationApi.getClassifications(currentAccountBook.id),
           categoryApi.getCategories(0, 100),
         ]);
 
-        const fetchedClassifications = classificationResponse.data;
         setClassifications(fetchedClassifications);
-        setCategories(categoryResponse.data.categories);
+        setCategories(fetchedCategories.categories ?? []);
 
         if (fetchedClassifications.length > 0) {
           setType((currentType) =>
@@ -95,17 +108,13 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
               : fetchedClassifications[0].name,
           );
         }
-      } catch (error) {
-        const err = error as AxiosError<{ message?: string }>;
-
+      } catch (err: unknown) {
         if (axios.isAxiosError(err) && err.response) {
           setError(
-            `분류 또는 카테고리 목록 조회 실패: ${err.response.data?.message ?? err.message}`,
+            `분류 또는 카테고리 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`,
           );
         } else {
-          setError(
-            "분류 또는 카테고리 목록 조회 중 예상치 못한 오류가 발생했습니다.",
-          );
+          setError("분류 또는 카테고리 목록을 불러오는 중 오류가 발생했습니다.");
         }
       }
     };
@@ -124,18 +133,24 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     setCategory("");
     setDescription("");
     setTransactionDate(dayjs());
+    setCategories([]);
     setLoading(false);
     setError(null);
     setSuccess(null);
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
     setSuccess(null);
 
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!currentAccountBook?.id) {
+      setError("가계부를 먼저 선택해 주세요.");
+      return;
+    }
+
+    if (!amount || Number.parseFloat(amount) <= 0) {
       setError("금액을 올바르게 입력해 주세요.");
       return;
     }
@@ -154,9 +169,9 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
 
     try {
       const newTransaction: TransactionCreateRequestDto = {
-        accountBookSeq: currentAccountBook?.id ?? 0,
+        accountBookSeq: currentAccountBook.id,
         type,
-        amount: parseFloat(amount),
+        amount: Number.parseFloat(amount),
         categorySeq: category,
         description,
         transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
@@ -165,16 +180,12 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       await transactionApi.createTransaction(newTransaction);
       setSuccess("거래가 성공적으로 추가되었습니다.");
       handleClose();
-    } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-
-      if (axios.isAxiosError(err) && err.response) {
-        setError(
-          `거래 추가 실패: ${err.response.data?.message ?? err.message}`,
-        );
-      } else {
-        setError("거래 추가 중 예상치 못한 오류가 발생했습니다.");
-      }
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response) {
+        setError(`거래 추가 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
+        } else {
+          setError("거래를 추가하는 중 오류가 발생했습니다.");
+        }
     } finally {
       setLoading(false);
     }
@@ -187,7 +198,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       aria-labelledby="transaction-create-modal-title"
       aria-describedby="transaction-create-modal-description"
     >
-      <Box sx={style} component="form" onSubmit={(e) => void handleSubmit(e)}>
+      <Box sx={style} component="form" onSubmit={(event) => void handleSubmit(event)}>
         <Typography
           id="transaction-create-modal-title"
           variant="h5"
@@ -197,33 +208,32 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           거래 추가
         </Typography>
 
-        {error && (
+        {error ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-        )}
-        {success && (
+        ) : null}
+        {success ? (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
-        )}
+        ) : null}
 
         <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="type-select-label">분류</InputLabel>
+          <InputLabel id="type-select-label">유형</InputLabel>
           <Select
             labelId="type-select-label"
             id="type-select"
             value={type}
-            label="분류"
-            onChange={(e: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
-              setType(e.target.value);
+            label="유형"
+            onChange={(event: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
+              setType(event.target.value);
               setCategory("");
             }}
           >
             {classifications.map((classification) => (
               <MenuItem key={classification.id} value={classification.name}>
-                {classificationLabelMap[classification.name] ??
-                  classification.name}
+                {classificationLabelMap[classification.name] ?? classification.name}
               </MenuItem>
             ))}
           </Select>
@@ -234,7 +244,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           label="금액"
           type="number"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(event) => setAmount(event.target.value)}
           margin="normal"
           required
           sx={{ mb: 2 }}
@@ -247,12 +257,12 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             id="category-select"
             value={category}
             label="카테고리"
-            onChange={(e) => setCategory(Number(e.target.value))}
+            onChange={(event) => setCategory(Number(event.target.value))}
             required
           >
-            {categories.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
+            {categories.map((item) => (
+              <MenuItem key={item.id} value={item.id}>
+                {item.name}
               </MenuItem>
             ))}
           </Select>
@@ -262,7 +272,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           fullWidth
           label="내용 (선택 사항)"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(event) => setDescription(event.target.value)}
           margin="normal"
           multiline
           rows={2}

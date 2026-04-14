@@ -1,56 +1,181 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { PieValueType } from "@mui/x-charts/models/seriesType";
+import axios from "axios";
+import dayjs, { type Dayjs } from "dayjs";
 import transactionApi from "../api/transactionApi";
 import statApi from "../api/statApi";
 import type { TransactionListResponse } from "../api/transaction.types";
-import axios from "axios";
 import type {
   StatPeriodRequest,
   StatPeriodResponse,
   StatRequest,
 } from "../api/stat.types";
-import type { PieValueType } from "@mui/x-charts/models/seriesType";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
-import dayjs, { type Dayjs } from "dayjs";
+
+interface StatPeriodDatasetEntry {
+  [key: string]: string | number;
+  period: string;
+  income: number;
+  expense: number;
+}
 
 export const useTransactions = () => {
   const [transactions, setTransactions] =
     useState<TransactionListResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { currentAccountBook } = useAccountBookContext();
-
-  const [dateRange, setDateRange] = useState<{ startDate: Dayjs; endDate: Dayjs }>({
-    startDate: dayjs().startOf("month"),
-    endDate: dayjs().endOf("month"),
-  });
-
   const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
   const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
-
   const [statPeriodDataset, setStatPeriodDataset] = useState<
     StatPeriodDatasetEntry[]
   >([]);
 
+  const { currentAccountBook } = useAccountBookContext();
+  const currentAccountBookId = currentAccountBook?.id ?? null;
+
+  const [dateRange, setDateRange] = useState<{ startDate: Dayjs; endDate: Dayjs }>(
+    {
+      startDate: dayjs().startOf("month"),
+      endDate: dayjs().endOf("month"),
+    },
+  );
+
+  const getRandomColor = () =>
+    `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+
   const fetchTransactions = useCallback(async () => {
+    if (!currentAccountBookId) {
+      setTransactions(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      const accountId = currentAccountBook?.id ?? 0;
       const startDate = dateRange.startDate.format("YYYYMMDD");
       const endDate = dateRange.endDate.format("YYYYMMDD");
-      const response = await transactionApi.getTransactions(accountId, startDate, endDate);
-      setTransactions(response?.data);
+      const response = await transactionApi.getTransactions(
+        currentAccountBookId,
+        startDate,
+        endDate,
+      );
+
+      setTransactions(response);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.message);
       } else {
-        setError("알 수 없는 오류가 발생했습니다.");
+        setError("거래 내역을 불러오는 중 오류가 발생했습니다.");
       }
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBook, dateRange]);
+  }, [currentAccountBookId, dateRange]);
+
+  const fetchStats = useCallback(async () => {
+    if (!currentAccountBookId) {
+      setIncomeStats([]);
+      setExpenseStats([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const request: StatRequest = {
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
+      };
+      const response = await statApi.getStats(request);
+
+      const nextIncomeStats: PieValueType[] = response
+        .filter((item) => item.type === "INCOME")
+        .map((item, idx) => ({
+          id: idx,
+          value: item.total,
+          label: item.name,
+          color: getRandomColor(),
+        }));
+
+      const nextExpenseStats: PieValueType[] = response
+        .filter((item) => item.type === "EXPENSE")
+        .map((item, idx) => ({
+          id: idx,
+          value: item.total,
+          label: item.name,
+          color: getRandomColor(),
+        }));
+
+      setIncomeStats(nextIncomeStats);
+      setExpenseStats(nextExpenseStats);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.message);
+      } else {
+        setError("통계를 불러오는 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [currentAccountBookId, dateRange]);
+
+  const fetchPeriodStats = useCallback(async () => {
+    if (!currentAccountBookId) {
+      setStatPeriodDataset([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const request: StatPeriodRequest = {
+        startDate: dateRange.startDate.format("YYYYMMDD"),
+        endDate: dateRange.endDate.format("YYYYMMDD"),
+      };
+      const response = await statApi.getPeriodStats(request);
+
+      const dataset = response.reduce(
+        (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
+          const period = item.transaction_date;
+          const found = acc.find((entry) => entry.period === period);
+          const typeKey = item.type.toLowerCase() as "income" | "expense";
+
+          if (found) {
+            found[typeKey] = item.total;
+            return acc;
+          }
+
+          acc.push({
+            period,
+            income: typeKey === "income" ? item.total : 0,
+            expense: typeKey === "expense" ? item.total : 0,
+          });
+
+          return acc;
+        },
+        [],
+      );
+
+      setStatPeriodDataset(dataset);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.message);
+      } else {
+        setError("기간별 통계를 불러오는 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [currentAccountBookId, dateRange]);
 
   const deleteTransaction = async (seq: number) => {
     try {
@@ -63,7 +188,7 @@ export const useTransactions = () => {
 
         return {
           ...prev,
-          content: prev.transactions.filter((tx) => tx.seq !== seq),
+          transactions: prev.transactions.filter((tx) => tx.seq !== seq),
         };
       });
     } catch (err) {
@@ -75,112 +200,17 @@ export const useTransactions = () => {
     }
   };
 
-  const getRandomColor = () =>
-    `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-
-  const fetchStats = useCallback(async () => {
-    try {
-      const request: StatRequest = {
-        startDate: dateRange.startDate.format("YYYYMMDD"),
-        endDate: dateRange.endDate.format("YYYYMMDD"),
-      };
-      const response = await statApi.getStats(request);
-
-      console.debug("전체 통계 정보 : ", response);
-
-      const incomeStats: PieValueType[] = response.data
-        .filter((item) => {
-          return item.type === "INCOME";
-        })
-        .map((item, idx) => ({
-          id: idx,
-          value: item.total,
-          label: item.name,
-          color: getRandomColor(),
-        }));
-
-      console.debug("수입 통계 정보 : ", incomeStats);
-
-      setIncomeStats(incomeStats);
-
-      const expenseStats: PieValueType[] = response.data
-        .filter((item) => {
-          return item.type === "EXPENSE";
-        })
-        .map((item, idx) => ({
-          id: idx,
-          value: item.total,
-          label: item.name,
-          color: getRandomColor(),
-        }));
-
-      console.log("지출 통계 정보 : ", expenseStats);
-
-      setExpenseStats(expenseStats);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("알 수 없는 오류가 발생했습니다.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [dateRange]);
-
-  const fetchPeriodStats = useCallback(async () => {
-    try {
-      const request: StatPeriodRequest = {
-        startDate: dateRange.startDate.format("YYYYMMDD"),
-        endDate: dateRange.endDate.format("YYYYMMDD"),
-      };
-
-      const response = await statApi.getPeriodStats(request);
-
-      console.debug("전체 월별 통계 정보 : ", response);
-
-      const dataset = response.data.reduce(
-        (acc: StatPeriodDatasetEntry[], item: StatPeriodResponse) => {
-          const month = item.transaction_date;
-          const found = acc.find((d) => d.period === month);
-          const typeKey = item.type.toLowerCase() as "income" | "expense";
-          if (found) {
-            found[typeKey] = item.total;
-          } else {
-            acc.push({
-              period: month,
-              income: typeKey === "income" ? item.total : 0,
-              expense: typeKey === "expense" ? item.total : 0,
-            });
-          }
-          return acc;
-        },
-        []
-      );
-
-      setStatPeriodDataset(dataset);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.message);
-      } else {
-        setError("알 수 없는 오류가 발생했습니다.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [dateRange]);
-
   useEffect(() => {
     void fetchTransactions();
   }, [fetchTransactions]);
 
   useEffect(() => {
     void fetchStats();
-  }, [fetchStats, currentAccountBook]);
+  }, [fetchStats]);
 
   useEffect(() => {
     void fetchPeriodStats();
-  }, [fetchPeriodStats, currentAccountBook]);
+  }, [fetchPeriodStats]);
 
   return {
     transactions,
@@ -197,10 +227,3 @@ export const useTransactions = () => {
     setDateRange,
   };
 };
-
-interface StatPeriodDatasetEntry {
-  [key: string]: string | number;
-  period: string;
-  income: number;
-  expense: number;
-}
