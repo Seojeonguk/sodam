@@ -28,7 +28,6 @@ public class CommonDefaultsEnvironmentPostProcessor implements EnvironmentPostPr
         putIfMissing(environment, defaults, "sodam.feign.retry.max-period-ms", "1000");
         putIfMissing(environment, defaults, "sodam.feign.retry.max-attempts", isProdProfile(environment) ? "1" : "2");
         putIfMissing(environment, defaults, "sodam.feign.logger-level", isVerboseProfile(environment) ? "FULL" : "BASIC");
-        putIfMissing(environment, defaults, "internal.service.token", InternalServiceProperties.DEFAULT_TOKEN);
         putIfMissing(environment, defaults, "management.tracing.sampling.probability", isVerboseProfile(environment) ? "1.0" : "0.1");
 
         if (!defaults.isEmpty()) {
