@@ -1,18 +1,29 @@
-import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import LoginApi from "../../../features/auth/api/LoginApi";
-import type { LoginRequestDto } from "../../../features/auth/api/login.types";
-import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import { useNavigate } from "react-router-dom";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Divider,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
+import LoginApi from "../../../features/auth/api/LoginApi";
+import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 function LoginPage() {
+  const theme = useTheme();
   const { fetchAccountBooks } = useAccountBookContext();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,10 +37,8 @@ function LoginPage() {
 
       const accessToken = data.data.accessToken;
       localStorage.setItem("accessToken", accessToken);
-
       await fetchAccountBooks();
       void navigate("/dashboard");
-
     } catch (e: any) {
       setErrorMsg(e.message);
     }
@@ -37,146 +46,261 @@ function LoginPage() {
 
   const handleKakaoLoginBtn = (e: React.FormEvent) => {
     e.preventDefault();
-
     window.location.href = "https://junguk7880.site/oauth2/authorization/kakao";
   };
 
   const handleGoogleLoginBtn = (e: React.FormEvent) => {
     e.preventDefault();
-
-    window.location.href =
-      "https://junguk7880.site/oauth2/authorization/google";
+    window.location.href = "https://junguk7880.site/oauth2/authorization/google";
   };
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. URL 파라미터에서 토큰 확인 (OAuth 리다이렉트)
       const params = new URLSearchParams(window.location.search);
       const urlAccessToken = params.get("accessToken");
 
       if (urlAccessToken) {
-        console.debug(`parameter access token : ${urlAccessToken}`);
         localStorage.setItem("accessToken", urlAccessToken);
         await fetchAccountBooks();
-        // URL 파라미터 제거 (선택사항, 깔끔한 URL을 위해)
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // 2. 로컬 스토리지에서 토큰 확인
       const savedAccessToken = localStorage.getItem("accessToken");
-      console.debug(`saved access token : ${savedAccessToken}`);
 
       if (savedAccessToken) {
         try {
-          // 3. 토큰 유효성 검증 (API 호출)
-          // accountBookApi.getAccountBooks() 같은 보호된 API를 호출하여 토큰이 유효한지 확인
-          // 만료되었다면 api.ts의 interceptor가 refresh를 시도할 것임
           await accountBookApi.getAccountBooks();
-
-          // 성공 시 대시보드로 이동
           void navigate("/dashboard");
-          return; // 이동하므로 로딩 상태 해제 불필요 (언마운트됨)
+          return;
         } catch (error) {
           console.error("Auto login failed:", error);
-          // 실패 시 (refresh도 실패한 경우) 토큰 제거 및 로그인 페이지 유지
           localStorage.removeItem("accessToken");
         }
       }
 
-      // 토큰이 없거나 유효하지 않은 경우 로딩 종료 -> 로그인 폼 표시
       setIsLoading(false);
     };
 
     void checkAuth();
-  }, [navigate]);
+  }, [fetchAccountBooks, navigate]);
 
   if (isLoading) {
     return (
-      <Container maxWidth="xs" sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Typography>로그인 확인 중...</Typography>
+      <Container
+        maxWidth="sm"
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Paper
+          sx={{
+            p: 4,
+            width: "100%",
+            maxWidth: 420,
+            borderRadius: 4,
+            textAlign: "center",
+          }}
+        >
+          <Stack spacing={2} alignItems="center">
+            <CircularProgress color="primary" />
+            <Typography fontWeight={700}>
+              로그인 상태를 확인하고 있어요.
+            </Typography>
+          </Stack>
+        </Paper>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xs">
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-      >
-        <Typography variant="h5" mb={3}>
-          로그인
-        </Typography>
-
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        py: { xs: 4, md: 8 },
+      }}
+    >
+      <Container maxWidth="lg">
         <Box
-          component="form"
-          width="100%"
-          display="flex"
-          flexDirection="column"
-          gap={2}
+          display="grid"
+          gridTemplateColumns={{ xs: "1fr", md: "1.1fr 0.9fr" }}
+          gap={{ xs: 3, md: 4 }}
+          alignItems="stretch"
         >
-          <TextField
-            label="이메일"
-            variant="outlined"
-            fullWidth
-            helperText=""
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            label="비밀번호"
-            type="password"
-            variant="outlined"
-            fullWidth
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <Typography>{errorMsg}</Typography>
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={(e) => void handleSubmit(e)}
+          <Paper
+            sx={{
+              p: { xs: 3, md: 5 },
+              borderRadius: 5,
+              minHeight: { md: 620 },
+              position: "relative",
+              overflow: "hidden",
+              background: `linear-gradient(145deg, ${alpha(
+                theme.palette.primary.light,
+                0.88,
+              )} 0%, ${alpha(theme.palette.primary.main, 0.72)} 50%, ${alpha(
+                theme.palette.secondary.light,
+                0.84,
+              )} 100%)`,
+            }}
           >
-            로그인
-          </Button>
+            <Box
+              sx={{
+                position: "absolute",
+                top: -80,
+                right: -40,
+                width: 240,
+                height: 240,
+                borderRadius: "50%",
+                backgroundColor: alpha("#ffffff", 0.26),
+                filter: "blur(10px)",
+              }}
+            />
+            <Stack
+              spacing={3}
+              justifyContent="space-between"
+              sx={{ position: "relative", height: "100%" }}
+            >
+              <Box>
+                <Typography variant="overline" sx={{ letterSpacing: 2 }}>
+                  PERSONAL FINANCE SPACE
+                </Typography>
+                <Typography variant="h2" sx={{ mt: 1, mb: 2, maxWidth: 420 }}>
+                  가계부를 더 차분하고 선명하게.
+                </Typography>
+                <Typography variant="body1" sx={{ maxWidth: 460 }}>
+                  지금의 부드러운 민트와 핑크 톤은 그대로 두고, 기록과 통계를
+                  한눈에 정리해 주는 가계부 경험을 만들었습니다.
+                </Typography>
+              </Box>
 
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ backgroundColor: "yellow" }}
-            fullWidth
-            onClick={handleKakaoLoginBtn}
-          >
-            카카오 로그인
-          </Button>
+              <Stack spacing={2.5}>
+                {[
+                  "한 화면에서 수입, 지출, 카테고리를 빠르게 확인",
+                  "부드러운 컬러 대비로 오래 봐도 부담 없는 인터페이스",
+                  "모바일과 데스크톱 모두 안정적인 간격과 정보 밀도",
+                ].map((item) => (
+                  <Paper
+                    key={item}
+                    sx={{
+                      p: 2,
+                      borderRadius: 3,
+                      bgcolor: alpha("#ffffff", 0.48),
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    <Typography fontWeight={700}>{item}</Typography>
+                  </Paper>
+                ))}
+              </Stack>
+            </Stack>
+          </Paper>
 
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ backgroundColor: "white" }}
-            fullWidth
-            onClick={handleGoogleLoginBtn}
+          <Paper
+            sx={{
+              p: { xs: 3, md: 4 },
+              borderRadius: 5,
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            구글 로그인
-          </Button>
+            <Box width="100%">
+              <Stack spacing={1} mb={4}>
+                <Typography variant="h4">로그인</Typography>
+                <Typography color="text.secondary">
+                  반가워요. 계정에 접속해서 오늘의 가계부를 이어서 관리해보세요.
+                </Typography>
+              </Stack>
 
-          <Button
-            variant="text"
-            fullWidth
-            onClick={() => void navigate("/signup")}
-          >
-            회원가입
-          </Button>
+              <Box
+                component="form"
+                display="flex"
+                flexDirection="column"
+                gap={2}
+                onSubmit={(e) => void handleSubmit(e)}
+              >
+                <Stack spacing={1.5}>
+                  <Typography variant="body2" fontWeight={700}>
+                    이메일
+                  </Typography>
+                  <TextField
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Stack>
+
+                <Stack spacing={1.5}>
+                  <Typography variant="body2" fontWeight={700}>
+                    비밀번호
+                  </Typography>
+                  <TextField
+                    placeholder="비밀번호를 입력해 주세요"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Stack>
+
+                {errorMsg ? <Alert severity="error">{errorMsg}</Alert> : null}
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 1 }}
+                >
+                  로그인
+                </Button>
+
+                <Divider sx={{ my: 1.5 }}>또는</Divider>
+
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#FEE500",
+                    color: "#2b2b2b",
+                    "&:hover": { bgcolor: "#f2da00" },
+                  }}
+                  onClick={handleKakaoLoginBtn}
+                >
+                  카카오로 계속하기
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  sx={{
+                    bgcolor: "#ffffff",
+                    borderColor: alpha(theme.palette.text.primary, 0.14),
+                  }}
+                  onClick={handleGoogleLoginBtn}
+                >
+                  구글로 계속하기
+                </Button>
+
+                <Button
+                  variant="text"
+                  sx={{
+                    mt: 1,
+                    color: "secondary.dark",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.secondary.main, 0.12),
+                    },
+                  }}
+                  onClick={() => void navigate("/signup")}
+                >
+                  회원가입
+                </Button>
+              </Box>
+            </Box>
+          </Paper>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 

@@ -1,14 +1,22 @@
-import { IconButton, Toolbar, Typography, styled, Box, Tooltip } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import LogoutIcon from "@mui/icons-material/Logout";
-import LoginApi from "../../../features/auth/api/LoginApi";
+import { memo } from "react";
+import {
+  Box,
+  IconButton,
+  Toolbar,
+  Tooltip,
+  Typography,
+  styled,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
-import { memo } from "react";
+import MenuIcon from "@mui/icons-material/Menu";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useNavigate } from "react-router-dom";
+import LoginApi from "../../../features/auth/api/LoginApi";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
-import { useNavigate } from "react-router-dom";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -30,20 +38,20 @@ const StyledAppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  boxShadow: "none",
   ...(open &&
     isDesktop && {
-    width: `calc(100% - ${DRAWER_WIDTH}px)`,
-    marginLeft: `${DRAWER_WIDTH}px`,
-    transition: theme.transitions.create(["margin", "width"], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
+      width: `calc(100% - ${DRAWER_WIDTH}px)`,
+      marginLeft: `${DRAWER_WIDTH}px`,
+      transition: theme.transitions.create(["margin", "width"], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
     }),
-  }),
 }));
 
 function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
-  const isDesktop = useIsDesktop(); // sm 이상이면 데스크탑
-
+  const isDesktop = useIsDesktop();
   const nav = useNavigate();
 
   const handleLogoClick = () => {
@@ -56,7 +64,6 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         await LoginApi.logout();
       } catch (error) {
         console.error("Logout API failed", error);
-        // Fallback to client-side logout even if API fails
       } finally {
         localStorage.removeItem("accessToken");
         void nav("/");
@@ -66,33 +73,46 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
 
   return (
     <StyledAppBar position="fixed" open={openSide} isDesktop={isDesktop}>
-      <Toolbar>
+      <Toolbar sx={{ minHeight: { xs: 64, md: 76 }, px: { xs: 1.5, md: 3 } }}>
         <IconButton
-          color="inherit"
+          color="default"
           aria-label="open drawer"
           onClick={toggleDrawer}
           edge="start"
           sx={[
             {
-              mr: 2,
+              mr: 1.5,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: alpha("#ffffff", 0.74),
             },
             openSide && { display: "none" },
           ]}
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Box
-            component="span"
+
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography
+            variant="h6"
+            fontWeight={800}
             sx={{ cursor: "pointer", display: "inline-block" }}
             onClick={handleLogoClick}
           >
-            💰 소담
-          </Box>
-        </Typography>
+            Sodam
+          </Typography>
+        </Box>
 
         <Tooltip title="로그아웃">
-          <IconButton color="inherit" onClick={() => void handleLogout()}>
+          <IconButton
+            color="default"
+            onClick={() => void handleLogout()}
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: alpha("#ffffff", 0.74),
+            }}
+          >
             <LogoutIcon />
           </IconButton>
         </Tooltip>
