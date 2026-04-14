@@ -15,6 +15,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import LoginApi from "../../../features/auth/api/LoginApi";
 import { restoreSession, setAccessToken } from "../../../shared/api/api";
+import { OAUTH_AUTHORIZATION_URLS } from "../../../shared/config/app";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 function LoginPage() {
@@ -58,11 +59,11 @@ function LoginPage() {
   };
 
   const handleKakaoLoginBtn = () => {
-    window.location.href = "https://junguk7880.site/oauth2/authorization/kakao";
+    window.location.href = OAUTH_AUTHORIZATION_URLS.kakao;
   };
 
   const handleGoogleLoginBtn = () => {
-    window.location.href = "https://junguk7880.site/oauth2/authorization/google";
+    window.location.href = OAUTH_AUTHORIZATION_URLS.google;
   };
 
   useEffect(() => {

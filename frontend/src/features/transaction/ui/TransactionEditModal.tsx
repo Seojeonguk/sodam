@@ -26,6 +26,10 @@ import type {
   TransactionUpdateRequestDto,
 } from "../../../entities/transaction/api/transaction.types";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import {
+  CATEGORY_SELECTION_PAGE_SIZE,
+  DEFAULT_PAGE_INDEX,
+} from "../../../shared/config/app";
 
 const style = {
   position: "absolute" as const,
@@ -93,7 +97,10 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       }
 
       try {
-        const fetchedCategories = await categoryApi.getCategories(0, 100);
+        const fetchedCategories = await categoryApi.getCategories(
+          DEFAULT_PAGE_INDEX,
+          CATEGORY_SELECTION_PAGE_SIZE,
+        );
         setCategories(fetchedCategories.categories ?? []);
       } catch (nextError) {
         if (axios.isAxiosError(nextError)) {

@@ -1,4 +1,8 @@
 import api from "../../../shared/api/api";
+import {
+  CATEGORY_SELECTION_PAGE_SIZE,
+  DEFAULT_PAGE_INDEX,
+} from "../../../shared/config/app";
 import type {
   CategoryListItemResponse,
   CategoryListResponse,
@@ -14,8 +18,8 @@ interface CategoryUpsertRequest {
 
 const categoryApi = {
   getCategories: async (
-    page = 0,
-    size = 100,
+    page = DEFAULT_PAGE_INDEX,
+    size = CATEGORY_SELECTION_PAGE_SIZE,
   ): Promise<CategoryListResponse> =>
     api.get<CategoryListResponse>(
       `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,

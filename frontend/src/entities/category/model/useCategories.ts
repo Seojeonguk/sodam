@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import categoryApi from "../api/categoryApi";
 import type { CategoryListResponse } from "../../transaction/api/category.types";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
+import {
+  DEFAULT_CATEGORY_PAGE_SIZE,
+  DEFAULT_PAGE_INDEX,
+} from "../../../shared/config/app";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export const useCategories = () => {
@@ -22,7 +26,10 @@ export const useCategories = () => {
     setError(null);
 
     try {
-      const response = await categoryApi.getCategories(0, 20);
+      const response = await categoryApi.getCategories(
+        DEFAULT_PAGE_INDEX,
+        DEFAULT_CATEGORY_PAGE_SIZE,
+      );
       setCategories(response);
     } catch (nextError) {
       setError(
