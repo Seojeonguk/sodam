@@ -1,6 +1,6 @@
 package com.sodam.transactionservice.application.service;
 
-import com.sodam.common.response.ApiResponse;
+import com.sodam.common.integration.ExternalResponseValidator;
 import com.sodam.transactionservice.application.api.dto.StatPeriodRequest;
 import com.sodam.transactionservice.application.api.dto.StatPeriodResponse;
 import com.sodam.transactionservice.application.api.dto.StatRequest;
@@ -23,30 +23,17 @@ public class StatApplicationService {
     private final UserServiceClient userServiceClient;
 
     public List<StatResponse> getStat(StatRequest request, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        log.info("사용자 응답 정보 : {}", userResponse);
-
-        Long id = userResponse.getData().getId();
-
-        log.info("사용자 id : {}" ,id);
-
-        request.setUserSeq(id);
-
+        request.setUserSeq(resolveUserId(email));
         return statDomainService.getStat(request);
     }
 
     public List<StatPeriodResponse> getPeriodStat(StatPeriodRequest request, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-
-        log.info("사용자 응답 정보 : {}", userResponse);
-
-        Long id = userResponse.getData().getId();
-
-        log.info("사용자 id : {}" ,id);
-
-        request.setUserSeq(id);
-
+        request.setUserSeq(resolveUserId(email));
         return statDomainService.getPeriodStat(request);
+    }
+
+    private Long resolveUserId(String email) {
+        UserDto user = ExternalResponseValidator.requireData(userServiceClient.getUser(email), "user-service");
+        return ExternalResponseValidator.requireField(user, UserDto::getId, "user-service", "user id");
     }
 }

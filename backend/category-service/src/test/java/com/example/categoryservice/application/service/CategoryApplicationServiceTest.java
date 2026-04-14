@@ -11,6 +11,7 @@ import com.example.categoryservice.domain.service.CategoryService;
 import com.example.categoryservice.infrastructure.TransactionServiceClient;
 import com.example.categoryservice.infrastructure.UserDto;
 import com.example.categoryservice.infrastructure.UserServiceClient;
+import com.sodam.common.exception.CustomException;
 import com.sodam.common.response.ApiResponse;
 import feign.FeignException;
 import feign.Request;
@@ -118,6 +119,7 @@ class CategoryApplicationServiceTest {
         request.setReplaceCategoryId(99L);
 
         when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(userDto));
+        when(transactionServiceClient.moveCategory(11L, 99L)).thenReturn(ApiResponse.success(3L));
 
         categoryApplicationService.deleteCategory(11L, "user@example.com", request);
 
@@ -182,7 +184,8 @@ class CategoryApplicationServiceTest {
         when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(null));
 
         assertThatThrownBy(() -> categoryApplicationService.createCategory(request, "user@example.com"))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("user-service");
 
         verify(categoryService, never()).createCategory(any());
     }
@@ -216,6 +219,25 @@ class CategoryApplicationServiceTest {
 
         assertThatThrownBy(() -> categoryApplicationService.deleteCategory(11L, "user@example.com", request))
                 .isInstanceOf(FeignException.class);
+
+        verify(categoryService, never()).deleteCategory(any(), any());
+    }
+
+    @Test
+    @DisplayName("deleteCategory does not delete category when move category response is invalid")
+    void deleteCategory_doesNotDeleteWhenMoveCategoryResponseInvalid() {
+        UserDto userDto = new UserDto();
+        userDto.setId(5L);
+
+        CategoryDeleteRequest request = new CategoryDeleteRequest();
+        request.setReplaceCategoryId(99L);
+
+        when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(userDto));
+        when(transactionServiceClient.moveCategory(11L, 99L)).thenReturn(ApiResponse.success(null));
+
+        assertThatThrownBy(() -> categoryApplicationService.deleteCategory(11L, "user@example.com", request))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("transaction-service");
 
         verify(categoryService, never()).deleteCategory(any(), any());
     }

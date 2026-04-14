@@ -3,6 +3,7 @@ package com.sodam.common.exception;
 import com.sodam.common.response.ApiResponse;
 import com.sodam.common.response.ResponseCode;
 import feign.FeignException;
+import feign.RetryableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -83,6 +84,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<ApiResponse<Void>> handleFeignException(FeignException ex) {
         log.error("Feign client request failed. status={}, message={}", ex.status(), ex.getMessage(), ex);
+        return buildErrorResponse(ResponseCode.BAD_GATEWAY, ResponseCode.BAD_GATEWAY.getMessage());
+    }
+
+    @ExceptionHandler(RetryableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRetryableException(RetryableException ex) {
+        log.error("Retryable upstream request failed. message={}", ex.getMessage(), ex);
         return buildErrorResponse(ResponseCode.BAD_GATEWAY, ResponseCode.BAD_GATEWAY.getMessage());
     }
 

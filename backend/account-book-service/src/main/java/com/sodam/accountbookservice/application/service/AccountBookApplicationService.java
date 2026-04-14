@@ -11,7 +11,7 @@ import com.sodam.accountbookservice.domain.service.AccountBookMemberService;
 import com.sodam.accountbookservice.domain.service.AccountBookService;
 import com.sodam.accountbookservice.infrastructure.UserDto;
 import com.sodam.accountbookservice.infrastructure.UserServiceClient;
-import com.sodam.common.response.ApiResponse;
+import com.sodam.common.integration.ExternalResponseValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
@@ -25,20 +25,18 @@ public class AccountBookApplicationService {
 
     private final AccountBookService accountBookService;
     private final AccountBookMemberService accountBookMemberService;
-
     private final UserServiceClient userServiceClient;
 
     @Transactional
     public AccountBookResponse createAccountBook(AccountBookCreateRequest request, String email) {
         if (request.getUserId() == null && Strings.isEmpty(email)) {
-            throw new IllegalArgumentException("사용자 정보가 존재하지 않습니다.");
+            throw new IllegalArgumentException("User information is required.");
         }
 
         Long userId = request.getUserId();
         if (userId == null) {
-            ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-            request.setUserId(userResponse.getData().getId());
-            userId = userResponse.getData().getId();
+            userId = resolveUserId(email);
+            request.setUserId(userId);
         }
 
         AccountBook accountBook = accountBookService.createAccountBook(request);
@@ -54,7 +52,7 @@ public class AccountBookApplicationService {
 
         AccountBookMember createdAccountBookMember = accountBookMemberService.createAccountBookMember(accountBookMember);
         if (createdAccountBookMember == null) {
-            throw new IllegalArgumentException("생성된 가계부 권한이 없습니다.");
+            throw new IllegalArgumentException("Failed to create account book owner membership.");
         }
 
         return AccountBookResponse.builder()
@@ -65,8 +63,7 @@ public class AccountBookApplicationService {
     }
 
     public AccountBookResponse updateAccountBook(Long id, AccountBookUpdateRequest request, String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
-        request.setUserId(userResponse.getData().getId());
+        request.setUserId(resolveUserId(email));
 
         AccountBook accountBook = accountBookService.updateAccountBook(id, request);
 
@@ -92,10 +89,11 @@ public class AccountBookApplicationService {
     }
 
     public List<AccountBookListResponse> getAccountBooks(String email) {
-        ApiResponse<UserDto> userResponse = userServiceClient.getUser(email);
+        return accountBookService.getAccountBooks(resolveUserId(email));
+    }
 
-        Long userId = userResponse.getData().getId();
-
-        return accountBookService.getAccountBooks(userId);
+    private Long resolveUserId(String email) {
+        UserDto user = ExternalResponseValidator.requireData(userServiceClient.getUser(email), "user-service");
+        return ExternalResponseValidator.requireField(user, UserDto::getId, "user-service", "user id");
     }
 }

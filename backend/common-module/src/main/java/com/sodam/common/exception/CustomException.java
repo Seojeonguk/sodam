@@ -12,4 +12,9 @@ public class CustomException extends RuntimeException {
         this.responseCode = responseCode;
     }
 
+    public CustomException(ResponseCode responseCode, String message) {
+        super(message);
+        this.responseCode = responseCode;
+    }
+
 }
