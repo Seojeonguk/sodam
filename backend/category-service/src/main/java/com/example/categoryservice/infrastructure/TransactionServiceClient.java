@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface TransactionServiceClient {
 
     @PutMapping("/api/transactions/category/move")
-    ApiResponse<Long> moveCategory(@RequestParam Long oldCategoryId, @RequestParam Long newCategoryId);
+    ApiResponse<Integer> moveCategory(@RequestParam Long oldCategoryId, @RequestParam Long newCategoryId);
 }

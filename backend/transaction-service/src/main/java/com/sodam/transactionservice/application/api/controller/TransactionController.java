@@ -68,7 +68,7 @@ public class TransactionController {
     }
 
     @PutMapping("category/move")
-    public ApiResponse<TransactionMoveCategoryResponse> moveCategory(
+    public ApiResponse<Integer> moveCategory(
             @RequestParam Long oldCategoryId,
             @RequestParam Long newCategoryId
     ) {

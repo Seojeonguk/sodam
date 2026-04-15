@@ -1,10 +1,8 @@
 package com.sodam.transactionservice.application.service;
 
 import com.sodam.common.integration.ExternalResponseValidator;
-import com.sodam.common.response.ResponseCode;
 import com.sodam.transactionservice.application.api.dto.TransactionListItemResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
@@ -95,17 +93,13 @@ public class TransactionApplicationService {
     }
 
     @Transactional
-    public TransactionMoveCategoryResponse moveCategory(Long oldCategoryId, Long newCategoryId) {
+    public Integer moveCategory(Long oldCategoryId, Long newCategoryId) {
         Integer updatedCnt = transactionDomainService.moveCategory(oldCategoryId, newCategoryId);
 
         log.info("Moved transaction category. updatedCount={}, oldCategoryId={}, newCategoryId={}",
                 updatedCnt, oldCategoryId, newCategoryId);
 
-        TransactionMoveCategoryResponse response = new TransactionMoveCategoryResponse();
-        response.setCode(ResponseCode.SUCCESS.getCode());
-        response.setMessage("Category move completed");
-        response.setData(updatedCnt);
-        return response;
+        return updatedCnt;
     }
 
     private Long resolveUserId(String email) {

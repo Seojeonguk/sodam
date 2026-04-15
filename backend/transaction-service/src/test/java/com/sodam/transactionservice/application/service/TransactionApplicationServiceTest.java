@@ -3,7 +3,6 @@ package com.sodam.transactionservice.application.service;
 import com.sodam.common.exception.CustomException;
 import com.sodam.common.response.ApiResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionListResponse;
-import com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;
@@ -240,10 +239,9 @@ class TransactionApplicationServiceTest {
     void moveCategory_returnsUpdatedCount() {
         when(transactionDomainService.moveCategory(1L, 2L)).thenReturn(4);
 
-        TransactionMoveCategoryResponse response = transactionApplicationService.moveCategory(1L, 2L);
+        Integer response = transactionApplicationService.moveCategory(1L, 2L);
 
-        assertThat(response.getCode()).isEqualTo("S-00000");
-        assertThat(response.getData()).isEqualTo(4);
+        assertThat(response).isEqualTo(4);
     }
 
     @Test
