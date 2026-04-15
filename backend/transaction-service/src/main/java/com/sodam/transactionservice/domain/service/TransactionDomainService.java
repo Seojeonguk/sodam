@@ -1,6 +1,5 @@
 package com.sodam.transactionservice.domain.service;
 
-import com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse;
 import com.sodam.transactionservice.application.api.dto.TransactionRequest;
 import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest;
 import com.sodam.transactionservice.domain.model.Transaction;

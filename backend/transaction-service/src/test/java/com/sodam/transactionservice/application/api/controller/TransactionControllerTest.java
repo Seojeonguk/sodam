@@ -181,20 +181,14 @@ class TransactionControllerTest {
     void moveCategory_returnsSuccessResponse() throws Exception {
         MockMvc mockMvc = buildMockMvc();
 
-        com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse response =
-                new com.sodam.transactionservice.application.api.dto.TransactionMoveCategoryResponse();
-        response.setCode("S-0000");
-        response.setMessage("updated");
-        response.setData(3);
-
-        when(transactionApplicationService.moveCategory(1L, 2L)).thenReturn(response);
+        when(transactionApplicationService.moveCategory(1L, 2L)).thenReturn(3);
 
         mockMvc.perform(put("/api/transactions/category/move")
                         .param("oldCategoryId", "1")
                         .param("newCategoryId", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("S-00000"))
-                .andExpect(jsonPath("$.data.data").value(3));
+                .andExpect(jsonPath("$.data").value(3));
     }
 
     private MockMvc buildMockMvc() {

@@ -119,7 +119,7 @@ class CategoryApplicationServiceTest {
         request.setReplaceCategoryId(99L);
 
         when(userServiceClient.getUser("user@example.com")).thenReturn(ApiResponse.success(userDto));
-        when(transactionServiceClient.moveCategory(11L, 99L)).thenReturn(ApiResponse.success(3L));
+        when(transactionServiceClient.moveCategory(11L, 99L)).thenReturn(ApiResponse.success(3));
 
         categoryApplicationService.deleteCategory(11L, "user@example.com", request);
 
