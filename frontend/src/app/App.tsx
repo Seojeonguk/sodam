@@ -7,6 +7,7 @@ import CategoryPage from "../pages/category/ui/CategoryPage";
 import DashboardPage from "../pages/dashboard/ui/DashboardPage";
 import SignupPage from "../pages/signup/ui/SignupPage";
 import { getAccessToken, restoreSession } from "../shared/api/api";
+import { AccountBookProvider } from "../entities/accountbook/model/AccountBookContext";
 import AuthLayout from "./layout/ui/AuthLayout";
 import AppShellLayout from "./layout/ui/AppShellLayout";
 
@@ -87,7 +88,11 @@ const AppRoutes = memo(function AppRoutes() {
 });
 
 function App() {
-  return <AppRoutes />;
+  return (
+    <AccountBookProvider>
+      <AppRoutes />
+    </AccountBookProvider>
+  );
 }
 
 export default App;
