@@ -10,6 +10,8 @@ import { getAccessToken, restoreSession } from "../shared/api/api";
 import { AccountBookProvider } from "../entities/accountbook/model/AccountBookContext";
 import AuthLayout from "./layout/ui/AuthLayout";
 import AppShellLayout from "./layout/ui/AppShellLayout";
+import { useOfflineSync } from "../shared/lib/useOfflineSync";
+import { OfflineBanner } from "../shared/ui/OfflineBanner";
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const [isChecking, setIsChecking] = useState<boolean>(() => !getAccessToken());
@@ -88,8 +90,11 @@ const AppRoutes = memo(function AppRoutes() {
 });
 
 function App() {
+  const { isOnline, pendingCount } = useOfflineSync();
+
   return (
     <AccountBookProvider>
+      {!isOnline && <OfflineBanner pendingCount={pendingCount} />}
       <AppRoutes />
     </AccountBookProvider>
   );

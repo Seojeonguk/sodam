@@ -6,6 +6,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { API_BASE_URL } from "../config/app";
+import { buildCacheKey, localCache } from "../lib/localCache";
+import { offlineQueue } from "../lib/offlineQueue";
 
 const BASE_URL = API_BASE_URL;
 
@@ -200,29 +202,101 @@ http.interceptors.response.use(
   },
 );
 
+/** 네트워크 에러 여부 판별 (서버 응답 없음) */
+const isNetworkError = (error: unknown): boolean =>
+  error instanceof ApiClientError && error.code === "NETWORK_ERROR";
+
+export const OFFLINE_QUEUED = Symbol("OFFLINE_QUEUED");
+
 const api = {
-  get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return http.get<ApiResponse<T>>(url, config).then(unwrapResponse);
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const cacheKey = buildCacheKey(url, config?.params as Record<string, unknown> | undefined);
+    try {
+      const result = await http.get<ApiResponse<T>>(url, config).then(unwrapResponse);
+      localCache.set(cacheKey, result);
+      return result;
+    } catch (error) {
+      if (isNetworkError(error)) {
+        const cached = localCache.get<T>(cacheKey);
+        if (cached !== null) {
+          console.warn(`[Offline] 캐시 데이터 사용: ${url}`);
+          return cached;
+        }
+      }
+      throw error;
+    }
   },
 
-  post<T, B = unknown>(
+  async post<T, B = unknown>(
     url: string,
     data?: B,
     config?: AxiosRequestConfig,
   ): Promise<T> {
-    return http.post<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+    try {
+      return await http.post<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        offlineQueue.add("post", url, data);
+        console.warn(`[Offline] 큐에 저장됨: POST ${url}`);
+        return OFFLINE_QUEUED as unknown as T;
+      }
+      throw error;
+    }
   },
 
-  put<T, B = unknown>(
+  async put<T, B = unknown>(
     url: string,
     data?: B,
     config?: AxiosRequestConfig,
   ): Promise<T> {
-    return http.put<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+    try {
+      return await http.put<ApiResponse<T>>(url, data, config).then(unwrapResponse);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        offlineQueue.add("put", url, data);
+        console.warn(`[Offline] 큐에 저장됨: PUT ${url}`);
+        return OFFLINE_QUEUED as unknown as T;
+      }
+      throw error;
+    }
   },
 
-  delete<T = void>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return http.delete<ApiResponse<T>>(url, config).then(unwrapResponse);
+  async delete<T = void>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    try {
+      return await http.delete<ApiResponse<T>>(url, config).then(unwrapResponse);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        offlineQueue.add("delete", url, config?.data as unknown);
+        console.warn(`[Offline] 큐에 저장됨: DELETE ${url}`);
+        return OFFLINE_QUEUED as unknown as T;
+      }
+      throw error;
+    }
+  },
+
+  /** 오프라인 큐에 쌓인 요청을 서버로 동기화 */
+  async syncOfflineQueue(): Promise<{ synced: number; failed: number }> {
+    const queue = offlineQueue.getAll();
+    let synced = 0;
+    let failed = 0;
+
+    for (const req of queue) {
+      try {
+        if (req.method === "post") {
+          await http.post(`${req.url}`, req.data).then(unwrapResponse);
+        } else if (req.method === "put") {
+          await http.put(`${req.url}`, req.data).then(unwrapResponse);
+        } else if (req.method === "delete") {
+          await http.delete(`${req.url}`).then(unwrapResponse);
+        }
+        offlineQueue.remove(req.id);
+        synced++;
+      } catch {
+        failed++;
+      }
+    }
+
+    return { synced, failed };
   },
 };
 
