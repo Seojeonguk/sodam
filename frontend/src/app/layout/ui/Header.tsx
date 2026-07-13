@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   Box,
+  Button,
   IconButton,
   Toolbar,
   Tooltip,
@@ -13,6 +14,7 @@ import MuiAppBar, {
 } from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useNavigate } from "react-router-dom";
 import LoginApi from "../../../features/auth/api/LoginApi";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
@@ -20,6 +22,7 @@ import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { clearAccessToken } from "../../../shared/api/api";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { guestMode } from "../../../shared/lib/guestMode";
+import { GuestMigrationModal } from "../../../features/auth/ui/GuestMigrationModal";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -57,6 +60,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   const isDesktop = useIsDesktop();
   const nav = useNavigate();
   const { resetAccountBooks } = useAccountBookContext();
+  const [migrationOpen, setMigrationOpen] = useState(false);
 
   const handleLogoClick = () => {
     void nav("/dashboard");
@@ -89,6 +93,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   };
 
   return (
+    <>
     <StyledAppBar position="fixed" open={openSide} isDesktop={isDesktop}>
       <Toolbar sx={{ minHeight: { xs: 64, md: 76 }, px: { xs: 1.5, md: 3 } }}>
         <IconButton
@@ -138,6 +143,26 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
           )}
         </Box>
 
+        {guestMode.isActive() && (
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<CloudUploadIcon fontSize="small" />}
+            onClick={() => setMigrationOpen(true)}
+            sx={{
+              mr: 1,
+              borderRadius: 2,
+              fontSize: "0.75rem",
+              whiteSpace: "nowrap",
+              borderColor: alpha("#6366f1", 0.5),
+              color: "#6366f1",
+              "&:hover": { borderColor: "#6366f1", bgcolor: alpha("#6366f1", 0.06) },
+            }}
+          >
+            {isDesktop ? "계정 만들고 연동하기" : "연동"}
+          </Button>
+        )}
+
         <Tooltip title={guestMode.isActive() ? "게스트 종료" : "로그아웃"}>
           <IconButton
             color="default"
@@ -153,6 +178,12 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         </Tooltip>
       </Toolbar>
     </StyledAppBar>
+
+    <GuestMigrationModal
+      open={migrationOpen}
+      onClose={() => setMigrationOpen(false)}
+    />
+    </>
   );
 }
 

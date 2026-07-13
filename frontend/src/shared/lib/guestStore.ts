@@ -22,7 +22,7 @@ const KEYS = {
 } as const;
 
 // ─── 내부 저장 타입 ───────────────────────────────────────────────────────────
-interface StoredTransaction {
+export interface StoredTransaction {
   seq: number;
   accountBookSeq: number;
   categorySeq: number | null;
@@ -269,6 +269,11 @@ export const guestStore = {
   deleteTransaction(seq: number): void {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     save(KEYS.transactions, all.filter((t) => t.seq !== seq));
+  },
+
+  /** 마이그레이션용: categorySeq 포함 전체 거래 반환 */
+  getRawTransactions(): StoredTransaction[] {
+    return load<StoredTransaction[]>(KEYS.transactions, []);
   },
 
   // ── 통계 (거래 데이터에서 계산) ──────────────────────────────────────────────
