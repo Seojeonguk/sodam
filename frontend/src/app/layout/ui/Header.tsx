@@ -19,6 +19,7 @@ import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { clearAccessToken } from "../../../shared/api/api";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import { guestMode } from "../../../shared/lib/guestMode";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -62,7 +63,19 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
   };
 
   const handleLogout = async () => {
-    if (window.confirm("로그아웃 하시겠습니까?")) {
+    const isGuest = guestMode.isActive();
+    const confirmMsg = isGuest
+      ? "게스트 모드를 종료하시겠습니까? 저장된 데이터가 모두 삭제됩니다."
+      : "로그아웃 하시겠습니까?";
+
+    if (window.confirm(confirmMsg)) {
+      if (isGuest) {
+        guestMode.clearAll();
+        resetAccountBooks();
+        void nav("/");
+        return;
+      }
+
       try {
         await LoginApi.logout();
       } catch (error) {
@@ -96,7 +109,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
           <MenuIcon />
         </IconButton>
 
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
           <Typography
             variant="h6"
             fontWeight={800}
@@ -105,9 +118,27 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
           >
             Sodam
           </Typography>
+          {guestMode.isActive() && (
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                bgcolor: alpha("#f59e0b", 0.15),
+                border: "1px solid",
+                borderColor: alpha("#f59e0b", 0.4),
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                color: "#b45309",
+                lineHeight: 1.6,
+              }}
+            >
+              게스트
+            </Box>
+          )}
         </Box>
 
-        <Tooltip title="로그아웃">
+        <Tooltip title={guestMode.isActive() ? "게스트 종료" : "로그아웃"}>
           <IconButton
             color="default"
             onClick={() => void handleLogout()}

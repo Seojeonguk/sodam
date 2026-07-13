@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { AccountBookListResponse } from "../api/accountbook.types";
 import accountBookApi from "../api/accountBookApi";
+import { guestMode } from "../../../shared/lib/guestMode";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export const useAccountBooks = () => {
@@ -26,6 +27,13 @@ export const useAccountBooks = () => {
       setLoading(false);
     }
   }, []);
+
+  // 게스트 모드로 페이지 새로고침 시 자동 fetch
+  useEffect(() => {
+    if (guestMode.isActive()) {
+      void fetchAccountBooks();
+    }
+  }, [fetchAccountBooks]);
 
   const resetAccountBooks = useCallback(() => {
     setAccountBooks([]);

@@ -1,5 +1,36 @@
 const CACHE_PREFIX = "sodam_cache_";
+const SESSION_KEY = "sodam_session";
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24; // 24시간
+
+export interface SessionInfo {
+  email: string;
+  name?: string;
+  savedAt: number;
+}
+
+export const sessionCache = {
+  set(email: string, name?: string): void {
+    try {
+      const info: SessionInfo = { email, name, savedAt: Date.now() };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(info));
+    } catch {
+      // 무시
+    }
+  },
+
+  get(): SessionInfo | null {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      return raw ? (JSON.parse(raw) as SessionInfo) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  clear(): void {
+    localStorage.removeItem(SESSION_KEY);
+  },
+};
 
 interface CacheEntry<T> {
   data: T;

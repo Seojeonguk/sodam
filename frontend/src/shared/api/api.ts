@@ -6,7 +6,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { API_BASE_URL } from "../config/app";
-import { buildCacheKey, localCache } from "../lib/localCache";
+import { buildCacheKey, localCache, sessionCache } from "../lib/localCache";
 import { offlineQueue } from "../lib/offlineQueue";
 
 const BASE_URL = API_BASE_URL;
@@ -125,7 +125,25 @@ export async function requestNewAccessToken(): Promise<string> {
   return nextToken;
 }
 
+/** 오프라인 전용 플레이스홀더 토큰 */
+const OFFLINE_TOKEN = "__offline__";
+
+export function isOfflineToken(): boolean {
+  return accessToken === OFFLINE_TOKEN;
+}
+
 export async function restoreSession(): Promise<boolean> {
+  // 오프라인이고 이전 세션이 있으면 → 네트워크 시도 없이 오프라인 통과
+  if (!navigator.onLine) {
+    const session = sessionCache.get();
+    if (session) {
+      setAccessToken(OFFLINE_TOKEN);
+      console.warn("[Offline] 캐시 세션으로 오프라인 접속 허용");
+      return true;
+    }
+    return false;
+  }
+
   try {
     await requestNewAccessToken();
     return true;

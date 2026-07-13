@@ -12,15 +12,19 @@ import AuthLayout from "./layout/ui/AuthLayout";
 import AppShellLayout from "./layout/ui/AppShellLayout";
 import { useOfflineSync } from "../shared/lib/useOfflineSync";
 import { OfflineBanner } from "../shared/ui/OfflineBanner";
+import { guestMode } from "../shared/lib/guestMode";
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
-  const [isChecking, setIsChecking] = useState<boolean>(() => !getAccessToken());
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
-    Boolean(getAccessToken()),
+  // 게스트 모드는 인증 없이 바로 통과
+  const [isChecking, setIsChecking] = useState<boolean>(
+    () => !getAccessToken() && !guestMode.isActive(),
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => Boolean(getAccessToken()) || guestMode.isActive(),
   );
 
   useEffect(() => {
-    if (getAccessToken()) {
+    if (getAccessToken() || guestMode.isActive()) {
       setIsAuthenticated(true);
       setIsChecking(false);
       return;

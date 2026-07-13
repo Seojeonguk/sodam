@@ -3,6 +3,8 @@ import {
   CATEGORY_SELECTION_PAGE_SIZE,
   DEFAULT_PAGE_INDEX,
 } from "../../../shared/config/app";
+import { guestMode } from "../../../shared/lib/guestMode";
+import { guestStore } from "../../../shared/lib/guestStore";
 import type {
   CategoryListItemResponse,
   CategoryListResponse,
@@ -20,20 +22,28 @@ const categoryApi = {
   getCategories: async (
     page = DEFAULT_PAGE_INDEX,
     size = CATEGORY_SELECTION_PAGE_SIZE,
-  ): Promise<CategoryListResponse> =>
-    api.get<CategoryListResponse>(
+  ): Promise<CategoryListResponse> => {
+    if (guestMode.isActive()) return guestStore.getCategories(page, size);
+    return api.get<CategoryListResponse>(
       `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
-    ),
+    );
+  },
 
   createCategory: async (
     data: CategoryUpsertRequest,
-  ): Promise<CategoryListItemResponse> =>
-    api.post<CategoryListItemResponse, CategoryUpsertRequest>(
+  ): Promise<CategoryListItemResponse> => {
+    if (guestMode.isActive()) return guestStore.createCategory(data);
+    return api.post<CategoryListItemResponse, CategoryUpsertRequest>(
       CATEGORY_BASE_URL,
       data,
-    ),
+    );
+  },
 
   deleteCategory: async (id: number, replacementId: number): Promise<void> => {
+    if (guestMode.isActive()) {
+      guestStore.deleteCategory(id, replacementId);
+      return;
+    }
     await api.delete(`${CATEGORY_BASE_URL}/${id}`, {
       data: { replaceCategoryId: replacementId },
     });
@@ -42,11 +52,13 @@ const categoryApi = {
   updateCategory: async (
     id: number,
     data: CategoryUpsertRequest,
-  ): Promise<CategoryListItemResponse> =>
-    api.put<CategoryListItemResponse, CategoryUpsertRequest>(
+  ): Promise<CategoryListItemResponse> => {
+    if (guestMode.isActive()) return guestStore.updateCategory(id, data);
+    return api.put<CategoryListItemResponse, CategoryUpsertRequest>(
       `${CATEGORY_BASE_URL}/${id}`,
       data,
-    ),
+    );
+  },
 };
 
 export default categoryApi;

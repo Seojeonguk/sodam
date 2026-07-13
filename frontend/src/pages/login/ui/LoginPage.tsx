@@ -17,6 +17,8 @@ import LoginApi from "../../../features/auth/api/LoginApi";
 import { restoreSession, setAccessToken } from "../../../shared/api/api";
 import { OAUTH_AUTHORIZATION_URLS } from "../../../shared/config/app";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import { sessionCache } from "../../../shared/lib/localCache";
+import { guestMode } from "../../../shared/lib/guestMode";
 
 function LoginPage() {
   const theme = useTheme();
@@ -46,6 +48,7 @@ function LoginPage() {
       });
 
       setAccessToken(response.accessToken);
+      sessionCache.set(email); // 오프라인 복귀를 위해 세션 정보 저장
       await moveToDashboard();
     } catch (error: unknown) {
       setErrorMsg(
@@ -56,6 +59,12 @@ function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGuestStart = async () => {
+    guestMode.enable();
+    await fetchAccountBooks(); // 게스트 가계부를 컨텍스트에 로드
+    void navigate("/dashboard");
   };
 
   const handleKakaoLoginBtn = () => {
@@ -70,6 +79,12 @@ function LoginPage() {
     let isMounted = true;
 
     void (async () => {
+      // 오프라인이고 이전 세션 없으면 스피너 없이 바로 로그인 폼 표시
+      if (!navigator.onLine && !sessionCache.get()) {
+        if (isMounted) setIsLoading(false);
+        return;
+      }
+
       const restored = await restoreSession();
 
       if (!isMounted) {
@@ -308,6 +323,23 @@ function LoginPage() {
                   }}
                 >
                   회원가입
+                </Button>
+
+                <Divider sx={{ my: 0.5 }} />
+
+                <Button
+                  variant="text"
+                  color="inherit"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.8rem",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.action.hover, 0.06),
+                    },
+                  }}
+                  onClick={() => void handleGuestStart()}
+                >
+                  로그인 없이 둘러보기
                 </Button>
               </Box>
             </Box>

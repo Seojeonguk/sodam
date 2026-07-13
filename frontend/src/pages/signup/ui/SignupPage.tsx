@@ -13,6 +13,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import SignupApi from "../../../features/auth/api/SignupApi";
 import type { SignupRequestDto } from "../../../features/auth/api/signup.types";
+import { OFFLINE_QUEUED } from "../../../shared/api/api";
 
 function SignupPage() {
   const theme = useTheme();
@@ -39,7 +40,16 @@ function SignupPage() {
     };
 
     try {
-      await SignupApi.signup(signupRequestDto);
+      const result = await SignupApi.signup(signupRequestDto);
+
+      // 오프라인으로 인해 큐에 저장된 경우
+      if ((result as unknown) === OFFLINE_QUEUED) {
+        setErrorMsg(
+          "현재 오프라인 상태입니다. 네트워크 연결 후 다시 시도해 주세요.",
+        );
+        return;
+      }
+
       alert("회원가입이 완료되었습니다. 로그인해 주세요.");
       void navigate("/");
     } catch (error: unknown) {
