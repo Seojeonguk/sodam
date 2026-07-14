@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { AddCircle } from "@mui/icons-material";
-import { Box, Button, Container, Paper, Skeleton, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Pagination,
+  Paper,
+  Skeleton,
+  Typography,
+} from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -36,7 +44,10 @@ function TransactionPage() {
     statPeriodDataset,
     dateRange,
     setDateRange,
-  } = useTransactions();
+    page,
+    setPage,
+    totalPages,
+  } = useTransactions({ pageSize: 10 });
 
   const handleOpenCreateModal = () => {
     setIsCreateModalOpen(true);
@@ -90,8 +101,21 @@ function TransactionPage() {
         <Container maxWidth="md">
           <Skeleton variant="text" width="40%" height={48} sx={{ mb: 2 }} />
           <Skeleton variant="text" width="60%" height={40} sx={{ mb: 3 }} />
-          <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, mb: 4, borderRadius: "24px", border: "1px solid #F1F5F9" }}>
-            <Box display="flex" justifyContent="center" gap={{ xs: 4, sm: 10 }} flexWrap="wrap">
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 4 },
+              mb: 4,
+              borderRadius: "24px",
+              border: "1px solid #F1F5F9",
+            }}
+          >
+            <Box
+              display="flex"
+              justifyContent="center"
+              gap={{ xs: 4, sm: 10 }}
+              flexWrap="wrap"
+            >
               <Box textAlign="center">
                 <Skeleton variant="circular" width={150} height={150} />
               </Box>
@@ -100,9 +124,19 @@ function TransactionPage() {
               </Box>
             </Box>
           </Paper>
-          <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: "24px", border: "1px solid #F1F5F9" }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 4 },
+              borderRadius: "24px",
+              border: "1px solid #F1F5F9",
+            }}
+          >
             {[0, 1, 2, 3].map((i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <Box
+                key={i}
+                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+              >
                 <Skeleton variant="circular" width={48} height={48} />
                 <Box flex={1}>
                   <Skeleton variant="text" width="30%" height={24} />
@@ -204,7 +238,11 @@ function TransactionPage() {
                   },
                 }}
               />
-              <Typography color="#94A3B8" fontWeight="bold" sx={{ flexShrink: 0 }}>
+              <Typography
+                color="#94A3B8"
+                fontWeight="bold"
+                sx={{ flexShrink: 0 }}
+              >
                 ~
               </Typography>
               <DatePicker
@@ -252,7 +290,13 @@ function TransactionPage() {
             paddingBottom={{ xs: 3, sm: 5 }}
           >
             <Box textAlign="center">
-              <Typography variant="h6" component="h2" mb={2} fontWeight="bold" color="#64748B">
+              <Typography
+                variant="h6"
+                component="h2"
+                mb={2}
+                fontWeight="bold"
+                color="#64748B"
+              >
                 월 수입
               </Typography>
               {incomeStats.length > 0 ? (
@@ -281,7 +325,13 @@ function TransactionPage() {
             </Box>
 
             <Box textAlign="center">
-              <Typography variant="h6" component="h2" mb={2} fontWeight="bold" color="#64748B">
+              <Typography
+                variant="h6"
+                component="h2"
+                mb={2}
+                fontWeight="bold"
+                color="#64748B"
+              >
                 월별 지출
               </Typography>
               {expenseStats.length > 0 ? (
@@ -359,21 +409,44 @@ function TransactionPage() {
           elevation={0}
           sx={{
             p: { xs: 2, sm: 4 },
-            mb: 4,
+            mb: 2,
             borderRadius: "24px",
             boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
             border: "1px solid #F1F5F9",
             bgcolor: "transparent",
           }}
         >
-          <Typography variant="h5" component="h2" mb={3} fontWeight="800" color="#334155">
-            최근 거래 내역
+          <Typography
+            variant="h5"
+            component="h2"
+            mb={3}
+            fontWeight="800"
+            color="#334155"
+          >
+            거래 내역
           </Typography>
           <TransactionList
             transactions={transactions}
             onViewDetail={handleOpenDetailModal}
           />
         </Paper>
+
+        {/* 페이지네이션: 데이터가 로드된 경우 항상 표시 */}
+        {!loading && transactions !== null && (
+          <Box display="flex" justifyContent="center" mb={4}>
+            <Pagination
+              count={Math.max(1, totalPages)}
+              page={page + 1} /* MUI는 1-indexed */
+              onChange={(_, value) => {
+                setPage(value - 1); /* Spring은 0-indexed */
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              color="primary"
+              shape="rounded"
+              size="large"
+            />
+          </Box>
+        )}
 
         <TransactionCreateModal
           isOpen={isCreateModalOpen}

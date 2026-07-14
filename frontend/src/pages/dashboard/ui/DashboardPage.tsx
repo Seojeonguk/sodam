@@ -46,7 +46,8 @@ function DashboardPage() {
     dateRange,
     setDateRange,
     refreshTransactionData,
-  } = useTransactions();
+    totalElements,
+  } = useTransactions({ pageSize: 5 });
   const {
     categories,
     loading: categoryLoading,
@@ -63,8 +64,12 @@ function DashboardPage() {
     }
 
     setDateRange({
-      startDate: dayjs(`${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`).startOf("month"),
-      endDate: dayjs(`${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`).endOf("month"),
+      startDate: dayjs(
+        `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`,
+      ).startOf("month"),
+      endDate: dayjs(
+        `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`,
+      ).endOf("month"),
     });
   }, [periodMode, selectedMonth, selectedYear, setDateRange]);
 
@@ -75,7 +80,8 @@ function DashboardPage() {
     () => transactions?.transactions ?? [],
     [transactions],
   );
-  const totalTransactions = allTransactions.length;
+  /* 현재 페이지 건수가 아닌 전체 건수 사용 */
+  const totalTransactions = totalElements;
 
   const totalIncome = useMemo(
     () =>
@@ -121,7 +127,9 @@ function DashboardPage() {
         ...category,
         usageCount: categoryUsage.get(category.name) ?? 0,
       }))
-      .sort((a, b) => b.usageCount - a.usageCount || a.name.localeCompare(b.name))
+      .sort(
+        (a, b) => b.usageCount - a.usageCount || a.name.localeCompare(b.name),
+      )
       .slice(0, 6);
   }, [allTransactions, categories]);
 
@@ -218,14 +226,20 @@ function DashboardPage() {
                 }
               }}
             >
-              <ToggleButton value="month" sx={{ px: 1.5, fontSize: "0.8rem" }}>월</ToggleButton>
-              <ToggleButton value="year" sx={{ px: 1.5, fontSize: "0.8rem" }}>연도</ToggleButton>
+              <ToggleButton value="month" sx={{ px: 1.5, fontSize: "0.8rem" }}>
+                월
+              </ToggleButton>
+              <ToggleButton value="year" sx={{ px: 1.5, fontSize: "0.8rem" }}>
+                연도
+              </ToggleButton>
             </ToggleButtonGroup>
 
             <FormControl size="small" sx={{ minWidth: 90 }}>
               <Select
                 value={selectedYear}
-                onChange={(event) => setSelectedYear(Number(event.target.value))}
+                onChange={(event) =>
+                  setSelectedYear(Number(event.target.value))
+                }
               >
                 {yearOptions.map((year) => (
                   <MenuItem key={year} value={year}>
@@ -256,7 +270,11 @@ function DashboardPage() {
           </Stack>
         </Stack>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 1.5, display: "block" }}
+        >
           현재 적용 범위: {dateRange.startDate.format("YYYY.MM.DD")} -{" "}
           {dateRange.endDate.format("YYYY.MM.DD")}
         </Typography>

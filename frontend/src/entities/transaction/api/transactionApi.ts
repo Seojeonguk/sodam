@@ -15,10 +15,19 @@ const transactionApi = {
     accountId: number,
     startDate?: string,
     endDate?: string,
+    page = 0,
+    size = 10,
   ): Promise<TransactionListResponse> => {
-    if (guestMode.isActive()) return guestStore.getTransactions(accountId, startDate, endDate);
+    if (guestMode.isActive())
+      return guestStore.getTransactions(
+        accountId,
+        startDate,
+        endDate,
+        page,
+        size,
+      );
     return api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
-      params: { accountBookSeq: accountId, startDate, endDate },
+      params: { accountBookSeq: accountId, startDate, endDate, page, size },
     });
   },
 

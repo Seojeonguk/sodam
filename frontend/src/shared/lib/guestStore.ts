@@ -11,8 +11,14 @@ import type {
   TransactionResponseDto,
   TransactionUpdateRequestDto,
 } from "../../entities/transaction/api/transaction.types";
-import type { CategoryListItemResponse, CategoryListResponse } from "../../entities/transaction/api/category.types";
-import type { StatPeriodResponse, StatResponse } from "../../entities/transaction/api/stat.types";
+import type {
+  CategoryListItemResponse,
+  CategoryListResponse,
+} from "../../entities/transaction/api/category.types";
+import type {
+  StatPeriodResponse,
+  StatResponse,
+} from "../../entities/transaction/api/stat.types";
 
 // ─── 키 ──────────────────────────────────────────────────────────────────────
 const KEYS = {
@@ -78,7 +84,10 @@ function nextSeq(): number {
 }
 
 function nextCategoryId(): number {
-  const cats = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+  const cats = load<CategoryListItemResponse[]>(
+    KEYS.categories,
+    DEFAULT_CATEGORIES,
+  );
   return cats.length > 0 ? Math.max(...cats.map((c) => c.id)) + 1 : 1;
 }
 
@@ -124,7 +133,10 @@ export const guestStore = {
 
   // ── 카테고리 ─────────────────────────────────────────────────────────────────
   getCategories(page = 0, size = 100): CategoryListResponse {
-    const all = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+    const all = load<CategoryListItemResponse[]>(
+      KEYS.categories,
+      DEFAULT_CATEGORIES,
+    );
     const start = page * size;
     const items = all.slice(start, start + size);
     return {
@@ -137,12 +149,22 @@ export const guestStore = {
   },
 
   getCategoryById(id: number): CategoryListItemResponse | null {
-    const all = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+    const all = load<CategoryListItemResponse[]>(
+      KEYS.categories,
+      DEFAULT_CATEGORIES,
+    );
     return all.find((c) => c.id === id) ?? null;
   },
 
-  createCategory(data: { name: string; description?: string; color?: string }): CategoryListItemResponse {
-    const all = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+  createCategory(data: {
+    name: string;
+    description?: string;
+    color?: string;
+  }): CategoryListItemResponse {
+    const all = load<CategoryListItemResponse[]>(
+      KEYS.categories,
+      DEFAULT_CATEGORIES,
+    );
     const cat: CategoryListItemResponse = {
       id: nextCategoryId(),
       name: data.name,
@@ -153,8 +175,14 @@ export const guestStore = {
     return cat;
   },
 
-  updateCategory(id: number, data: { name: string; description?: string; color?: string }): CategoryListItemResponse {
-    const all = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+  updateCategory(
+    id: number,
+    data: { name: string; description?: string; color?: string },
+  ): CategoryListItemResponse {
+    const all = load<CategoryListItemResponse[]>(
+      KEYS.categories,
+      DEFAULT_CATEGORIES,
+    );
     const updated = all.map((c) =>
       c.id === id ? { ...c, ...data, color: data.color ?? c.color } : c,
     );
@@ -164,13 +192,18 @@ export const guestStore = {
     const updatedName = data.name;
     save(
       KEYS.transactions,
-      transactions.map((t) => (t.categorySeq === id ? { ...t, categoryName: updatedName } : t)),
+      transactions.map((t) =>
+        t.categorySeq === id ? { ...t, categoryName: updatedName } : t,
+      ),
     );
     return updated.find((c) => c.id === id)!;
   },
 
   deleteCategory(id: number, replacementId: number): void {
-    const all = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+    const all = load<CategoryListItemResponse[]>(
+      KEYS.categories,
+      DEFAULT_CATEGORIES,
+    );
     const replacement = all.find((c) => c.id === replacementId) ?? null;
     save(
       KEYS.categories,
@@ -182,7 +215,11 @@ export const guestStore = {
       KEYS.transactions,
       transactions.map((t) =>
         t.categorySeq === id
-          ? { ...t, categorySeq: replacement?.id ?? null, categoryName: replacement?.name ?? null }
+          ? {
+              ...t,
+              categorySeq: replacement?.id ?? null,
+              categoryName: replacement?.name ?? null,
+            }
           : t,
       ),
     );
@@ -193,6 +230,8 @@ export const guestStore = {
     _accountId: number,
     startDate?: string,
     endDate?: string,
+    page = 0,
+    size = 10,
   ): TransactionListResponse {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     let filtered = all;
@@ -203,7 +242,12 @@ export const guestStore = {
       filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
     }
 
-    const items: TransactionListItemResponse[] = filtered.map((t) => ({
+    const totalElements = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalElements / size));
+    const safePage = Math.min(page, totalPages - 1);
+    const paged = filtered.slice(safePage * size, safePage * size + size);
+
+    const items: TransactionListItemResponse[] = paged.map((t) => ({
       seq: t.seq,
       amount: t.amount,
       description: t.description,
@@ -214,16 +258,18 @@ export const guestStore = {
 
     return {
       transactions: items,
-      pageNumber: 0,
-      pageSize: items.length,
-      totalElements: items.length,
-      totalPages: 1,
+      pageNumber: safePage,
+      pageSize: size,
+      totalElements,
+      totalPages,
     };
   },
 
   createTransaction(data: TransactionCreateRequestDto): TransactionResponseDto {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
-    const category = data.categorySeq ? this.getCategoryById(data.categorySeq) : null;
+    const category = data.categorySeq
+      ? this.getCategoryById(data.categorySeq)
+      : null;
     const tx: StoredTransaction = {
       seq: nextSeq(),
       accountBookSeq: data.accountBookSeq,
@@ -245,9 +291,15 @@ export const guestStore = {
     return tx ? toDto(tx) : null;
   },
 
-  updateTransaction(seq: number, data: TransactionUpdateRequestDto): TransactionResponseDto {
+  updateTransaction(
+    seq: number,
+    data: TransactionUpdateRequestDto,
+  ): TransactionResponseDto {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
-    const category = data.categorySeq != null ? this.getCategoryById(data.categorySeq) : undefined;
+    const category =
+      data.categorySeq != null
+        ? this.getCategoryById(data.categorySeq)
+        : undefined;
     const updated = all.map((t) => {
       if (t.seq !== seq) return t;
       return {
@@ -268,7 +320,10 @@ export const guestStore = {
 
   deleteTransaction(seq: number): void {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
-    save(KEYS.transactions, all.filter((t) => t.seq !== seq));
+    save(
+      KEYS.transactions,
+      all.filter((t) => t.seq !== seq),
+    );
   },
 
   /** 마이그레이션용: categorySeq 포함 전체 거래 반환 */
@@ -281,7 +336,9 @@ export const guestStore = {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
-    const filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
+    const filtered = all.filter((t) =>
+      isInRange(t.transactionDate, start, end),
+    );
 
     const map = new Map<string, StatResponse>();
     for (const t of filtered) {
@@ -290,7 +347,11 @@ export const guestStore = {
       if (existing) {
         existing.total += t.amount;
       } else {
-        map.set(key, { total: t.amount, type: t.type, name: t.categoryName ?? "미분류" });
+        map.set(key, {
+          total: t.amount,
+          type: t.type,
+          name: t.categoryName ?? "미분류",
+        });
       }
     }
     return Array.from(map.values());
@@ -300,7 +361,9 @@ export const guestStore = {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
-    const filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
+    const filtered = all.filter((t) =>
+      isInRange(t.transactionDate, start, end),
+    );
 
     const map = new Map<string, StatPeriodResponse>();
     for (const t of filtered) {

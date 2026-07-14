@@ -19,8 +19,15 @@ interface StatPeriodDatasetEntry {
   expense: number;
 }
 
+interface UseTransactionsOptions {
+  /** 한 페이지에 보여줄 거래 수 (기본값: 10) */
+  pageSize?: number;
+}
+
 const getRandomColor = () =>
-  `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+  `#${Math.floor(Math.random() * 16777215)
+    .toString(16)
+    .padStart(6, "0")}`;
 
 const buildPieStats = (
   type: "INCOME" | "EXPENSE",
@@ -57,7 +64,9 @@ const buildPeriodDataset = (
     return accumulator;
   }, []);
 
-export const useTransactions = () => {
+export const useTransactions = (options?: UseTransactionsOptions) => {
+  const pageSize = options?.pageSize ?? 10;
+
   const [transactions, setTransactions] =
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -68,15 +77,24 @@ export const useTransactions = () => {
     StatPeriodDatasetEntry[]
   >([]);
 
+  /** 0-indexed (Spring Pageable 기준) */
+  const [page, setPage] = useState(0);
+
   const { currentAccountBook } = useAccountBookContext();
   const currentAccountBookId = currentAccountBook?.id ?? null;
 
-  const [dateRange, setDateRange] = useState<{ startDate: Dayjs; endDate: Dayjs }>(
-    {
-      startDate: dayjs().startOf("month"),
-      endDate: dayjs().endOf("month"),
-    },
-  );
+  const [dateRange, setDateRange] = useState<{
+    startDate: Dayjs;
+    endDate: Dayjs;
+  }>({
+    startDate: dayjs().startOf("month"),
+    endDate: dayjs().endOf("month"),
+  });
+
+  /** dateRange가 바뀌면 첫 페이지로 리셋 */
+  useEffect(() => {
+    setPage(0);
+  }, [dateRange.startDate, dateRange.endDate]);
 
   const resetTransactionState = useCallback(() => {
     setTransactions(null);
@@ -104,7 +122,13 @@ export const useTransactions = () => {
 
     try {
       const [nextTransactions, nextStats, nextPeriodStats] = await Promise.all([
-        transactionApi.getTransactions(currentAccountBookId, startDate, endDate),
+        transactionApi.getTransactions(
+          currentAccountBookId,
+          startDate,
+          endDate,
+          page,
+          pageSize,
+        ),
         statApi.getStats(statRequest),
         statApi.getPeriodStats(statPeriodRequest),
       ]);
@@ -123,7 +147,14 @@ export const useTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBookId, dateRange.endDate, dateRange.startDate, resetTransactionState]);
+  }, [
+    currentAccountBookId,
+    dateRange.endDate,
+    dateRange.startDate,
+    page,
+    pageSize,
+    resetTransactionState,
+  ]);
 
   const deleteTransaction = useCallback(
     async (seq: number) => {
@@ -132,10 +163,7 @@ export const useTransactions = () => {
         await refreshTransactionData();
       } catch (nextError) {
         throw new Error(
-          getServerErrorMessage(
-            nextError,
-            "거래 삭제 중 오류가 발생했습니다.",
-          ),
+          getServerErrorMessage(nextError, "거래 삭제 중 오류가 발생했습니다."),
         );
       }
     },
@@ -157,5 +185,13 @@ export const useTransactions = () => {
     statPeriodDataset,
     dateRange,
     setDateRange,
+    /** 현재 페이지 (0-indexed) */
+    page,
+    /** 페이지 변경 핸들러 (0-indexed) */
+    setPage,
+    /** 전체 페이지 수 */
+    totalPages: transactions?.totalPages ?? 1,
+    /** 전체 거래 건수 */
+    totalElements: transactions?.totalElements ?? 0,
   };
 };
