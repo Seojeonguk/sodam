@@ -35,6 +35,7 @@ public class CategoryApplicationService {
                 .name(category.getName())
                 .description(category.getDescription())
                 .color(category.getColor())
+                .type(category.getType())
                 .build();
     }
 
@@ -63,6 +64,7 @@ public class CategoryApplicationService {
                 .name(updatedCategory.getName())
                 .description(updatedCategory.getDescription())
                 .color(updatedCategory.getColor())
+                .type(updatedCategory.getType())
                 .build();
     }
 
@@ -75,6 +77,7 @@ public class CategoryApplicationService {
                 .name(category.getName())
                 .description(category.getDescription())
                 .color(category.getColor())
+                .type(category.getType())
                 .build();
     }
 

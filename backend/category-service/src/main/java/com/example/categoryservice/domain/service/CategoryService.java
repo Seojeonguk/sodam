@@ -27,6 +27,7 @@ public class CategoryService {
                 .description(request.getDescription())
                 .color(request.getColor())
                 .userSeq(request.getUserSeq())
+                .type(request.getType() != null ? request.getType() : "EXPENSE")
                 .build();
 
         return categoryRepository.save(category);

@@ -19,6 +19,10 @@ public class CategorySpecification {
                     predicates.add(criteriaBuilder.equal(root.get("userSeq"), userSeq))
             );
 
+            Optional.ofNullable(searchRequest.getType()).ifPresent(type ->
+                    predicates.add(criteriaBuilder.equal(root.get("type"), type))
+            );
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }

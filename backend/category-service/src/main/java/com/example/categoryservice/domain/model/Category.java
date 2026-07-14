@@ -37,6 +37,10 @@ public class Category {
     @Column(name = "color")
     private String color;
 
+    /** INCOME(수입) 또는 EXPENSE(지출) */
+    @Column(name = "type", nullable = false, length = 10)
+    private String type;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false, length = 14)
     private String createdAt;
@@ -49,6 +53,9 @@ public class Category {
         this.name = request.getName();
         this.description = request.getDescription();
         this.color = request.getColor();
+        if (request.getType() != null) {
+            this.type = request.getType();
+        }
     }
 
     @PrePersist

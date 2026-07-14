@@ -12,21 +12,24 @@ import type {
 
 const CATEGORY_BASE_URL = "/categories";
 
-interface CategoryUpsertRequest {
+export interface CategoryUpsertRequest {
   name: string;
   description?: string;
   color?: string;
+  /** INCOME 또는 EXPENSE */
+  type: "INCOME" | "EXPENSE";
 }
 
 const categoryApi = {
   getCategories: async (
     page = DEFAULT_PAGE_INDEX,
     size = CATEGORY_SELECTION_PAGE_SIZE,
+    type?: "INCOME" | "EXPENSE",
   ): Promise<CategoryListResponse> => {
-    if (guestMode.isActive()) return guestStore.getCategories(page, size);
-    return api.get<CategoryListResponse>(
-      `${CATEGORY_BASE_URL}?page=${page}&size=${size}`,
-    );
+    if (guestMode.isActive()) return guestStore.getCategories(page, size, type);
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (type) params.set("type", type);
+    return api.get<CategoryListResponse>(`${CATEGORY_BASE_URL}?${params.toString()}`);
   },
 
   createCategory: async (

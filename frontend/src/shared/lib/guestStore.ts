@@ -50,13 +50,13 @@ export const GUEST_ACCOUNT_BOOK: AccountBookListResponse = {
 
 // ─── 기본 카테고리 ────────────────────────────────────────────────────────────
 const DEFAULT_CATEGORIES: CategoryListItemResponse[] = [
-  { id: 1, name: "식비", description: "음식·식료품", color: "#ef4444" },
-  { id: 2, name: "교통", description: "대중교통·주유", color: "#f97316" },
-  { id: 3, name: "문화/여가", description: "영화·취미·여행", color: "#8b5cf6" },
-  { id: 4, name: "의료/건강", description: "병원·약국·운동", color: "#06b6d4" },
-  { id: 5, name: "쇼핑", description: "의류·생활용품", color: "#ec4899" },
-  { id: 6, name: "월급", description: "급여·보너스", color: "#22c55e" },
-  { id: 7, name: "기타수입", description: "용돈·부수입", color: "#84cc16" },
+  { id: 1, name: "식비",     description: "음식·식료품",    color: "#ef4444", type: "EXPENSE" },
+  { id: 2, name: "교통",     description: "대중교통·주유",  color: "#f97316", type: "EXPENSE" },
+  { id: 3, name: "문화/여가", description: "영화·취미·여행", color: "#8b5cf6", type: "EXPENSE" },
+  { id: 4, name: "의료/건강", description: "병원·약국·운동", color: "#06b6d4", type: "EXPENSE" },
+  { id: 5, name: "쇼핑",     description: "의류·생활용품",  color: "#ec4899", type: "EXPENSE" },
+  { id: 6, name: "월급",     description: "급여·보너스",    color: "#22c55e", type: "INCOME"  },
+  { id: 7, name: "기타수입", description: "용돈·부수입",    color: "#84cc16", type: "INCOME"  },
 ];
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -132,19 +132,20 @@ export const guestStore = {
   },
 
   // ── 카테고리 ─────────────────────────────────────────────────────────────────
-  getCategories(page = 0, size = 100): CategoryListResponse {
+  getCategories(page = 0, size = 100, type?: "INCOME" | "EXPENSE"): CategoryListResponse {
     const all = load<CategoryListItemResponse[]>(
       KEYS.categories,
       DEFAULT_CATEGORIES,
     );
+    const filtered = type ? all.filter((c) => c.type === type) : all;
     const start = page * size;
-    const items = all.slice(start, start + size);
+    const items = filtered.slice(start, start + size);
     return {
       categories: items,
       pageNumber: page,
       pageSize: size,
-      totalElements: all.length,
-      totalPages: Math.ceil(all.length / size),
+      totalElements: filtered.length,
+      totalPages: Math.max(1, Math.ceil(filtered.length / size)),
     };
   },
 
@@ -160,6 +161,7 @@ export const guestStore = {
     name: string;
     description?: string;
     color?: string;
+    type: "INCOME" | "EXPENSE";
   }): CategoryListItemResponse {
     const all = load<CategoryListItemResponse[]>(
       KEYS.categories,
@@ -170,6 +172,7 @@ export const guestStore = {
       name: data.name,
       description: data.description ?? "",
       color: data.color ?? null,
+      type: data.type,
     };
     save(KEYS.categories, [...all, cat]);
     return cat;

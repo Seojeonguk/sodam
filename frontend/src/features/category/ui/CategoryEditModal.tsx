@@ -7,6 +7,8 @@ import {
   ClickAwayListener,
   Modal,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { ChromePicker } from "react-color";
@@ -14,7 +16,6 @@ import categoryApi from "../../../entities/category/api/categoryApi";
 import axios, { type AxiosError } from "axios";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
-// 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
   position: "absolute" as const,
   top: "50%",
@@ -30,7 +31,6 @@ const style = {
   borderRadius: "24px",
 };
 
-// CategoryEditModal 컴포넌트가 받을 props 정의
 interface CategoryEditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -47,19 +47,19 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [color, setColor] = useState<string>("#1976d2");
+  const [categoryType, setCategoryType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [displayColorPicker, setDisplayColorPicker] = useState<boolean>(false);
 
-  // API 호출 상태 관리
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // category가 변경될 때마다 폼 초기화
   useEffect(() => {
     if (category) {
       setName(category.name ?? "");
       setDescription(category.description ?? "");
       setColor(category.color ?? "#1976d2");
+      setCategoryType(category.type ?? "EXPENSE");
     }
   }, [category]);
 
@@ -68,7 +68,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     setLoading(false);
     setError(null);
     setSuccess(null);
-    onClose(); // 부모 컴포넌트의 onClose 호출
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +84,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
         name,
         description: description || undefined,
         color: color || undefined,
+        type: categoryType,
       });
       await onSuccess();
       setSuccess("카테고리가 성공적으로 수정되었습니다.");
@@ -91,9 +92,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     } catch (err) {
       const axiosError = err as AxiosError<{ message?: string }>;
       if (axios.isAxiosError(axiosError) && axiosError.response) {
-        setError(
-          `카테고리 수정 실패: ${axiosError.response.data?.message ?? axiosError.message}`,
-        );
+        setError(`카테고리 수정 실패: ${axiosError.response.data?.message ?? axiosError.message}`);
       } else {
         setError("카테고리 수정 중 예상치 못한 오류가 발생했습니다.");
       }
@@ -102,121 +101,93 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     }
   };
 
-  const handleColor = (color: { hex: string }) => {
-    setColor(color.hex);
-  };
-
-  const handleOpenColorPicker = () => {
-    setDisplayColorPicker(true);
-  };
-
-  const handleCloseColorPicker = () => {
-    setDisplayColorPicker(false);
-  };
-
-  if (!category) {
-    return null;
-  }
+  if (!category) return null;
 
   return (
-    <Modal
-      open={isOpen}
-      onClose={handleClose}
-      aria-labelledby="category-edit-modal-title"
-      aria-describedby="category-edit-modal-description"
-    >
+    <Modal open={isOpen} onClose={handleClose} aria-labelledby="category-edit-modal-title">
       <Box sx={style} component="form" onSubmit={(e) => void handleSubmit(e)}>
-        <Typography
-          id="category-edit-modal-title"
-          variant="h5"
-          component="h2"
-          mb={3}
-        >
+        <Typography id="category-edit-modal-title" variant="h5" component="h2" mb={3}>
           카테고리 수정
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+        {/* 수입 / 지출 구분 */}
+        <Box mb={2.5}>
+          <Typography variant="body2" color="text.secondary" mb={1} fontWeight={600}>
+            분류
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            value={categoryType}
+            onChange={(_, value: "INCOME" | "EXPENSE" | null) => {
+              if (value) setCategoryType(value);
+            }}
+            size="small"
+            fullWidth
+          >
+            <ToggleButton
+              value="EXPENSE"
+              sx={{
+                fontWeight: 700,
+                "&.Mui-selected": { bgcolor: "error.main", color: "white", "&:hover": { bgcolor: "error.dark" } },
+              }}
+            >
+              지출
+            </ToggleButton>
+            <ToggleButton
+              value="INCOME"
+              sx={{
+                fontWeight: 700,
+                "&.Mui-selected": { bgcolor: "success.main", color: "white", "&:hover": { bgcolor: "success.dark" } },
+              }}
+            >
+              수입
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
 
         <TextField
-          fullWidth
-          label="이름"
-          type="text"
-          value={name}
+          fullWidth label="이름" value={name}
           onChange={(e) => setName(e.target.value)}
-          margin="normal"
-          required
-          sx={{ mb: 2 }}
+          margin="normal" required sx={{ mb: 2 }}
         />
 
         <TextField
-          fullWidth
-          label="설명"
-          type="text"
-          value={description}
+          fullWidth label="설명" value={description}
           onChange={(e) => setDescription(e.target.value)}
-          margin="normal"
-          sx={{ mb: 2 }}
+          margin="normal" sx={{ mb: 2 }}
         />
 
         <Box sx={{ mb: 2 }}>
           <TextField
-            fullWidth
-            label="색상"
-            type="text"
-            value={color}
+            fullWidth label="색상" value={color}
             onChange={(e) => setColor(e.target.value)}
             margin="normal"
-            onClick={handleOpenColorPicker}
-            InputProps={{
-              readOnly: true,
-            }}
+            onClick={() => setDisplayColorPicker(true)}
+            InputProps={{ readOnly: true }}
           />
           <Box
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: color,
-              border: "1px solid #ccc",
-              borderRadius: 1,
-              mt: 1,
-              cursor: "pointer",
-            }}
-            onClick={handleOpenColorPicker}
+            sx={{ width: 40, height: 40, bgcolor: color, border: "1px solid #ccc", borderRadius: 1, mt: 1, cursor: "pointer" }}
+            onClick={() => setDisplayColorPicker(true)}
           />
         </Box>
 
         {displayColorPicker && (
-          <ClickAwayListener onClickAway={() => handleCloseColorPicker()}>
+          <ClickAwayListener onClickAway={() => setDisplayColorPicker(false)}>
             <Box sx={{ zIndex: 2, width: "fit-content", marginBottom: 5 }}>
-              <ChromePicker color={color} onChange={handleColor} />
+              <ChromePicker color={color} onChange={(c) => setColor(c.hex)} />
             </Box>
           </ClickAwayListener>
         )}
 
         <Box display="flex" justifyContent="space-between" gap={2}>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleClose}
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-          >
+          <Button variant="contained" color="error" onClick={handleClose} sx={{ flexGrow: 1 }} disabled={loading}>
             취소
           </Button>
           <Button
-            variant="contained"
-            type="submit"
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
+            variant="contained" type="submit" sx={{ flexGrow: 1 }} disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
             {loading ? "수정 중..." : "카테고리 수정"}

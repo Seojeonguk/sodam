@@ -9,4 +9,5 @@ public class CategoryResponse {
     private String name;
     private String description;
     private String color;
+    private String type;
 }

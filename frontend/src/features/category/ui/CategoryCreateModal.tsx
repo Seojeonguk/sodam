@@ -11,6 +11,8 @@ import {
   Tab,
   Tabs,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { ChromePicker } from "react-color";
@@ -53,6 +55,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   onSuccess,
 }) => {
   const [mode, setMode] = useState<CreateMode>("single");
+  const [categoryType, setCategoryType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(getRandomColor());
@@ -65,15 +68,12 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
 
   const parsedBulkNames = useMemo(() => {
     const seen = new Set<string>();
-
     return bulkInput
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .filter((line) => {
-        if (seen.has(line)) {
-          return false;
-        }
+        if (seen.has(line)) return false;
         seen.add(line);
         return true;
       });
@@ -90,6 +90,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
 
   const resetAll = () => {
     setMode("single");
+    setCategoryType("EXPENSE");
     resetSingleForm(false);
     setKeepCreating(true);
     setBulkInput("");
@@ -108,6 +109,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       name,
       description: description || undefined,
       color: color || undefined,
+      type: categoryType,
     });
     await onSuccess();
 
@@ -131,13 +133,12 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       await categoryApi.createCategory({
         name: categoryName,
         color: getRandomColor(),
+        type: categoryType,
       });
     }
     await onSuccess();
 
-    setSuccess(
-      `${parsedBulkNames.length}개의 카테고리를 한 번에 추가했습니다.`,
-    );
+    setSuccess(`${parsedBulkNames.length}개의 카테고리를 한 번에 추가했습니다.`);
     setBulkInput("");
   };
 
@@ -155,11 +156,8 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       }
     } catch (err) {
       const axiosError = err as AxiosError<{ message?: string }>;
-
       if (axios.isAxiosError(axiosError) && axiosError.response) {
-        setError(
-          `카테고리 추가 실패: ${axiosError.response.data?.message ?? axiosError.message}`,
-        );
+        setError(`카테고리 추가 실패: ${axiosError.response.data?.message ?? axiosError.message}`);
       } else {
         setError("카테고리 추가 중 예상치 못한 오류가 발생했습니다.");
       }
@@ -173,15 +171,9 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       open={isOpen}
       onClose={handleClose}
       aria-labelledby="category-create-modal-title"
-      aria-describedby="category-create-modal-description"
     >
       <Box sx={style} component="form" onSubmit={(e) => void handleSubmit(e)}>
-        <Typography
-          id="category-create-modal-title"
-          variant="h5"
-          component="h2"
-          mb={1}
-        >
+        <Typography id="category-create-modal-title" variant="h5" component="h2" mb={1}>
           새 카테고리 추가
         </Typography>
 
@@ -189,16 +181,43 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
           개별로 만들거나, 여러 줄을 붙여넣어 한 번에 생성할 수 있습니다.
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+        {/* 수입 / 지출 구분 선택 */}
+        <Box mb={2.5}>
+          <Typography variant="body2" color="text.secondary" mb={1} fontWeight={600}>
+            분류
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            value={categoryType}
+            onChange={(_, value: "INCOME" | "EXPENSE" | null) => {
+              if (value) setCategoryType(value);
+            }}
+            size="small"
+            fullWidth
+          >
+            <ToggleButton
+              value="EXPENSE"
+              sx={{
+                fontWeight: 700,
+                "&.Mui-selected": { bgcolor: "error.main", color: "white", "&:hover": { bgcolor: "error.dark" } },
+              }}
+            >
+              지출
+            </ToggleButton>
+            <ToggleButton
+              value="INCOME"
+              sx={{
+                fontWeight: 700,
+                "&.Mui-selected": { bgcolor: "success.main", color: "white", "&:hover": { bgcolor: "success.dark" } },
+              }}
+            >
+              수입
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
 
         <Tabs
           value={mode}
@@ -230,7 +249,6 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
               fullWidth
               autoFocus
               label="이름"
-              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               margin="normal"
@@ -241,7 +259,6 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
             <TextField
               fullWidth
               label="설명"
-              type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               margin="normal"
@@ -252,25 +269,14 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
               <TextField
                 fullWidth
                 label="색상"
-                type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 margin="normal"
                 onClick={() => setDisplayColorPicker(true)}
-                InputProps={{
-                  readOnly: true,
-                }}
+                InputProps={{ readOnly: true }}
               />
               <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: color,
-                  border: "1px solid #ccc",
-                  borderRadius: 1,
-                  mt: 1,
-                  cursor: "pointer",
-                }}
+                sx={{ width: 40, height: 40, bgcolor: color, border: "1px solid #ccc", borderRadius: 1, mt: 1, cursor: "pointer" }}
                 onClick={() => setDisplayColorPicker(true)}
               />
             </Box>
@@ -278,10 +284,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
             {displayColorPicker && (
               <ClickAwayListener onClickAway={() => setDisplayColorPicker(false)}>
                 <Box sx={{ zIndex: 2, width: "fit-content", marginBottom: 3 }}>
-                  <ChromePicker
-                    color={color}
-                    onChange={(nextColor) => setColor(nextColor.hex)}
-                  />
+                  <ChromePicker color={color} onChange={(nextColor) => setColor(nextColor.hex)} />
                 </Box>
               </ClickAwayListener>
             )}
@@ -304,21 +307,11 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
               빈 줄은 무시하고, 중복 이름은 한 번만 추가합니다. 색상은 각 항목마다 랜덤으로 자동 지정됩니다.
             </Typography>
 
-            <Box
-              sx={{
-                mb: 2,
-                p: 2,
-                borderRadius: 2,
-                backgroundColor: "action.hover",
-              }}
-            >
-              <Typography fontWeight={700} mb={1}>
-                미리보기
-              </Typography>
+            <Box sx={{ mb: 2, p: 2, borderRadius: 2, backgroundColor: "action.hover" }}>
+              <Typography fontWeight={700} mb={1}>미리보기</Typography>
               {parsedBulkNames.length > 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  {parsedBulkNames.length}개를 생성합니다:{" "}
-                  {parsedBulkNames.join(", ")}
+                  {parsedBulkNames.length}개를 생성합니다: {parsedBulkNames.join(", ")}
                 </Typography>
               ) : (
                 <Typography variant="body2" color="text.secondary">
@@ -330,13 +323,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
         )}
 
         <Box display="flex" justifyContent="space-between" gap={2}>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleClose}
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-          >
+          <Button variant="contained" color="error" onClick={handleClose} sx={{ flexGrow: 1 }} disabled={loading}>
             취소
           </Button>
           <Button

@@ -11,6 +11,8 @@ public class CategoryListItemResponse {
     private String name;
     private String description;
     private String color;
+    /** INCOME 또는 EXPENSE */
+    private String type;
 
     public static CategoryListItemResponse from(Category category) {
         return CategoryListItemResponse.builder()
@@ -18,6 +20,7 @@ public class CategoryListItemResponse {
                 .name(category.getName())
                 .description(category.getDescription())
                 .color(category.getColor())
+                .type(category.getType())
                 .build();
     }
 }

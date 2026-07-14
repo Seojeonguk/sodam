@@ -91,6 +91,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     setLoading(false);
   }, [transactionToEdit]);
 
+  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
   useEffect(() => {
     const fetchModalOptions = async () => {
       if (!isOpen || !currentAccountBook?.id) {
@@ -102,6 +103,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         const fetchedCategories = await categoryApi.getCategories(
           DEFAULT_PAGE_INDEX,
           CATEGORY_SELECTION_PAGE_SIZE,
+          type,
         );
         setCategories(fetchedCategories.categories ?? []);
       } catch (nextError) {
@@ -114,7 +116,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     };
 
     void fetchModalOptions();
-  }, [currentAccountBook?.id, isOpen]);
+  }, [currentAccountBook?.id, isOpen, type]);
 
   const handleClose = () => {
     setError(null);

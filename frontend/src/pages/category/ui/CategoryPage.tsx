@@ -37,6 +37,7 @@ function CategoryPage() {
   const theme = useTheme();
   const { currentAccountBook } = useAccountBookContext();
   const [activeTab, setActiveTab] = useState<ManagementTab>("categories");
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] =
@@ -55,7 +56,14 @@ function CategoryPage() {
     refetchClassifications,
   } = useClassifications(currentAccountBook?.id);
 
-  const totalCategories = categories?.categories?.length ?? 0;
+  const allCategoryList = categories?.categories ?? [];
+  const filteredCategories = useMemo(
+    () => categoryTypeFilter === "ALL"
+      ? allCategoryList
+      : allCategoryList.filter((c) => c.type === categoryTypeFilter),
+    [allCategoryList, categoryTypeFilter],
+  );
+  const totalCategories = allCategoryList.length;
   const totalClassifications = classifications.length;
   const hasAnyCategory = totalCategories > 0;
 
@@ -476,11 +484,31 @@ function CategoryPage() {
               borderColor: "divider",
             }}
           >
-            <Typography variant="h5" component="h2" fontWeight={700} mb={2}>
-              카테고리 목록
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2} flexWrap="wrap" gap={1}>
+              <Typography variant="h5" component="h2" fontWeight={700}>
+                카테고리 목록
+              </Typography>
+              <Tabs
+                value={categoryTypeFilter}
+                onChange={(_, v: "ALL" | "INCOME" | "EXPENSE") => setCategoryTypeFilter(v)}
+                size="small"
+                sx={{ minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5, fontSize: "0.8rem" } }}
+              >
+                <Tab value="ALL" label={`전체 (${allCategoryList.length})`} />
+                <Tab
+                  value="EXPENSE"
+                  label={`지출 (${allCategoryList.filter((c) => c.type === "EXPENSE").length})`}
+                  sx={{ color: "error.main" }}
+                />
+                <Tab
+                  value="INCOME"
+                  label={`수입 (${allCategoryList.filter((c) => c.type === "INCOME").length})`}
+                  sx={{ color: "success.main" }}
+                />
+              </Tabs>
+            </Stack>
             <CategoryList
-              categories={categories?.categories ?? []}
+              categories={filteredCategories}
               onDelete={(id) => {
                 handleDeleteCategory(id);
               }}

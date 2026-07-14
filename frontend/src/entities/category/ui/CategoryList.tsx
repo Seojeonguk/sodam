@@ -106,7 +106,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
             }}
           >
             <Stack spacing={1.5}>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                 <Chip
                   label={category.name}
                   size="small"
@@ -119,6 +119,14 @@ const CategoryList: React.FC<CategoryListProps> = ({
                     fontWeight: 600,
                     "& .MuiChip-label": { px: 1.5 },
                   }}
+                />
+                {/* 수입/지출 뱃지 */}
+                <Chip
+                  label={category.type === "INCOME" ? "수입" : "지출"}
+                  size="small"
+                  color={category.type === "INCOME" ? "success" : "error"}
+                  variant="outlined"
+                  sx={{ fontWeight: 700, fontSize: "0.65rem", height: 20, "& .MuiChip-label": { px: 1 } }}
                 />
                 {category.color && (
                   <Box

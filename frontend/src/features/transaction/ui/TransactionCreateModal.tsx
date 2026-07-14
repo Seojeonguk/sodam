@@ -90,52 +90,53 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  /* 모달 오픈 시 classifications 조회 (1회) */
   useEffect(() => {
-    const fetchModalOptions = async () => {
-      if (!currentAccountBook?.id) {
-        setClassifications([]);
-        setCategories([]);
-        return;
-      }
-
+    if (!isOpen || !currentAccountBook?.id) {
+      setClassifications([]);
+      return;
+    }
+    const fetch = async () => {
       try {
-        const [fetchedClassifications, fetchedCategories] = await Promise.all([
-          classificationApi.getClassifications(currentAccountBook.id),
-          categoryApi.getCategories(
-            DEFAULT_PAGE_INDEX,
-            CATEGORY_SELECTION_PAGE_SIZE,
-          ),
-        ]);
-
+        const fetchedClassifications = await classificationApi.getClassifications(currentAccountBook.id);
         setClassifications(fetchedClassifications);
-        setCategories(fetchedCategories.categories ?? []);
-
         if (fetchedClassifications.length > 0) {
-          setType((currentType) =>
-            fetchedClassifications.some(
-              (classification) => classification.name === currentType,
-            )
-              ? currentType
-              : fetchedClassifications[0].name,
+          setType((cur) =>
+            fetchedClassifications.some((c) => c.name === cur) ? cur : fetchedClassifications[0].name,
           );
         }
       } catch (err: unknown) {
         if (axios.isAxiosError(err) && err.response) {
-          setError(
-            `분류 또는 카테고리 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`,
-          );
-        } else {
-          setError("분류 또는 카테고리 목록을 불러오는 중 오류가 발생했습니다.");
+          setError(`분류 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
         }
       }
     };
+    void fetch();
+  }, [currentAccountBook?.id, isOpen]);
 
-    if (!isOpen) {
+  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
+  useEffect(() => {
+    if (!isOpen || !currentAccountBook?.id) {
+      setCategories([]);
       return;
     }
-
-    void fetchModalOptions();
-  }, [currentAccountBook?.id, isOpen]);
+    const fetch = async () => {
+      try {
+        const res = await categoryApi.getCategories(
+          DEFAULT_PAGE_INDEX,
+          CATEGORY_SELECTION_PAGE_SIZE,
+          type,
+        );
+        setCategories(res.categories ?? []);
+        setCategory(""); // type 바뀌면 선택 초기화
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response) {
+          setError(`카테고리 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
+        }
+      }
+    };
+    void fetch();
+  }, [currentAccountBook?.id, isOpen, type]);
 
   const handleClose = () => {
     setType("EXPENSE");
