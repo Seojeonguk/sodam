@@ -199,7 +199,15 @@ function DashboardPage() {
             </Typography>
           </Box>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          {/* 기간 컨트롤: 항상 한 줄 (토글 + 연도 + 월) */}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            flexWrap="wrap"
+            useFlexGap
+            rowGap={1}
+          >
             <ToggleButtonGroup
               exclusive
               size="small"
@@ -210,11 +218,11 @@ function DashboardPage() {
                 }
               }}
             >
-              <ToggleButton value="month">월 기준</ToggleButton>
-              <ToggleButton value="year">연도 기준</ToggleButton>
+              <ToggleButton value="month" sx={{ px: 1.5, fontSize: "0.8rem" }}>월</ToggleButton>
+              <ToggleButton value="year" sx={{ px: 1.5, fontSize: "0.8rem" }}>연도</ToggleButton>
             </ToggleButtonGroup>
 
-            <FormControl size="small" sx={{ minWidth: 110 }}>
+            <FormControl size="small" sx={{ minWidth: 90 }}>
               <Select
                 value={selectedYear}
                 onChange={(event) => setSelectedYear(Number(event.target.value))}
@@ -228,7 +236,7 @@ function DashboardPage() {
             </FormControl>
 
             {periodMode === "month" ? (
-              <FormControl size="small" sx={{ minWidth: 110 }}>
+              <FormControl size="small" sx={{ minWidth: 80 }}>
                 <Select
                   value={selectedMonth}
                   onChange={(event) =>

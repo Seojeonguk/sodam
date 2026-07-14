@@ -1,7 +1,7 @@
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
-import { formatCurrency } from "../../../shared/lib/format";
+import { formatCompactCurrency, formatCurrency } from "../../../shared/lib/format";
 
 interface DashboardHeroProps {
   netBalance: number;
@@ -59,7 +59,7 @@ export const DashboardHero = ({
             component="h1"
             fontWeight={700}
             mb={1}
-            sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}
+            sx={{ fontSize: { xs: "1.25rem", md: "2rem" } }}
           >
             이번 가계부 현황을 기준과 함께 살펴보세요
           </Typography>
@@ -68,7 +68,7 @@ export const DashboardHero = ({
             sx={{
               maxWidth: 680,
               opacity: 0.92,
-              fontSize: { xs: "0.92rem", md: "1rem" },
+              fontSize: { xs: "0.85rem", md: "1rem" },
             }}
           >
             숫자만 보여주는 대신, 각 카드와 차트가 어떤 기준으로 집계됐는지
@@ -76,13 +76,23 @@ export const DashboardHero = ({
           </Typography>
         </Box>
 
+        {/* 잔액 행 */}
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={2}
+          spacing={{ xs: 1.5, md: 2 }}
           alignItems={{ xs: "flex-start", md: "center" }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Typography variant="h3" component="span" fontWeight={700}>
+          {/* 순잔액 숫자 + 레이블 */}
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            <Typography
+              component="span"
+              fontWeight={700}
+              sx={{
+                fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                lineHeight: 1.15,
+                wordBreak: "break-all",
+              }}
+            >
               {formatCurrency(Math.abs(netBalance))}
             </Typography>
             <Box>
@@ -94,33 +104,41 @@ export const DashboardHero = ({
               </Typography>
             </Box>
           </Stack>
+
           <Box flexGrow={1} />
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+
+          {/* 수입 / 지출 chip */}
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" rowGap={1}>
             <Chip
-              icon={<ArrowUpward />}
-              label={`수입 ${formatCurrency(totalIncome)}`}
+              icon={<ArrowUpward sx={{ fontSize: "1rem !important" }} />}
+              label={`수입 ${formatCompactCurrency(totalIncome)}`}
+              size="small"
               sx={{
                 color: "common.white",
                 borderColor: alpha("#fff", 0.4),
                 borderWidth: 1,
                 borderStyle: "solid",
                 backgroundColor: alpha("#fff", 0.08),
+                maxWidth: 200,
               }}
             />
             <Chip
-              icon={<ArrowDownward />}
-              label={`지출 ${formatCurrency(totalExpense)}`}
+              icon={<ArrowDownward sx={{ fontSize: "1rem !important" }} />}
+              label={`지출 ${formatCompactCurrency(totalExpense)}`}
+              size="small"
               sx={{
                 color: "common.white",
                 borderColor: alpha("#fff", 0.4),
                 borderWidth: 1,
                 borderStyle: "solid",
                 backgroundColor: alpha("#fff", 0.08),
+                maxWidth: 200,
               }}
             />
           </Stack>
         </Stack>
 
+        {/* 집계 기준 chip 목록 */}
         <Box>
           <Typography
             variant="caption"
@@ -133,12 +151,15 @@ export const DashboardHero = ({
               <Chip
                 key={standard}
                 label={standard}
+                size="small"
                 sx={{
                   color: "common.white",
                   borderColor: alpha("#fff", 0.3),
                   borderWidth: 1,
                   borderStyle: "solid",
                   backgroundColor: alpha("#fff", 0.1),
+                  height: "auto",
+                  "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
                 }}
               />
             ))}

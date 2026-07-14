@@ -44,7 +44,9 @@ const StyledAppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  boxShadow: "none",
+  boxShadow: "0 1px 0 rgba(0,0,0,0.08)",
+  backdropFilter: "blur(12px)",
+  backgroundColor: alpha(theme.palette.background.paper, 0.88),
   ...(open &&
     isDesktop && {
       width: `calc(100% - ${DRAWER_WIDTH}px)`,

@@ -16,17 +16,19 @@ import type { CategoryListItemResponse } from "../../../entities/transaction/api
 
 // 모달 스타일 (Material-UI 기본 Box 컴포넌트 사용)
 const style = {
-  position: "absolute",
+  position: "absolute" as const,
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: "min(400px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 64px)",
+  overflowY: "auto" as const,
   bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: "8px",
-} as const;
+  border: "none",
+  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
+  p: { xs: 3, sm: 4 },
+  borderRadius: "24px",
+};
 
 // CategoryEditModal 컴포넌트가 받을 props 정의
 interface CategoryEditModalProps {

@@ -36,12 +36,14 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: "min(400px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 64px)",
+  overflowY: "auto" as const,
   bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: "8px",
+  border: "none",
+  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
+  p: { xs: 3, sm: 4 },
+  borderRadius: "24px",
 };
 
 interface TransactionEditModalProps {

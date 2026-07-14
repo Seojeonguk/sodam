@@ -43,7 +43,8 @@ function AppShellLayout() {
           transition: "margin 0.3s ease",
           marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
           paddingTop: isDesktop ? "96px" : "80px",
-          paddingInline: { xs: 2, md: 3 },
+          /* xs에서는 각 페이지의 Container가 자체 패딩을 처리하므로 제거 */
+          paddingInline: { xs: 0, md: 3 },
           position: "relative",
         }}
       >

@@ -2,13 +2,16 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Divider,
+  IconButton,
   Modal,
-  Paper,
+  Stack,
   Typography,
 } from "@mui/material";
-import { GridCloseIcon } from "@mui/x-data-grid";
+import { alpha } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { TransactionResponseDto } from "../../../entities/transaction/api/transaction.types";
@@ -16,6 +19,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import dayjs from "dayjs";
+import { formatCurrency } from "../../../shared/lib/format";
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -25,17 +29,20 @@ interface TransactionDetailModalProps {
   onDeleteRequest: (seq: number) => void;
 }
 
-const style = {
+const MODAL_SX = {
   position: "absolute" as const,
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 450, // Create Modal보다 약간 넓게 설정
+  width: "min(500px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 64px)",
+  overflowY: "auto" as const,
   bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: "8px",
+  border: "none",
+  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
+  borderRadius: "24px",
+  p: 0,
+  outline: "none",
 };
 
 const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
@@ -81,18 +88,18 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     };
 
     void fetchTransactionDetail();
-  }, [isOpen, transactionSeq]); // 모달이 열리거나 transactionId가 변경될 때마다 데이터를 가져옴
+  }, [isOpen, transactionSeq]);
 
   const handleEdit = () => {
     if (transaction) {
-      onEditRequest(transaction); // 수정 요청 시 거래 데이터를 함께 전달
+      onEditRequest(transaction);
     }
   };
 
   const handleDelete = () => {
     if (transaction) {
       onDeleteRequest(transaction.seq);
-      onClose(); // 삭제 요청 후 모달 닫기
+      onClose();
     }
   };
 
@@ -103,116 +110,139 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       aria-labelledby="transaction-detail-modal-title"
       aria-describedby="transaction-detail-modal-description"
     >
-      <Box sx={style}>
+      <Box sx={MODAL_SX}>
+        {/* 헤더 */}
         <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
+          sx={{
+            p: 3,
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            borderRadius: "24px 24px 0 0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
           <Typography
             id="transaction-detail-modal-title"
-            variant="h5"
-            component="h2"
+            variant="h6"
+            fontWeight={700}
+            sx={{ color: "common.white" }}
           >
-            거래 상세 내역
+            거래 상세
           </Typography>
-          <Button
+          <IconButton
             onClick={onClose}
+            size="small"
             sx={{
-              color: (theme) => theme.palette.primary.contrastText,
+              color: "common.white",
+              bgcolor: (theme) => alpha(theme.palette.common.white, 0.15),
+              "&:hover": {
+                bgcolor: (theme) => alpha(theme.palette.common.white, 0.25),
+              },
             }}
-            variant="text"
-            color="primary"
-            startIcon={<GridCloseIcon />}
           >
-            닫기
-          </Button>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
-        <Divider sx={{ mb: 3 }} />
 
-        {loading && (
-          <Box display="flex" justifyContent="center" py={4}>
-            <CircularProgress />
-          </Box>
-        )}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {/* 콘텐츠 */}
+        <Box sx={{ p: 3 }}>
+          {loading && (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
+            </Box>
+          )}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        {transaction && !loading && (
-          <Paper elevation={0} sx={{ p: 2, bgcolor: "background.default" }}>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              <Typography component="span" fontWeight="bold">
-                분류:
-              </Typography>{" "}
-              <Typography
-                component="span"
-                sx={{
-                  color: transaction.type === "INCOME" ? "green" : "red",
-                  fontWeight: "bold",
-                }}
-              >
-                {transaction.type === "INCOME" ? "수입" : "지출"}
-              </Typography>
-            </Typography>
+          {transaction && !loading && (
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
+                  분류
+                </Typography>
+                <Chip
+                  label={transaction.type === "INCOME" ? "수입" : "지출"}
+                  color={transaction.type === "INCOME" ? "success" : "error"}
+                  size="small"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
 
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              <Typography component="span" fontWeight="bold">
-                금액:
-              </Typography>{" "}
-              {transaction.amount.toLocaleString("ko-KR")}원
-            </Typography>
+              <Divider />
 
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              <Typography component="span" fontWeight="bold">
-                카테고리:
-              </Typography>{" "}
-              {transaction.categorySeq}
-            </Typography>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
+                  금액
+                </Typography>
+                <Typography variant="h6" fontWeight={700}>
+                  {formatCurrency(transaction.amount)}
+                </Typography>
+              </Stack>
 
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              <Typography component="span" fontWeight="bold">
-                날짜:
-              </Typography>{" "}
-              {dayjs(transaction.transactionDate).format(
-                "YYYY년 MM월 DD일 HH시 mm분"
+              <Divider />
+
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
+                  카테고리
+                </Typography>
+                <Typography variant="body1">
+                  카테고리 ID: {transaction.categorySeq ?? "없음"}
+                </Typography>
+              </Stack>
+
+              <Divider />
+
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
+                  날짜
+                </Typography>
+                <Typography variant="body1">
+                  {dayjs(transaction.transactionDate).format("YYYY년 MM월 DD일 HH시 mm분")}
+                </Typography>
+              </Stack>
+
+              {transaction.description && (
+                <>
+                  <Divider />
+                  <Stack direction="row" spacing={2} alignItems="flex-start">
+                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60, pt: 0.25 }}>
+                      내용
+                    </Typography>
+                    <Typography variant="body1">{transaction.description}</Typography>
+                  </Stack>
+                </>
               )}
-            </Typography>
+            </Stack>
+          )}
 
-            {transaction.description && (
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <Typography component="span" fontWeight="bold">
-                  내용:
-                </Typography>{" "}
-                {transaction.description}
-              </Typography>
-            )}
-          </Paper>
-        )}
-
-        <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
-            disabled={loading || !transaction}
-          >
-            수정
-          </Button>
-
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={handleDelete}
-            disabled={loading || !transaction}
-          >
-            삭제
-          </Button>
+          {/* 버튼 영역 */}
+          <Box display="flex" gap={2} mt={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              disabled={loading || !transaction}
+              fullWidth
+            >
+              수정
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleDelete}
+              disabled={loading || !transaction}
+              fullWidth
+            >
+              삭제
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Modal>

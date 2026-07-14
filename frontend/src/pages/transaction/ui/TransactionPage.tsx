@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AddCircle } from "@mui/icons-material";
-import { Box, Button, Container, Paper, Typography } from "@mui/material";
+import { Box, Button, Container, Paper, Skeleton, Typography } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -86,12 +86,33 @@ function TransactionPage() {
 
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography variant="h5">거래 내역</Typography>
-        <Paper elevation={2} sx={{ p: 3, mt: 2, textAlign: "center" }}>
-          <Typography>데이터를 불러오는 중입니다...</Typography>
-        </Paper>
-      </Container>
+      <Box sx={{ bgcolor: "#F8FAFC", minHeight: "100vh", pt: 4, pb: 8 }}>
+        <Container maxWidth="md">
+          <Skeleton variant="text" width="40%" height={48} sx={{ mb: 2 }} />
+          <Skeleton variant="text" width="60%" height={40} sx={{ mb: 3 }} />
+          <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, mb: 4, borderRadius: "24px", border: "1px solid #F1F5F9" }}>
+            <Box display="flex" justifyContent="center" gap={{ xs: 4, sm: 10 }} flexWrap="wrap">
+              <Box textAlign="center">
+                <Skeleton variant="circular" width={150} height={150} />
+              </Box>
+              <Box textAlign="center">
+                <Skeleton variant="circular" width={150} height={150} />
+              </Box>
+            </Box>
+          </Paper>
+          <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: "24px", border: "1px solid #F1F5F9" }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                <Skeleton variant="circular" width={48} height={48} />
+                <Box flex={1}>
+                  <Skeleton variant="text" width="30%" height={24} />
+                  <Skeleton variant="text" width="60%" height={20} />
+                </Box>
+              </Box>
+            ))}
+          </Paper>
+        </Container>
+      </Box>
     );
   }
 
@@ -121,18 +142,46 @@ function TransactionPage() {
   return (
     <Box sx={{ bgcolor: "#F8FAFC", minHeight: "100vh", pt: 4, pb: 8 }}>
       <Container maxWidth="md">
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={4}
-        >
-          <Typography variant="h4" component="h1" fontWeight="800" color="#334155">
-            이번 달 가계부
-          </Typography>
+        {/* 헤더: 모바일에서 제목+버튼 / 날짜 두 줄 구조 */}
+        <Box mb={4}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
+              fontWeight="800"
+              color="#334155"
+              sx={{ fontSize: { xs: "1.4rem", sm: "1.75rem", md: "2.125rem" } }}
+            >
+              이번 달 가계부
+            </Typography>
+
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddCircle />}
+              onClick={handleOpenCreateModal}
+              sx={{
+                borderRadius: "24px",
+                px: { xs: 2, sm: 3 },
+                py: 1,
+                textTransform: "none",
+                fontWeight: "bold",
+                boxShadow: "none",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              거래 추가
+            </Button>
+          </Box>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
               <DatePicker
                 label="시작일"
                 value={dateRange.startDate}
@@ -146,7 +195,8 @@ function TransactionPage() {
                   textField: {
                     size: "small",
                     sx: {
-                      width: 160,
+                      flex: 1,
+                      minWidth: 0,
                       bgcolor: "white",
                       borderRadius: 2,
                       "& fieldset": { borderRadius: "12px" },
@@ -154,7 +204,7 @@ function TransactionPage() {
                   },
                 }}
               />
-              <Typography color="#94A3B8" fontWeight="bold">
+              <Typography color="#94A3B8" fontWeight="bold" sx={{ flexShrink: 0 }}>
                 ~
               </Typography>
               <DatePicker
@@ -170,7 +220,8 @@ function TransactionPage() {
                   textField: {
                     size: "small",
                     sx: {
-                      width: 160,
+                      flex: 1,
+                      minWidth: 0,
                       bgcolor: "white",
                       borderRadius: 2,
                       "& fieldset": { borderRadius: "12px" },
@@ -180,29 +231,12 @@ function TransactionPage() {
               />
             </Box>
           </LocalizationProvider>
-
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddCircle />}
-            onClick={handleOpenCreateModal}
-            sx={{
-              borderRadius: "24px",
-              px: 3,
-              py: 1,
-              textTransform: "none",
-              fontWeight: "bold",
-              boxShadow: "none",
-            }}
-          >
-            거래 추가
-          </Button>
         </Box>
 
         <Paper
           elevation={0}
           sx={{
-            p: 4,
+            p: { xs: 2, sm: 4 },
             mb: 4,
             borderRadius: "24px",
             boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
@@ -214,8 +248,8 @@ function TransactionPage() {
             flexDirection={{ xs: "column", sm: "row" }}
             alignItems="center"
             justifyContent="center"
-            gap={10}
-            paddingBottom={5}
+            gap={{ xs: 4, sm: 10 }}
+            paddingBottom={{ xs: 3, sm: 5 }}
           >
             <Box textAlign="center">
               <Typography variant="h6" component="h2" mb={2} fontWeight="bold" color="#64748B">

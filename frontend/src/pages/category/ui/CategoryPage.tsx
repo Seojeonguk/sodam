@@ -497,7 +497,7 @@ function CategoryPage() {
         <Stack spacing={3}>
           <Box
             display="grid"
-            gridTemplateColumns={{ xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }}
+            gridTemplateColumns={{ xs: "1fr", md: "repeat(2, 1fr)" }}
             gap={3}
           >
             <Paper
@@ -538,24 +538,7 @@ function CategoryPage() {
               </Typography>
             </Paper>
 
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                border: `1px solid ${alpha(theme.palette.info.main, 0.15)}`,
-              }}
-            >
-              <Typography variant="overline" color="info.main">
-                Next Step
-              </Typography>
-              <Typography variant="body1" fontWeight={600} mb={1}>
-                분류 CRUD는 다음 단계
-              </Typography>
-              <Typography color="text.secondary">
-                지금은 서버에서 내려주는 가계부 공통 분류를 보여주고 있습니다. 이후 생성, 수정, 삭제 모달도 이 탭에 자연스럽게 붙일 수 있습니다.
-              </Typography>
-            </Paper>
+
           </Box>
 
           <Paper

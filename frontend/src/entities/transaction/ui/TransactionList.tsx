@@ -82,13 +82,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
                 <Typography
                   variant="body1"
                   fontWeight="800"
-                  fontSize="1.1rem"
                   sx={{
+                    fontSize: { xs: "0.95rem", sm: "1.05rem" },
                     color:
                       transaction.type === "INCOME"
                         ? "#1E8E3E"
                         : "#D93025",
-                    mb: 0.5
+                    mb: 0.5,
+                    wordBreak: "break-word",
                   }}
                 >
                   {transaction.type === "INCOME" ? "+" : "-"}{transaction.amount.toLocaleString("ko-KR")}원

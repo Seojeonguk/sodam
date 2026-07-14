@@ -155,6 +155,7 @@ function LoginPage() {
           gap={{ xs: 3, md: 4 }}
           alignItems="stretch"
         >
+          {/* 히어로 패널: 데스크톱에서만 표시 */}
           <Paper
             sx={{
               p: { xs: 3, md: 5 },
@@ -162,6 +163,7 @@ function LoginPage() {
               minHeight: { md: 620 },
               position: "relative",
               overflow: "hidden",
+              display: { xs: "none", md: "block" },
               background: `linear-gradient(145deg, ${alpha(
                 theme.palette.primary.light,
                 0.88,
@@ -232,6 +234,28 @@ function LoginPage() {
             }}
           >
             <Box width="100%">
+              {/* 모바일 전용 상단 브랜딩 */}
+              <Box
+                sx={{
+                  display: { xs: "block", md: "none" },
+                  mb: 3,
+                  pb: 3,
+                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight={800}
+                  color="primary"
+                  mb={0.5}
+                >
+                  Sodam
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  가계부를 더 차분하고 선명하게.
+                </Typography>
+              </Box>
+
               <Stack spacing={1} mb={4}>
                 <Typography variant="h4">로그인</Typography>
                 <Typography color="text.secondary">

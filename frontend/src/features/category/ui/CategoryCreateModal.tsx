@@ -33,10 +33,10 @@ const style = {
   maxHeight: "calc(100vh - 32px)",
   overflowY: "auto",
   bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: "8px",
+  border: "none",
+  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
+  p: { xs: 3, sm: 4 },
+  borderRadius: "24px",
 } as const;
 
 interface CategoryCreateModalProps {
