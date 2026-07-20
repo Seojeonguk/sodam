@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { AddCircle } from "@mui/icons-material";
+import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
   Button,
   Container,
+  Divider,
   Pagination,
   Paper,
   Skeleton,
+  Stack,
   Typography,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -25,14 +28,13 @@ import TransactionEditModal from "../../../features/transaction/ui/TransactionEd
 dayjs.locale("ko");
 
 function TransactionPage() {
+  const theme = useTheme();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<
-    number | null
-  >(null);
+  const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [transactionToEdit, setTransactionToEdit] =
-    useState<TransactionResponseDto | null>(null);
+  const [transactionToEdit, setTransactionToEdit] = useState<TransactionResponseDto | null>(null);
+
   const {
     transactions,
     loading,
@@ -47,21 +49,16 @@ function TransactionPage() {
     page,
     setPage,
     totalPages,
+    totalElements,
   } = useTransactions({ pageSize: 10 });
 
-  const handleOpenCreateModal = () => {
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCloseCreateModal = () => {
-    setIsCreateModalOpen(false);
-  };
+  const handleOpenCreateModal = () => { setIsCreateModalOpen(true); };
+  const handleCloseCreateModal = () => { setIsCreateModalOpen(false); };
 
   const handleOpenDetailModal = (seq: number) => {
     setSelectedTransactionSeq(seq);
     setIsDetailModalOpen(true);
   };
-
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedTransactionSeq(null);
@@ -72,99 +69,74 @@ function TransactionPage() {
     setIsEditModalOpen(true);
     setIsDetailModalOpen(false);
   };
-
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setTransactionToEdit(null);
   };
 
   const handleDeleteTransaction = async (seq: number) => {
-    if (!window.confirm("정말로 이 거래를 삭제하시겠습니까?")) {
-      return;
-    }
-
+    if (!window.confirm("정말로 이 거래를 삭제하시겠습니까?")) return;
     try {
       await deleteTransaction(seq);
       handleCloseDetailModal();
     } catch (nextError) {
-      alert(
-        nextError instanceof Error
-          ? nextError.message
-          : "거래 삭제 중 오류가 발생했습니다.",
-      );
+      alert(nextError instanceof Error ? nextError.message : "거래 삭제 중 오류가 발생했습니다.");
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ bgcolor: "#F8FAFC", minHeight: "100vh", pt: 4, pb: 8 }}>
-        <Container maxWidth="md">
-          <Skeleton variant="text" width="40%" height={48} sx={{ mb: 2 }} />
-          <Skeleton variant="text" width="60%" height={40} sx={{ mb: 3 }} />
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 4 },
-              mb: 4,
-              borderRadius: "24px",
-              border: "1px solid #F1F5F9",
-            }}
-          >
-            <Box
-              display="flex"
-              justifyContent="center"
-              gap={{ xs: 4, sm: 10 }}
-              flexWrap="wrap"
-            >
-              <Box textAlign="center">
-                <Skeleton variant="circular" width={150} height={150} />
-              </Box>
-              <Box textAlign="center">
-                <Skeleton variant="circular" width={150} height={150} />
+      <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box>
+            <Skeleton variant="text" width={120} height={36} />
+            <Skeleton variant="text" width={180} height={20} />
+          </Box>
+          <Skeleton variant="rounded" width={100} height={36} />
+        </Stack>
+        <Skeleton variant="rounded" height={60} sx={{ mb: 3, borderRadius: 2 }} />
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, mb: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Box display="flex" justifyContent="center" gap={2} pb={3}>
+            <Skeleton variant="circular" width={120} height={120} />
+            <Skeleton variant="circular" width={120} height={120} />
+          </Box>
+          <Skeleton variant="rounded" width="100%" height={180} sx={{ borderRadius: 1 }} />
+        </Paper>
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <Skeleton variant="circular" width={44} height={44} />
+              <Box flex={1}>
+                <Skeleton variant="text" width="30%" height={22} />
+                <Skeleton variant="text" width="60%" height={18} />
               </Box>
             </Box>
-          </Paper>
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 4 },
-              borderRadius: "24px",
-              border: "1px solid #F1F5F9",
-            }}
-          >
-            {[0, 1, 2, 3].map((i) => (
-              <Box
-                key={i}
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
-              >
-                <Skeleton variant="circular" width={48} height={48} />
-                <Box flex={1}>
-                  <Skeleton variant="text" width="30%" height={24} />
-                  <Skeleton variant="text" width="60%" height={20} />
-                </Box>
-              </Box>
-            ))}
-          </Paper>
-        </Container>
-      </Box>
+          ))}
+        </Paper>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Typography variant="h5">거래 내역</Typography>
+      <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
         <Paper
-          elevation={2}
-          sx={{ p: 3, mt: 2, textAlign: "center", color: "error.main" }}
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: alpha(theme.palette.error.main, 0.3),
+          }}
         >
-          <Typography>오류 발생: {error}</Typography>
+          <Typography variant="h6" color="error" gutterBottom>오류가 발생했습니다</Typography>
+          <Typography color="text.secondary">{error}</Typography>
           <Button
-            onClick={() => {
-              void refreshTransactionData();
-            }}
-            sx={{ mt: 2 }}
-            variant="outlined"
+            onClick={() => { void refreshTransactionData(); }}
+            sx={{ mt: 3 }}
+            variant="contained"
+            color="error"
           >
             다시 시도
           </Button>
@@ -174,302 +146,226 @@ function TransactionPage() {
   }
 
   return (
-    <Box sx={{ bgcolor: "#F8FAFC", minHeight: "100vh", pt: 4, pb: 8 }}>
-      <Container maxWidth="md">
-        {/* 헤더: 모바일에서 제목+버튼 / 날짜 두 줄 구조 */}
-        <Box mb={4}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-          >
-            <Typography
-              variant="h4"
-              component="h1"
-              fontWeight="800"
-              color="#334155"
-              sx={{ fontSize: { xs: "1.4rem", sm: "1.75rem", md: "2.125rem" } }}
-            >
-              이번 달 가계부
-            </Typography>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
 
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddCircle />}
-              onClick={handleOpenCreateModal}
-              sx={{
-                borderRadius: "24px",
-                px: { xs: 2, sm: 3 },
-                py: 1,
-                textTransform: "none",
-                fontWeight: "bold",
-                boxShadow: "none",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              거래 추가
-            </Button>
-          </Box>
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
-              <DatePicker
-                label="시작일"
-                value={dateRange.startDate}
-                format="YYYY.MM.DD"
-                onChange={(newValue) => {
-                  if (newValue) {
-                    setDateRange((prev) => ({ ...prev, startDate: newValue }));
-                  }
-                }}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    sx: {
-                      flex: 1,
-                      minWidth: 0,
-                      bgcolor: "white",
-                      borderRadius: 2,
-                      "& fieldset": { borderRadius: "12px" },
-                    },
-                  },
-                }}
-              />
-              <Typography
-                color="#94A3B8"
-                fontWeight="bold"
-                sx={{ flexShrink: 0 }}
-              >
-                ~
-              </Typography>
-              <DatePicker
-                label="종료일"
-                value={dateRange.endDate}
-                format="YYYY.MM.DD"
-                onChange={(newValue) => {
-                  if (newValue) {
-                    setDateRange((prev) => ({ ...prev, endDate: newValue }));
-                  }
-                }}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    sx: {
-                      flex: 1,
-                      minWidth: 0,
-                      bgcolor: "white",
-                      borderRadius: 2,
-                      "& fieldset": { borderRadius: "12px" },
-                    },
-                  },
-                }}
-              />
-            </Box>
-          </LocalizationProvider>
-        </Box>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, sm: 4 },
-            mb: 4,
-            borderRadius: "24px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
-            border: "1px solid #F1F5F9",
-          }}
-        >
-          <Box
-            display="flex"
-            flexDirection={{ xs: "column", sm: "row" }}
-            alignItems="center"
-            justifyContent="center"
-            gap={{ xs: 4, sm: 10 }}
-            paddingBottom={{ xs: 3, sm: 5 }}
-          >
-            <Box textAlign="center">
-              <Typography
-                variant="h6"
-                component="h2"
-                mb={2}
-                fontWeight="bold"
-                color="#64748B"
-              >
-                월 수입
-              </Typography>
-              {incomeStats.length > 0 ? (
-                <PieChart
-                  series={[
-                    {
-                      data: incomeStats,
-                    },
-                  ]}
-                  width={150}
-                  height={150}
-                />
-              ) : (
-                <Typography
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  수입 내역이 없습니다.
-                </Typography>
-              )}
-            </Box>
-
-            <Box textAlign="center">
-              <Typography
-                variant="h6"
-                component="h2"
-                mb={2}
-                fontWeight="bold"
-                color="#64748B"
-              >
-                월별 지출
-              </Typography>
-              {expenseStats.length > 0 ? (
-                <PieChart
-                  series={[
-                    {
-                      data: expenseStats,
-                    },
-                  ]}
-                  width={150}
-                  height={150}
-                />
-              ) : (
-                <Typography
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  지출 내역이 없습니다.
-                </Typography>
-              )}
-            </Box>
-          </Box>
-
-          <Box mt={3}>
-            <Typography
-              variant="h6"
-              component="h2"
-              mb={2}
-              fontWeight="bold"
-              color="#64748B"
-              textAlign="center"
-            >
-              월 기간별 추이
-            </Typography>
-            {statPeriodDataset.length === 0 ? (
-              <Typography
-                sx={{
-                  width: "100%",
-                  height: 320,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                수입 및 지출 내역이 없습니다.
-              </Typography>
-            ) : (
-              <BarChart
-                dataset={statPeriodDataset}
-                xAxis={[
-                  {
-                    dataKey: "period",
-                    scaleType: "band",
-                    label: "기간",
-                    height: 50,
-                  },
-                ]}
-                series={[
-                  { dataKey: "income", label: "수입" },
-                  { dataKey: "expense", label: "지출" },
-                ]}
-                height={300}
-                grid={{ horizontal: true }}
-              />
-            )}
-          </Box>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, sm: 4 },
-            mb: 2,
-            borderRadius: "24px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
-            border: "1px solid #F1F5F9",
-            bgcolor: "transparent",
-          }}
-        >
+      {/* ── 페이지 헤더: 항상 한 줄 ── */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5} gap={1}>
+        <Box minWidth={0}>
           <Typography
             variant="h5"
-            component="h2"
-            mb={3}
-            fontWeight="800"
-            color="#334155"
+            fontWeight={700}
+            sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
           >
             거래 내역
           </Typography>
-          <TransactionList
-            transactions={transactions}
-            onViewDetail={handleOpenDetailModal}
-          />
-        </Paper>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.25 }}
+            noWrap
+          >
+            총 {totalElements}건 · {dateRange.startDate.format("YYYY.MM.DD")} – {dateRange.endDate.format("YYYY.MM.DD")}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddCircle />}
+          onClick={handleOpenCreateModal}
+          size="small"
+          sx={{
+            fontWeight: 700,
+            textTransform: "none",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
+            px: { xs: 1.5, sm: 2.5 },
+            fontSize: { xs: "0.8rem", sm: "0.875rem" },
+          }}
+        >
+          거래 추가
+        </Button>
+      </Stack>
 
-        {/* 페이지네이션: 데이터가 로드된 경우 항상 표시 */}
-        {!loading && transactions !== null && (
-          <Box display="flex" justifyContent="center" mb={4}>
-            <Pagination
-              count={Math.max(1, totalPages)}
-              page={page + 1} /* MUI는 1-indexed */
-              onChange={(_, value) => {
-                setPage(value - 1); /* Spring은 0-indexed */
-                window.scrollTo({ top: 0, behavior: "smooth" });
+      {/* ── 날짜 필터: 모바일 세로, 데스크톱 가로 ── */}
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 1.5, sm: 2.5 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+      >
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 1, sm: 1.5 }}
+            alignItems="stretch"
+          >
+            <DatePicker
+              label="시작일"
+              value={dateRange.startDate}
+              format="YYYY.MM.DD"
+              onChange={(newValue) => {
+                if (newValue) setDateRange((prev) => ({ ...prev, startDate: newValue }));
               }}
-              color="primary"
-              shape="rounded"
-              size="large"
+              slotProps={{
+                textField: {
+                  size: "small",
+                  sx: { flex: 1, "& fieldset": { borderRadius: 1.5 } },
+                },
+              }}
             />
+            <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", flexShrink: 0 }}>
+              <Typography color="text.disabled" fontWeight={700}>~</Typography>
+            </Box>
+            <DatePicker
+              label="종료일"
+              value={dateRange.endDate}
+              format="YYYY.MM.DD"
+              onChange={(newValue) => {
+                if (newValue) setDateRange((prev) => ({ ...prev, endDate: newValue }));
+              }}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  sx: { flex: 1, "& fieldset": { borderRadius: 1.5 } },
+                },
+              }}
+            />
+          </Stack>
+        </LocalizationProvider>
+      </Paper>
+
+      {/* ── 통계 ── */}
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 1.5, sm: 4 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+      >
+        {/* 파이차트: 모바일도 가로 배치 (150px × 2 = 300px, 모바일 충분히 수용) */}
+        <Box
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="space-around"
+          pb={{ xs: 2, sm: 4 }}
+        >
+          <Box textAlign="center">
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{ display: "block", mb: 1, textTransform: "uppercase", letterSpacing: "0.04em" }}
+            >
+              수입
+            </Typography>
+            {incomeStats.length > 0 ? (
+              <PieChart
+                series={[{ data: incomeStats }]}
+                width={140}
+                height={140}
+              />
+            ) : (
+              <Box sx={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" color="text.disabled">데이터 없음</Typography>
+              </Box>
+            )}
           </Box>
-        )}
 
-        <TransactionCreateModal
-          isOpen={isCreateModalOpen}
-          onClose={handleCloseCreateModal}
-          onSuccess={refreshTransactionData}
-        />
+          <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0.5, sm: 2 } }} />
 
-        <TransactionDetailModal
-          isOpen={isDetailModalOpen}
-          transactionSeq={selectedTransactionSeq}
-          onEditRequest={handleOpenEditModal}
-          onClose={handleCloseDetailModal}
-          onDeleteRequest={(seq) => void handleDeleteTransaction(seq)}
-        />
+          <Box textAlign="center">
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{ display: "block", mb: 1, textTransform: "uppercase", letterSpacing: "0.04em" }}
+            >
+              지출
+            </Typography>
+            {expenseStats.length > 0 ? (
+              <PieChart
+                series={[{ data: expenseStats }]}
+                width={140}
+                height={140}
+              />
+            ) : (
+              <Box sx={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" color="text.disabled">데이터 없음</Typography>
+              </Box>
+            )}
+          </Box>
+        </Box>
 
-        <TransactionEditModal
-          isOpen={isEditModalOpen}
-          transactionToEdit={transactionToEdit}
-          onClose={handleCloseEditModal}
-          onSuccess={refreshTransactionData}
-        />
-      </Container>
-    </Box>
+        <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+
+        {/* 바차트 */}
+        <Box>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color="text.secondary"
+            sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.04em" }}
+          >
+            기간별 추이
+          </Typography>
+          {statPeriodDataset.length === 0 ? (
+            <Box sx={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Typography variant="body2" color="text.disabled">기간 내 거래 내역이 없습니다.</Typography>
+            </Box>
+          ) : (
+            <BarChart
+              dataset={statPeriodDataset}
+              xAxis={[{ dataKey: "period", scaleType: "band", label: "기간", height: 40 }]}
+              series={[{ dataKey: "income", label: "수입" }, { dataKey: "expense", label: "지출" }]}
+              height={220}
+              grid={{ horizontal: true }}
+            />
+          )}
+        </Box>
+      </Paper>
+
+      {/* ── 거래 목록 ── */}
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 1.5, sm: 3 }, mb: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+      >
+        <Typography variant="h6" component="h2" mb={2} fontWeight={700}>
+          거래 목록
+        </Typography>
+        <TransactionList transactions={transactions} onViewDetail={handleOpenDetailModal} />
+      </Paper>
+
+      {/* ── 페이지네이션 ── */}
+      {transactions !== null && (
+        <Box display="flex" justifyContent="center" mb={4}>
+          <Pagination
+            count={Math.max(1, totalPages)}
+            page={page + 1}
+            onChange={(_, value) => {
+              setPage(value - 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            color="primary"
+            shape="rounded"
+            size="medium"
+          />
+        </Box>
+      )}
+
+      <TransactionCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+        onSuccess={refreshTransactionData}
+      />
+      <TransactionDetailModal
+        isOpen={isDetailModalOpen}
+        transactionSeq={selectedTransactionSeq}
+        onEditRequest={handleOpenEditModal}
+        onClose={handleCloseDetailModal}
+        onDeleteRequest={(seq) => void handleDeleteTransaction(seq)}
+      />
+      <TransactionEditModal
+        isOpen={isEditModalOpen}
+        transactionToEdit={transactionToEdit}
+        onClose={handleCloseEditModal}
+        onSuccess={refreshTransactionData}
+      />
+    </Container>
   );
 }
 

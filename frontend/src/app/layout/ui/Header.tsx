@@ -8,13 +8,15 @@ import {
   Typography,
   styled,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import { useNavigate } from "react-router-dom";
 import LoginApi from "../../../features/auth/api/LoginApi";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
@@ -23,6 +25,7 @@ import { clearAccessToken } from "../../../shared/api/api";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { GuestMigrationModal } from "../../../features/auth/ui/GuestMigrationModal";
+import { useColorMode } from "../../../shared/lib/ColorModeContext";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -44,9 +47,6 @@ const StyledAppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  boxShadow: "0 1px 0 rgba(0,0,0,0.08)",
-  backdropFilter: "blur(12px)",
-  backgroundColor: alpha(theme.palette.background.paper, 0.88),
   ...(open &&
     isDesktop && {
       width: `calc(100% - ${DRAWER_WIDTH}px)`,
@@ -58,15 +58,22 @@ const StyledAppBar = styled(MuiAppBar, {
     }),
 }));
 
+const iconButtonSx = {
+  border: "1px solid",
+  borderColor: "divider",
+  color: "text.secondary",
+  "&:hover": { color: "text.primary" },
+};
+
 function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
+  const theme = useTheme();
+  const { mode, toggleColorMode } = useColorMode();
   const isDesktop = useIsDesktop();
   const nav = useNavigate();
   const { resetAccountBooks } = useAccountBookContext();
   const [migrationOpen, setMigrationOpen] = useState(false);
 
-  const handleLogoClick = () => {
-    void nav("/dashboard");
-  };
+  const handleLogoClick = () => { void nav("/dashboard"); };
 
   const handleLogout = async () => {
     const isGuest = guestMode.isActive();
@@ -81,7 +88,6 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         void nav("/");
         return;
       }
-
       try {
         await LoginApi.logout();
       } catch (error) {
@@ -96,95 +102,103 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
 
   return (
     <>
-    <StyledAppBar position="fixed" open={openSide} isDesktop={isDesktop}>
-      <Toolbar sx={{ minHeight: { xs: 64, md: 76 }, px: { xs: 1.5, md: 3 } }}>
-        <IconButton
-          color="default"
-          aria-label="open drawer"
-          onClick={toggleDrawer}
-          edge="start"
-          sx={[
-            {
-              mr: 1.5,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: alpha("#ffffff", 0.74),
-            },
-            openSide && { display: "none" },
-          ]}
-        >
-          <MenuIcon />
-        </IconButton>
-
-        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Typography
-            variant="h6"
-            fontWeight={800}
-            sx={{ cursor: "pointer", display: "inline-block" }}
-            onClick={handleLogoClick}
+      <StyledAppBar position="fixed" open={openSide} isDesktop={isDesktop}>
+        <Toolbar sx={{ minHeight: { xs: 64, md: 72 }, px: { xs: 1.5, md: 3 } }}>
+          {/* 메뉴 버튼 */}
+          <IconButton
+            aria-label="open drawer"
+            onClick={toggleDrawer}
+            edge="start"
+            sx={[iconButtonSx, { mr: 1.5 }, openSide && { display: "none" }]}
           >
-            Sodam
-          </Typography>
+            <MenuIcon />
+          </IconButton>
+
+          {/* 로고 + 게스트 뱃지 */}
+          <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography
+              variant="h6"
+              fontWeight={800}
+              color="primary.dark"
+              sx={{ cursor: "pointer" }}
+              onClick={handleLogoClick}
+            >
+              Sodam
+            </Typography>
+            {guestMode.isActive() && (
+              <Box
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  bgcolor: alpha("#f59e0b", 0.12),
+                  border: "1px solid",
+                  borderColor: alpha("#f59e0b", 0.35),
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  color: "#d97706",
+                  lineHeight: 1.6,
+                }}
+              >
+                게스트
+              </Box>
+            )}
+          </Box>
+
+          {/* 계정 연동 버튼 (게스트 전용) */}
           {guestMode.isActive() && (
-            <Box
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<CloudUploadIcon fontSize="small" />}
+              onClick={() => setMigrationOpen(true)}
               sx={{
-                px: 1,
-                py: 0.25,
-                borderRadius: 1,
-                bgcolor: alpha("#f59e0b", 0.15),
-                border: "1px solid",
-                borderColor: alpha("#f59e0b", 0.4),
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                color: "#b45309",
-                lineHeight: 1.6,
+                mr: 1,
+                borderRadius: 2,
+                fontSize: "0.75rem",
+                whiteSpace: "nowrap",
+                borderColor: alpha(theme.palette.info.main, 0.5),
+                color: "info.dark",
+                "&:hover": {
+                  borderColor: "info.main",
+                  bgcolor: alpha(theme.palette.info.main, 0.06),
+                },
               }}
             >
-              게스트
-            </Box>
+              {isDesktop ? "계정 만들고 연동하기" : "연동"}
+            </Button>
           )}
-        </Box>
 
-        {guestMode.isActive() && (
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<CloudUploadIcon fontSize="small" />}
-            onClick={() => setMigrationOpen(true)}
-            sx={{
-              mr: 1,
-              borderRadius: 2,
-              fontSize: "0.75rem",
-              whiteSpace: "nowrap",
-              borderColor: alpha("#6366f1", 0.5),
-              color: "#6366f1",
-              "&:hover": { borderColor: "#6366f1", bgcolor: alpha("#6366f1", 0.06) },
-            }}
-          >
-            {isDesktop ? "계정 만들고 연동하기" : "연동"}
-          </Button>
-        )}
+          {/* 다크모드 토글 */}
+          <Tooltip title={mode === "dark" ? "라이트 모드" : "다크 모드"}>
+            <IconButton
+              onClick={toggleColorMode}
+              sx={{ ...iconButtonSx, mr: 1 }}
+            >
+              {mode === "dark" ? (
+                <LightModeIcon fontSize="small" />
+              ) : (
+                <DarkModeIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip title={guestMode.isActive() ? "게스트 종료" : "로그아웃"}>
-          <IconButton
-            color="default"
-            onClick={() => void handleLogout()}
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: alpha("#ffffff", 0.74),
-            }}
-          >
-            <LogoutIcon />
-          </IconButton>
-        </Tooltip>
-      </Toolbar>
-    </StyledAppBar>
+          {/* 로그아웃 */}
+          <Tooltip title={guestMode.isActive() ? "게스트 종료" : "로그아웃"}>
+            <IconButton
+              onClick={() => void handleLogout()}
+              sx={iconButtonSx}
+            >
+              <LogoutIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Toolbar>
+      </StyledAppBar>
 
-    <GuestMigrationModal
-      open={migrationOpen}
-      onClose={() => setMigrationOpen(false)}
-    />
+      <GuestMigrationModal
+        open={migrationOpen}
+        onClose={() => setMigrationOpen(false)}
+      />
     </>
   );
 }

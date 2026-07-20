@@ -139,12 +139,6 @@ function DashboardPage() {
       ? `${selectedYear}년 전체`
       : `${selectedYear}년 ${selectedMonth}월`;
 
-  const standards = [
-    `기간 기준: ${appliedPeriodLabel}`,
-    `거래 집계: 현재 범위 내 전체 거래 ${totalTransactions}건`,
-    `카테고리 기준: 거래 사용 순 상위 ${highlightedCategories.length}개`,
-  ];
-
   const summaryCards = [
     {
       title: "전체 거래 건수",
@@ -180,7 +174,6 @@ function DashboardPage() {
         netBalance={netBalance}
         totalIncome={totalIncome}
         totalExpense={totalExpense}
-        standards={standards}
       />
 
       <Paper

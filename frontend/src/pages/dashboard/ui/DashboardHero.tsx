@@ -1,171 +1,257 @@
-import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
-import { formatCompactCurrency, formatCurrency } from "../../../shared/lib/format";
+import {
+  AccountBalanceWallet,
+  TrendingDown,
+  TrendingUp,
+} from "@mui/icons-material";
+import { formatCurrency } from "../../../shared/lib/format";
 
 interface DashboardHeroProps {
   netBalance: number;
   totalIncome: number;
   totalExpense: number;
-  standards: string[];
 }
 
 export const DashboardHero = ({
   netBalance,
   totalIncome,
   totalExpense,
-  standards,
 }: DashboardHeroProps) => {
   const theme = useTheme();
+  const isPositive = netBalance >= 0;
+
+  const balanceColor = isPositive
+    ? theme.palette.success.dark
+    : theme.palette.error.dark;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 3, md: 4 },
-        mb: 4,
-        borderRadius: 3,
-        color: "common.white",
-        position: "relative",
-        overflow: "hidden",
-        backgroundImage: `linear-gradient(135deg, ${alpha(
-          theme.palette.primary.main,
-          0.95,
-        )} 0%, ${alpha(theme.palette.primary.dark, 0.92)} 60%, ${alpha(
-          theme.palette.secondary.main,
-          0.9,
-        )} 100%)`,
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: -80,
-          right: -60,
-          width: 280,
-          height: 280,
-          borderRadius: "50%",
-          backgroundColor: alpha("#fff", 0.15),
-          filter: "blur(8px)",
-        }}
-      />
-      <Stack spacing={3} position="relative">
-        <Box>
-          <Typography variant="overline" sx={{ letterSpacing: 2 }}>
-            DASHBOARD OVERVIEW
-          </Typography>
-          <Typography
-            variant="h4"
-            component="h1"
-            fontWeight={700}
-            mb={1}
-            sx={{ fontSize: { xs: "1.25rem", md: "2rem" } }}
-          >
-            이번 가계부 현황을 기준과 함께 살펴보세요
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              maxWidth: 680,
-              opacity: 0.92,
-              fontSize: { xs: "0.85rem", md: "1rem" },
-            }}
-          >
-            숫자만 보여주는 대신, 각 카드와 차트가 어떤 기준으로 집계됐는지
-            같이 확인할 수 있도록 정리했습니다.
-          </Typography>
-        </Box>
+    <Box mb={4}>
+      {/* 페이지 타이틀 */}
+      <Stack mb={3}>
+        <Typography variant="h4" fontWeight={700}>
+          대시보드
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          가계부 현황을 기준과 함께 살펴보세요.
+        </Typography>
+      </Stack>
 
-        {/* 잔액 행 */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={{ xs: 1.5, md: 2 }}
-          alignItems={{ xs: "flex-start", md: "center" }}
+      {/* 핵심 지표 */}
+      <Box
+        display="grid"
+        gridTemplateColumns={{ xs: "1fr 1fr", sm: "repeat(3, 1fr)" }}
+        gap={{ xs: 1.5, sm: 2 }}
+      >
+
+        {/* ── 순잔액 (모바일: 전체 폭) ── */}
+        <Paper
+          elevation={0}
+          sx={{
+            gridColumn: { xs: "1 / -1", sm: "auto" },
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: isPositive
+              ? alpha(theme.palette.success.main, 0.4)
+              : alpha(theme.palette.error.main, 0.4),
+            bgcolor: isPositive
+              ? alpha(theme.palette.success.main, 0.06)
+              : alpha(theme.palette.error.main, 0.06),
+            borderLeft: "3px solid",
+            borderLeftColor: balanceColor,
+          }}
         >
-          {/* 순잔액 숫자 + 레이블 */}
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Typography
-              component="span"
-              fontWeight={700}
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Avatar
               sx={{
-                fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-                lineHeight: 1.15,
-                wordBreak: "break-all",
+                bgcolor: isPositive
+                  ? alpha(theme.palette.success.main, 0.15)
+                  : alpha(theme.palette.error.main, 0.15),
+                color: balanceColor,
+                width: { xs: 40, sm: 44 },
+                height: { xs: 40, sm: 44 },
+                flexShrink: 0,
               }}
             >
-              {formatCurrency(Math.abs(netBalance))}
-            </Typography>
-            <Box>
-              <Typography variant="subtitle2">
-                {netBalance >= 0 ? "순이익 기준" : "순지출 기준"}
+              <AccountBalanceWallet sx={{ fontSize: { xs: "1.2rem", sm: "1.4rem" } }} />
+            </Avatar>
+            <Box minWidth={0}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+                sx={{ textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}
+              >
+                순잔액
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.84 }}>
-                수입 합계 대비 지출 합계
+              <Typography
+                fontWeight={800}
+                sx={{
+                  fontSize: { xs: "1.15rem", sm: "1.3rem" },
+                  lineHeight: 1.25,
+                  color: balanceColor,
+                  wordBreak: "break-all",
+                }}
+              >
+                {(isPositive ? "+" : "") + formatCurrency(netBalance)}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
+                {isPositive ? "수입이 지출보다 많아요" : "지출이 수입보다 많아요"}
               </Typography>
             </Box>
           </Stack>
+        </Paper>
 
-          <Box flexGrow={1} />
+        {/* ── 총 수입 ── */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 1.5, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: alpha(theme.palette.success.main, 0.35),
+            bgcolor: alpha(theme.palette.success.main, 0.04),
+            borderLeft: "3px solid",
+            borderLeftColor: theme.palette.success.dark,
+          }}
+        >
+          {/* 모바일: 아바타 없이 컴팩트 */}
+          <Box sx={{ display: { xs: "block", sm: "none" } }}>
+            <Stack direction="row" alignItems="center" spacing={0.75} mb={0.75}>
+              <TrendingUp sx={{ fontSize: "1rem", color: theme.palette.success.dark }} />
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                sx={{ textTransform: "uppercase", letterSpacing: "0.04em" }}
+              >
+                총 수입
+              </Typography>
+            </Stack>
+            <Typography
+              fontWeight={800}
+              color="success.dark"
+              sx={{ fontSize: "1rem", lineHeight: 1.3, wordBreak: "break-all" }}
+            >
+              {formatCurrency(totalIncome)}
+            </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
+              해당 기간 합계
+            </Typography>
+          </Box>
 
-          {/* 수입 / 지출 chip */}
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" rowGap={1}>
-            <Chip
-              icon={<ArrowUpward sx={{ fontSize: "1rem !important" }} />}
-              label={`수입 ${formatCompactCurrency(totalIncome)}`}
-              size="small"
+          {/* 데스크톱: 아바타 포함 */}
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ display: { xs: "none", sm: "flex" } }}>
+            <Avatar
               sx={{
-                color: "common.white",
-                borderColor: alpha("#fff", 0.4),
-                borderWidth: 1,
-                borderStyle: "solid",
-                backgroundColor: alpha("#fff", 0.08),
-                maxWidth: 200,
+                bgcolor: alpha(theme.palette.success.main, 0.12),
+                color: theme.palette.success.dark,
+                width: 44,
+                height: 44,
+                flexShrink: 0,
               }}
-            />
-            <Chip
-              icon={<ArrowDownward sx={{ fontSize: "1rem !important" }} />}
-              label={`지출 ${formatCompactCurrency(totalExpense)}`}
-              size="small"
-              sx={{
-                color: "common.white",
-                borderColor: alpha("#fff", 0.4),
-                borderWidth: 1,
-                borderStyle: "solid",
-                backgroundColor: alpha("#fff", 0.08),
-                maxWidth: 200,
-              }}
-            />
+            >
+              <TrendingUp />
+            </Avatar>
+            <Box minWidth={0}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+                sx={{ textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}
+              >
+                총 수입
+              </Typography>
+              <Typography
+                fontWeight={700}
+                color="success.dark"
+                sx={{ fontSize: "1.2rem", lineHeight: 1.3, wordBreak: "break-all" }}
+              >
+                {formatCurrency(totalIncome)}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
+                해당 기간 합계
+              </Typography>
+            </Box>
           </Stack>
-        </Stack>
+        </Paper>
 
-        {/* 집계 기준 chip 목록 */}
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{ display: "block", opacity: 0.84, mb: 1.2 }}
-          >
-            집계 기준
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
-            {standards.map((standard) => (
-              <Chip
-                key={standard}
-                label={standard}
-                size="small"
-                sx={{
-                  color: "common.white",
-                  borderColor: alpha("#fff", 0.3),
-                  borderWidth: 1,
-                  borderStyle: "solid",
-                  backgroundColor: alpha("#fff", 0.1),
-                  height: "auto",
-                  "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
-                }}
-              />
-            ))}
+        {/* ── 총 지출 ── */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 1.5, sm: 2.5 },
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: alpha(theme.palette.error.main, 0.35),
+            bgcolor: alpha(theme.palette.error.main, 0.04),
+            borderLeft: "3px solid",
+            borderLeftColor: theme.palette.error.dark,
+          }}
+        >
+          {/* 모바일: 아바타 없이 컴팩트 */}
+          <Box sx={{ display: { xs: "block", sm: "none" } }}>
+            <Stack direction="row" alignItems="center" spacing={0.75} mb={0.75}>
+              <TrendingDown sx={{ fontSize: "1rem", color: theme.palette.error.dark }} />
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                sx={{ textTransform: "uppercase", letterSpacing: "0.04em" }}
+              >
+                총 지출
+              </Typography>
+            </Stack>
+            <Typography
+              fontWeight={800}
+              color="error.dark"
+              sx={{ fontSize: "1rem", lineHeight: 1.3, wordBreak: "break-all" }}
+            >
+              {formatCurrency(totalExpense)}
+            </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
+              해당 기간 합계
+            </Typography>
+          </Box>
+
+          {/* 데스크톱: 아바타 포함 */}
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ display: { xs: "none", sm: "flex" } }}>
+            <Avatar
+              sx={{
+                bgcolor: alpha(theme.palette.error.main, 0.12),
+                color: theme.palette.error.dark,
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+              }}
+            >
+              <TrendingDown />
+            </Avatar>
+            <Box minWidth={0}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+                sx={{ textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}
+              >
+                총 지출
+              </Typography>
+              <Typography
+                fontWeight={700}
+                color="error.dark"
+                sx={{ fontSize: "1.2rem", lineHeight: 1.3, wordBreak: "break-all" }}
+              >
+                {formatCurrency(totalExpense)}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
+                해당 기간 합계
+              </Typography>
+            </Box>
           </Stack>
-        </Box>
-      </Stack>
-    </Paper>
+        </Paper>
+
+      </Box>
+    </Box>
   );
 };

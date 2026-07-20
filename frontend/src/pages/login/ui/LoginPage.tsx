@@ -155,74 +155,71 @@ function LoginPage() {
           gap={{ xs: 3, md: 4 }}
           alignItems="stretch"
         >
-          {/* 히어로 패널: 데스크톱에서만 표시 */}
+          {/* 브랜딩 패널: 데스크톱에서만 표시 */}
           <Paper
+            elevation={0}
             sx={{
-              p: { xs: 3, md: 5 },
+              p: { md: 5 },
               borderRadius: 5,
               minHeight: { md: 620 },
-              position: "relative",
-              overflow: "hidden",
-              display: { xs: "none", md: "block" },
-              background: `linear-gradient(145deg, ${alpha(
-                theme.palette.primary.light,
-                0.88,
-              )} 0%, ${alpha(theme.palette.primary.main, 0.72)} 50%, ${alpha(
-                theme.palette.secondary.light,
-                0.84,
-              )} 100%)`,
+              display: { xs: "none", md: "flex" },
+              flexDirection: "column",
+              justifyContent: "space-between",
+              border: "1px solid",
+              borderColor: alpha(theme.palette.primary.main, 0.12),
+              bgcolor: alpha(theme.palette.primary.main, 0.03),
             }}
           >
-            <Box
-              sx={{
-                position: "absolute",
-                top: -80,
-                right: -40,
-                width: 240,
-                height: 240,
-                borderRadius: "50%",
-                backgroundColor: alpha("#ffffff", 0.26),
-                filter: "blur(10px)",
-              }}
-            />
-            <Stack
-              spacing={3}
-              justifyContent="space-between"
-              sx={{ position: "relative", height: "100%" }}
-            >
+            <Stack spacing={3}>
               <Box>
-                <Typography variant="overline" sx={{ letterSpacing: 2 }}>
+                <Typography
+                  variant="overline"
+                  color="primary"
+                  sx={{ letterSpacing: 2, fontWeight: 700 }}
+                >
                   PERSONAL FINANCE SPACE
                 </Typography>
-                <Typography variant="h2" sx={{ mt: 1, mb: 2, maxWidth: 420 }}>
+                <Typography
+                  variant="h3"
+                  fontWeight={700}
+                  sx={{ mt: 1, mb: 2, maxWidth: 400, lineHeight: 1.2 }}
+                >
                   가계부를 더 차분하고 선명하게.
                 </Typography>
-                <Typography variant="body1" sx={{ maxWidth: 460 }}>
+                <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 420 }}>
                   수입과 지출을 한눈에 정리하고, 계정별 흐름과 통계를 안정적으로
                   이어서 관리할 수 있는 개인 자산 공간입니다.
                 </Typography>
               </Box>
 
-              <Stack spacing={2.5}>
+              <Stack spacing={1.5}>
                 {[
                   "유형과 카테고리를 빠르게 나눠서 거래를 정리합니다.",
                   "자동 로그인과 재발급 흐름을 단순하게 유지합니다.",
                   "데스크톱과 모바일 모두에서 같은 감각으로 이어집니다.",
                 ].map((item) => (
-                  <Paper
-                    key={item}
-                    sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      bgcolor: alpha("#ffffff", 0.48),
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    <Typography fontWeight={700}>{item}</Typography>
-                  </Paper>
+                  <Stack key={item} direction="row" spacing={1.5} alignItems="flex-start">
+                    <Box
+                      sx={{
+                        mt: 0.6,
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        bgcolor: "primary.main",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                      {item}
+                    </Typography>
+                  </Stack>
                 ))}
               </Stack>
             </Stack>
+
+            <Typography variant="caption" color="text.disabled">
+              Sodam · 개인 자산 관리 서비스
+            </Typography>
           </Paper>
 
           <Paper
