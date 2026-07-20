@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AddCircle } from "@mui/icons-material";
+import { AddCircle, CalendarMonth, FormatListBulleted } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -10,6 +10,8 @@ import {
   Paper,
   Skeleton,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -24,11 +26,15 @@ import TransactionCreateModal from "../../../features/transaction/ui/Transaction
 import TransactionDetailModal from "../../../features/transaction/ui/TransactionDetailModal";
 import type { TransactionResponseDto } from "../../../entities/transaction/api/transaction.types";
 import TransactionEditModal from "../../../features/transaction/ui/TransactionEditModal";
+import CalendarView from "./CalendarView";
 
 dayjs.locale("ko");
 
+type ViewMode = "list" | "calendar";
+
 function TransactionPage() {
   const theme = useTheme();
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<number | null>(null);
@@ -158,32 +164,61 @@ function TransactionPage() {
           >
             거래 내역
           </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 0.25 }}
-            noWrap
-          >
-            총 {totalElements}건 · {dateRange.startDate.format("YYYY.MM.DD")} – {dateRange.endDate.format("YYYY.MM.DD")}
-          </Typography>
+          {viewMode === "list" && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.25 }}
+              noWrap
+            >
+              총 {totalElements}건 · {dateRange.startDate.format("YYYY.MM.DD")} – {dateRange.endDate.format("YYYY.MM.DD")}
+            </Typography>
+          )}
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddCircle />}
-          onClick={handleOpenCreateModal}
-          size="small"
-          sx={{
-            fontWeight: 700,
-            textTransform: "none",
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-            px: { xs: 1.5, sm: 2.5 },
-            fontSize: { xs: "0.8rem", sm: "0.875rem" },
-          }}
-        >
-          거래 추가
-        </Button>
+        <Stack direction="row" alignItems="center" gap={1} flexShrink={0}>
+          {/* 뷰 토글 */}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, v: ViewMode | null) => { if (v) setViewMode(v); }}
+            size="small"
+            sx={{ "& .MuiToggleButton-root": { px: { xs: 1, sm: 1.5 }, py: 0.5, textTransform: "none", fontWeight: 600 } }}
+          >
+            <ToggleButton value="list" aria-label="목록 뷰">
+              <FormatListBulleted fontSize="small" />
+              <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, ml: 0.5 }}>목록</Box>
+            </ToggleButton>
+            <ToggleButton value="calendar" aria-label="캘린더 뷰">
+              <CalendarMonth fontSize="small" />
+              <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, ml: 0.5 }}>캘린더</Box>
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <Button
+            variant="contained"
+            startIcon={<AddCircle />}
+            onClick={handleOpenCreateModal}
+            size="small"
+            sx={{
+              fontWeight: 700,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              px: { xs: 1.5, sm: 2.5 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
+            거래 추가
+          </Button>
+        </Stack>
       </Stack>
+
+      {/* ── 캘린더 뷰 ── */}
+      {viewMode === "calendar" && (
+        <CalendarView onViewDetail={handleOpenDetailModal} />
+      )}
+
+      {/* ── 목록 뷰 전용 섹션 ── */}
+      {viewMode === "list" && (<>
 
       {/* ── 날짜 필터: 모바일 세로, 데스크톱 가로 ── */}
       <Paper
@@ -386,6 +421,9 @@ function TransactionPage() {
           />
         </Box>
       )}
+
+      </>)}
+      {/* ── 목록 뷰 섹션 끝 ── */}
 
       <TransactionCreateModal
         isOpen={isCreateModalOpen}
