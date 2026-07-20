@@ -6,17 +6,28 @@ import Header from "./Header";
 import SideBarDrawer from "./SideBarDrawer";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
+import { MobileBottomNav } from "../../../shared/ui/MobileBottomNav";
+import TransactionCreateModal from "../../../features/transaction/ui/TransactionCreateModal";
+
+/** 거래 추가 완료 시 다른 페이지(useTransactions)가 감지할 수 있는 전역 이벤트 */
+export const TRANSACTION_ADDED_EVENT = "sodam:transaction-added";
 
 function AppShellLayout() {
   const [openSide, setOpenSide] = useState<boolean>(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const isDesktop = useIsDesktop();
   const theme = useTheme();
 
   const toggleDrawer = useCallback(
-    () => setOpenSide((prevOpen) => !prevOpen),
+    () => setOpenSide((prev) => !prev),
     [],
   );
   const handleDrawerClose = useCallback(() => setOpenSide(false), []);
+
+  const handleQuickAddSuccess = useCallback(async () => {
+    // 각 페이지의 useTransactions가 이벤트를 구독해 자동 새로고침
+    window.dispatchEvent(new CustomEvent(TRANSACTION_ADDED_EVENT));
+  }, []);
 
   return (
     <Box
@@ -34,17 +45,18 @@ function AppShellLayout() {
         handleDrawerClose={handleDrawerClose}
       />
 
+      {/* 메인 콘텐츠 */}
       <Box
         sx={{
           flexGrow: 1,
-          mb: 4,
           display: "flex",
           flexDirection: "column",
           transition: "margin 0.3s ease",
           marginLeft: openSide && isDesktop ? `${DRAWER_WIDTH}px` : 0,
           paddingTop: isDesktop ? "96px" : "80px",
-          /* xs에서는 각 페이지의 Container가 자체 패딩을 처리하므로 제거 */
           paddingInline: { xs: 0, md: 3 },
+          // 모바일 하단 BottomNav 높이만큼 패딩
+          paddingBottom: { xs: "72px", md: 0 },
           position: "relative",
         }}
       >
@@ -65,9 +77,11 @@ function AppShellLayout() {
         <Outlet />
       </Box>
 
+      {/* 데스크톱 푸터 */}
       <Box
         component="footer"
         sx={{
+          display: { xs: "none", md: "block" },
           px: 3,
           py: 2.5,
           mt: "auto",
@@ -83,6 +97,19 @@ function AppShellLayout() {
           2025 SODAM
         </Typography>
       </Box>
+
+      {/* 모바일 하단 내비게이션 */}
+      <MobileBottomNav
+        onAddClick={() => setIsQuickAddOpen(true)}
+        onMenuClick={toggleDrawer}
+      />
+
+      {/* 쉘 레벨 거래 추가 모달 (FAB에서 트리거) */}
+      <TransactionCreateModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        onSuccess={handleQuickAddSuccess}
+      />
     </Box>
   );
 }

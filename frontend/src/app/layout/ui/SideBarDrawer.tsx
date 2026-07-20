@@ -39,8 +39,8 @@ interface SideBarDrawerProps {
 
 const SIDE_MENU_ITEMS = [
   { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
-  { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
   { label: "거래 내역", path: "/transactions", icon: <ReceiptLongIcon /> },
+  { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
 ];
 
 const DrawerHeader = styled("div")(({ theme }) => ({

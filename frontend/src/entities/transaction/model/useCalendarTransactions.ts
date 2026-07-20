@@ -69,5 +69,12 @@ export const useCalendarTransactions = () => {
     void fetchData();
   }, [fetchData]);
 
+  // FAB에서 거래 추가 시 자동 새로고침
+  useEffect(() => {
+    const handler = () => { void fetchData(); };
+    window.addEventListener("sodam:transaction-added", handler);
+    return () => window.removeEventListener("sodam:transaction-added", handler);
+  }, [fetchData]);
+
   return { month, setMonth, dayMap, loading, error, refresh: fetchData };
 };

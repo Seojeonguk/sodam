@@ -174,6 +174,13 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     void refreshTransactionData();
   }, [refreshTransactionData]);
 
+  // FAB(쉘 레벨)에서 거래 추가 시 자동 새로고침
+  useEffect(() => {
+    const handler = () => { void refreshTransactionData(); };
+    window.addEventListener("sodam:transaction-added", handler);
+    return () => window.removeEventListener("sodam:transaction-added", handler);
+  }, [refreshTransactionData]);
+
   return {
     transactions,
     loading,

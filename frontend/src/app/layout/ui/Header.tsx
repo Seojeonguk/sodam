@@ -109,7 +109,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
             aria-label="open drawer"
             onClick={toggleDrawer}
             edge="start"
-            sx={[iconButtonSx, { mr: 1.5 }, openSide && { display: "none" }]}
+            sx={[iconButtonSx, { mr: 1.5 }, { display: { xs: "none", md: "flex" } }, openSide && { display: "none" }]}
           >
             <MenuIcon />
           </IconButton>

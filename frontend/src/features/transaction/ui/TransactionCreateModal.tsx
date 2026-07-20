@@ -3,26 +3,26 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Modal,
-  Select,
+  Dialog,
+  DialogContent,
+  InputAdornment,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
-  type SelectChangeEvent,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
+import "dayjs/locale/ko";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import categoryApi from "../../../entities/category/api/categoryApi";
-import classificationApi from "../../../entities/category/api/classificationApi";
-import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types";
@@ -31,31 +31,15 @@ import {
   DEFAULT_PAGE_INDEX,
 } from "../../../shared/config/app";
 
-const style = {
-  position: "absolute" as const,
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "min(400px, calc(100vw - 32px))",
-  maxHeight: "calc(100vh - 64px)",
-  overflowY: "auto" as const,
-  bgcolor: "background.paper",
-  border: "none",
-  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
-  p: { xs: 3, sm: 4 },
-  borderRadius: "24px",
-};
+dayjs.locale("ko");
 
-interface TransactionCreateModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => Promise<void>;
-}
-
-const classificationLabelMap: Record<"INCOME" | "EXPENSE", string> = {
-  INCOME: "수입",
-  EXPENSE: "지출",
-};
+const QUICK_AMOUNTS = [
+  { label: "+1천", value: 1_000 },
+  { label: "+5천", value: 5_000 },
+  { label: "+1만", value: 10_000 },
+  { label: "+5만", value: 50_000 },
+  { label: "+10만", value: 100_000 },
+];
 
 const getApiErrorMessage = (payload: unknown): string | null => {
   if (
@@ -66,55 +50,33 @@ const getApiErrorMessage = (payload: unknown): string | null => {
   ) {
     return payload.message;
   }
-
   return null;
 };
+
+interface TransactionCreateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => Promise<void>;
+}
 
 const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
 }) => {
+  const theme = useTheme();
   const { currentAccountBook } = useAccountBookContext();
 
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
-  const [classifications, setClassifications] = useState<ClassificationResponse[]>(
-    [],
-  );
   const [amount, setAmount] = useState<string>("");
   const [category, setCategory] = useState<number | "">("");
   const [description, setDescription] = useState<string>("");
-  const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs());
+  const [transactionDate, setTransactionDate] = useState<Dayjs>(dayjs());
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  /* 모달 오픈 시 classifications 조회 (1회) */
-  useEffect(() => {
-    if (!isOpen || !currentAccountBook?.id) {
-      setClassifications([]);
-      return;
-    }
-    const fetch = async () => {
-      try {
-        const fetchedClassifications = await classificationApi.getClassifications(currentAccountBook.id);
-        setClassifications(fetchedClassifications);
-        if (fetchedClassifications.length > 0) {
-          setType((cur) =>
-            fetchedClassifications.some((c) => c.name === cur) ? cur : fetchedClassifications[0].name,
-          );
-        }
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err) && err.response) {
-          setError(`분류 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
-        }
-      }
-    };
-    void fetch();
-  }, [currentAccountBook?.id, isOpen]);
-
-  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
+  // 카테고리 목록: type 변경마다 재조회
   useEffect(() => {
     if (!isOpen || !currentAccountBook?.id) {
       setCategories([]);
@@ -128,10 +90,10 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           type,
         );
         setCategories(res.categories ?? []);
-        setCategory(""); // type 바뀌면 선택 초기화
-      } catch (err: unknown) {
+        setCategory("");
+      } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
-          setError(`카테고리 목록 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
+          setError(`카테고리 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
         }
       }
     };
@@ -140,7 +102,6 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
 
   const handleClose = () => {
     setType("EXPENSE");
-    setClassifications([]);
     setAmount("");
     setCategory("");
     setDescription("");
@@ -148,181 +109,319 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     setCategories([]);
     setLoading(false);
     setError(null);
-    setSuccess(null);
     onClose();
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleAddQuickAmount = (value: number) => {
+    setAmount((prev) => String((parseInt(prev || "0", 10) + value)));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!currentAccountBook?.id) {
       setError("가계부를 먼저 선택해 주세요.");
       return;
     }
-
-    if (!amount || Number.parseFloat(amount) <= 0) {
+    const parsed = parseInt(amount, 10);
+    if (!amount || isNaN(parsed) || parsed <= 0) {
       setError("금액을 올바르게 입력해 주세요.");
       return;
     }
-
-    if (!transactionDate) {
-      setError("거래 날짜를 선택해 주세요.");
-      return;
-    }
-
     if (category === "") {
       setError("카테고리를 선택해 주세요.");
       return;
     }
 
     setLoading(true);
-
     try {
-      const newTransaction: TransactionCreateRequestDto = {
+      const req: TransactionCreateRequestDto = {
         accountBookSeq: currentAccountBook.id,
         type,
-        amount: Number.parseFloat(amount),
+        amount: parsed,
         categorySeq: category,
         description,
         transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
       };
-
-      await transactionApi.createTransaction(newTransaction);
+      await transactionApi.createTransaction(req);
       await onSuccess();
-      setSuccess("거래가 성공적으로 추가되었습니다.");
       handleClose();
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err) && err.response) {
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
         setError(`거래 추가 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
-        } else {
-          setError("거래를 추가하는 중 오류가 발생했습니다.");
-        }
+      } else {
+        setError("거래를 추가하는 중 오류가 발생했습니다.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const isExpense = type === "EXPENSE";
+  const typeColor = isExpense ? theme.palette.error : theme.palette.success;
+  const canSubmit = !!amount && parseInt(amount, 10) > 0 && category !== "";
+
   return (
-    <Modal
+    <Dialog
       open={isOpen}
       onClose={handleClose}
-      aria-labelledby="transaction-create-modal-title"
-      aria-describedby="transaction-create-modal-description"
+      maxWidth="xs"
+      fullWidth
+      // 모바일: 하단에서 올라오는 바텀시트, 데스크톱: 중앙 다이얼로그
+      sx={{
+        "& .MuiDialog-container": {
+          alignItems: { xs: "flex-end", sm: "center" },
+        },
+      }}
+      PaperProps={{
+        component: "form",
+        onSubmit: (e: React.FormEvent) => void handleSubmit(e),
+        sx: {
+          m: { xs: 0, sm: 2 },
+          width: { xs: "100%", sm: 440 },
+          maxWidth: { xs: "100%", sm: 440 },
+          maxHeight: { xs: "92vh", sm: "88vh" },
+          borderRadius: { xs: "20px 20px 0 0", sm: 3 },
+          overflowY: "auto",
+        },
+      }}
     >
-      <Box sx={style} component="form" onSubmit={(event) => void handleSubmit(event)}>
-        <Typography
-          id="transaction-create-modal-title"
-          variant="h5"
-          component="h2"
-          mb={3}
+      <DialogContent sx={{ p: 0 }}>
+        {/* 모바일 드래그 핸들 */}
+        <Box
+          sx={{
+            display: { xs: "flex", sm: "none" },
+            justifyContent: "center",
+            pt: 1.5,
+            pb: 0.5,
+          }}
         >
-          거래 추가
-        </Typography>
+          <Box
+            sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "action.disabled" }}
+          />
+        </Box>
 
-        {error ? (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        ) : null}
-        {success ? (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        ) : null}
+        <Box sx={{ px: { xs: 2.5, sm: 3 }, pb: { xs: 2.5, sm: 3 }, pt: { xs: 1, sm: 2.5 } }}>
+          {/* 제목 */}
+          <Typography variant="h6" fontWeight={700} mb={2.5}>
+            거래 추가
+          </Typography>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="type-select-label">유형</InputLabel>
-          <Select
-            labelId="type-select-label"
-            id="type-select"
+          {/* ── 1. 유형 토글 ── */}
+          <ToggleButtonGroup
             value={type}
-            label="유형"
-            onChange={(event: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
-              setType(event.target.value);
-              setCategory("");
+            exclusive
+            onChange={(_, v: "INCOME" | "EXPENSE" | null) => {
+              if (v) { setType(v); setCategory(""); }
+            }}
+            fullWidth
+            sx={{
+              mb: 2.5,
+              "& .MuiToggleButton-root": {
+                flex: 1,
+                py: 1.25,
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                border: "1.5px solid",
+                borderColor: "divider",
+                borderRadius: "10px !important",
+                transition: "all 0.15s ease",
+                "&.Mui-selected": {
+                  borderWidth: "1.5px",
+                },
+              },
+              gap: 1.5,
             }}
           >
-            {classifications.map((classification) => (
-              <MenuItem key={classification.id} value={classification.name}>
-                {classificationLabelMap[classification.name] ?? classification.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <ToggleButton
+              value="EXPENSE"
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: alpha(theme.palette.error.main, 0.1),
+                  color: "error.main",
+                  borderColor: `${theme.palette.error.main} !important`,
+                },
+              }}
+            >
+              지출
+            </ToggleButton>
+            <ToggleButton
+              value="INCOME"
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  color: "success.main",
+                  borderColor: `${theme.palette.success.main} !important`,
+                },
+              }}
+            >
+              수입
+            </ToggleButton>
+          </ToggleButtonGroup>
 
-        <TextField
-          fullWidth
-          label="금액"
-          type="number"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          margin="normal"
-          required
-          sx={{ mb: 2 }}
-        />
+          {/* ── 2. 금액 입력 ── */}
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              label="금액"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              inputProps={{ min: 0, style: { fontSize: "1.3rem", fontWeight: 800 } }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Typography fontWeight={600} color="text.secondary">원</Typography>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 1 }}
+            />
+            {/* 빠른 금액 칩 */}
+            <Box display="flex" gap={0.75} flexWrap="wrap">
+              {QUICK_AMOUNTS.map(({ label, value }) => (
+                <Chip
+                  key={value}
+                  label={label}
+                  size="small"
+                  onClick={() => handleAddQuickAmount(value)}
+                  sx={{
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    bgcolor: alpha(typeColor.main, 0.08),
+                    color: isExpense ? "error.dark" : "success.dark",
+                    border: "1px solid",
+                    borderColor: alpha(typeColor.main, 0.25),
+                    "&:hover": { bgcolor: alpha(typeColor.main, 0.15) },
+                  }}
+                />
+              ))}
+              {amount && (
+                <Chip
+                  label="초기화"
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setAmount("")}
+                  sx={{ cursor: "pointer" }}
+                />
+              )}
+            </Box>
+          </Box>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="category-select-label">카테고리</InputLabel>
-          <Select
-            labelId="category-select-label"
-            id="category-select"
-            value={category}
-            label="카테고리"
-            onChange={(event) => setCategory(Number(event.target.value))}
-            required
-          >
-            {categories.map((item) => (
-              <MenuItem key={item.id} value={item.id}>
-                {item.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          {/* ── 3. 카테고리 칩 그리드 ── */}
+          <Box mb={2}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{ display: "block", mb: 1, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
+              카테고리
+            </Typography>
+            {categories.length === 0 ? (
+              <Typography variant="body2" color="text.disabled" sx={{ py: 1 }}>
+                카테고리가 없습니다. 먼저 카테고리를 추가해 주세요.
+              </Typography>
+            ) : (
+              <Box
+                display="flex"
+                gap={0.75}
+                flexWrap="wrap"
+                sx={{ maxHeight: 120, overflowY: "auto", pr: 0.5 }}
+              >
+                {categories.map((cat) => {
+                  const isSelected = category === cat.id;
+                  return (
+                    <Chip
+                      key={cat.id}
+                      label={cat.name}
+                      onClick={() => setCategory(cat.id)}
+                      sx={{
+                        cursor: "pointer",
+                        fontWeight: isSelected ? 700 : 500,
+                        bgcolor: isSelected
+                          ? alpha(typeColor.main, 0.15)
+                          : "action.hover",
+                        color: isSelected
+                          ? isExpense ? "error.dark" : "success.dark"
+                          : "text.primary",
+                        border: "1.5px solid",
+                        borderColor: isSelected
+                          ? alpha(typeColor.main, 0.5)
+                          : "transparent",
+                        transition: "all 0.15s ease",
+                        "&:hover": {
+                          bgcolor: alpha(typeColor.main, 0.1),
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
 
-        <TextField
-          fullWidth
-          label="내용 (선택 사항)"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          margin="normal"
-          multiline
-          rows={2}
-          sx={{ mb: 2 }}
-        />
-
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
-            label="거래 날짜 및 시간"
-            value={transactionDate}
-            onChange={(newValue) => setTransactionDate(newValue)}
-            sx={{ width: "100%", mb: 3 }}
+          {/* ── 4. 메모 (선택) ── */}
+          <TextField
+            fullWidth
+            label="메모 (선택)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            size="small"
+            sx={{ mb: 2 }}
           />
-        </LocalizationProvider>
 
-        <Box display="flex" justifyContent="space-between" gap={2}>
+          {/* ── 5. 날짜 ── */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="날짜"
+              value={transactionDate}
+              format="YYYY년 M월 D일"
+              onChange={(v) => { if (v) setTransactionDate(v); }}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  fullWidth: true,
+                  sx: { mb: 2.5 },
+                },
+              }}
+            />
+          </LocalizationProvider>
+
+          {/* 에러 */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* ── 6. 제출 버튼 ── */}
           <Button
-            variant="contained"
-            color="error"
-            onClick={handleClose}
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-          >
-            취소
-          </Button>
-          <Button
-            variant="contained"
             type="submit"
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
+            variant="contained"
+            fullWidth
+            size="large"
+            disabled={loading || !canSubmit}
+            sx={{
+              py: 1.5,
+              fontWeight: 700,
+              fontSize: "1rem",
+              borderRadius: 2,
+              bgcolor: canSubmit ? typeColor.main : undefined,
+              "&:hover": { bgcolor: canSubmit ? typeColor.dark : undefined },
+              transition: "background-color 0.2s ease",
+            }}
           >
-            {loading ? "추가 중..." : "거래 추가"}
+            {loading ? (
+              <CircularProgress size={22} sx={{ color: "inherit" }} />
+            ) : (
+              `${isExpense ? "지출" : "수입"} ${amount && parseInt(amount, 10) > 0 ? parseInt(amount, 10).toLocaleString("ko-KR") + "원 추가" : "추가"}`
+            )}
           </Button>
         </Box>
-      </Box>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };
 
