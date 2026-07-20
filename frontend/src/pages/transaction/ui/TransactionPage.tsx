@@ -15,7 +15,7 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { BarChart, PieChart } from "@mui/x-charts";
+import { BarChart } from "@mui/x-charts";
 import "dayjs/locale/ko";
 import dayjs from "dayjs";
 import TransactionList from "../../../entities/transaction/ui/TransactionList";
@@ -234,85 +234,125 @@ function TransactionPage() {
       {/* ── 통계 ── */}
       <Paper
         elevation={0}
-        sx={{ p: { xs: 1.5, sm: 4 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+        sx={{ p: { xs: 2, sm: 3 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
       >
-        {/* 파이차트: 모바일도 가로 배치 (150px × 2 = 300px, 모바일 충분히 수용) */}
+        {/* 카테고리 분석: 수입 / 지출 */}
         <Box
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="space-around"
-          pb={{ xs: 2, sm: 4 }}
+          display="grid"
+          gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }}
+          gap={{ xs: 2.5, sm: 3 }}
+          mb={3}
         >
-          <Box textAlign="center">
+          {/* 수입 */}
+          <Box>
             <Typography
               variant="caption"
               fontWeight={700}
-              color="text.secondary"
-              sx={{ display: "block", mb: 1, textTransform: "uppercase", letterSpacing: "0.04em" }}
+              color="success.dark"
+              sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
-              수입
+              수입 카테고리
             </Typography>
-            {incomeStats.length > 0 ? (
-              <PieChart
-                series={[{ data: incomeStats }]}
-                width={140}
-                height={140}
-              />
-            ) : (
-              <Box sx={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography variant="caption" color="text.disabled">데이터 없음</Typography>
-              </Box>
-            )}
+            {incomeStats.length === 0 ? (
+              <Typography variant="body2" color="text.disabled">해당 기간 수입 없음</Typography>
+            ) : (() => {
+              const total = incomeStats.reduce((s, i) => s + i.value, 0);
+              return (
+                <Stack spacing={1.5}>
+                  {incomeStats.map((item) => {
+                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                    return (
+                      <Box key={item.id}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                          <Stack direction="row" alignItems="center" spacing={0.75}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: item.color ?? "success.main", flexShrink: 0 }} />
+                            <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: 100 }}>
+                              {item.label ?? "기타"}
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                            {item.value.toLocaleString("ko-KR")}원 · {pct}%
+                          </Typography>
+                        </Stack>
+                        <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
+                          <Box sx={{ height: "100%", width: `${pct}%`, bgcolor: item.color ?? "success.main", borderRadius: 99, transition: "width 0.4s ease" }} />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              );
+            })()}
           </Box>
 
-          <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0.5, sm: 2 } }} />
+          {/* 모바일 구분선 */}
+          <Divider sx={{ display: { xs: "block", sm: "none" } }} />
 
-          <Box textAlign="center">
+          {/* 지출 */}
+          <Box>
             <Typography
               variant="caption"
               fontWeight={700}
-              color="text.secondary"
-              sx={{ display: "block", mb: 1, textTransform: "uppercase", letterSpacing: "0.04em" }}
+              color="error.dark"
+              sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
-              지출
+              지출 카테고리
             </Typography>
-            {expenseStats.length > 0 ? (
-              <PieChart
-                series={[{ data: expenseStats }]}
-                width={140}
-                height={140}
-              />
-            ) : (
-              <Box sx={{ width: 140, height: 140, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography variant="caption" color="text.disabled">데이터 없음</Typography>
-              </Box>
-            )}
+            {expenseStats.length === 0 ? (
+              <Typography variant="body2" color="text.disabled">해당 기간 지출 없음</Typography>
+            ) : (() => {
+              const total = expenseStats.reduce((s, i) => s + i.value, 0);
+              return (
+                <Stack spacing={1.5}>
+                  {expenseStats.map((item) => {
+                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                    return (
+                      <Box key={item.id}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                          <Stack direction="row" alignItems="center" spacing={0.75}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: item.color ?? "error.main", flexShrink: 0 }} />
+                            <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: 100 }}>
+                              {item.label ?? "기타"}
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                            {item.value.toLocaleString("ko-KR")}원 · {pct}%
+                          </Typography>
+                        </Stack>
+                        <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
+                          <Box sx={{ height: "100%", width: `${pct}%`, bgcolor: item.color ?? "error.main", borderRadius: 99, transition: "width 0.4s ease" }} />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              );
+            })()}
           </Box>
         </Box>
 
-        <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+        <Divider sx={{ mb: 2.5 }} />
 
-        {/* 바차트 */}
+        {/* 기간별 추이 바차트 */}
         <Box>
           <Typography
             variant="caption"
             fontWeight={700}
             color="text.secondary"
-            sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.04em" }}
+            sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
           >
             기간별 추이
           </Typography>
           {statPeriodDataset.length === 0 ? (
-            <Box sx={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Typography variant="body2" color="text.disabled">기간 내 거래 내역이 없습니다.</Typography>
             </Box>
           ) : (
             <BarChart
               dataset={statPeriodDataset}
-              xAxis={[{ dataKey: "period", scaleType: "band", label: "기간", height: 40 }]}
+              xAxis={[{ dataKey: "period", scaleType: "band", height: 36 }]}
               series={[{ dataKey: "income", label: "수입" }, { dataKey: "expense", label: "지출" }]}
-              height={220}
+              height={200}
               grid={{ horizontal: true }}
             />
           )}
