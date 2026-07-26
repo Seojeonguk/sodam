@@ -37,6 +37,10 @@ public class TransactionSpecification {
                     predicates.add(criteriaBuilder.equal(root.get("userSeq"), userSeq))
             );
 
+            Optional.ofNullable(searchRequest.getCategorySeq()).ifPresent(categorySeq ->
+                    predicates.add(criteriaBuilder.equal(root.get("categorySeq"), categorySeq))
+            );
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }

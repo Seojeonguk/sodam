@@ -17,6 +17,7 @@ const transactionApi = {
     endDate?: string,
     page = 0,
     size = 10,
+    categorySeq?: number,
   ): Promise<TransactionListResponse> => {
     if (guestMode.isActive())
       return guestStore.getTransactions(
@@ -25,9 +26,10 @@ const transactionApi = {
         endDate,
         page,
         size,
+        categorySeq,
       );
     return api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
-      params: { accountBookSeq: accountId, startDate, endDate, page, size },
+      params: { accountBookSeq: accountId, startDate, endDate, page, size, ...(categorySeq != null && { categorySeq }) },
     });
   },
 

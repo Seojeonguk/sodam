@@ -91,10 +91,13 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     endDate: dayjs().endOf("month"),
   });
 
-  /** dateRange가 바뀌면 첫 페이지로 리셋 */
+  /** 카테고리 필터 (null = 전체) */
+  const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+
+  /** dateRange / categoryFilter가 바뀌면 첫 페이지로 리셋 */
   useEffect(() => {
     setPage(0);
-  }, [dateRange.startDate, dateRange.endDate]);
+  }, [dateRange.startDate, dateRange.endDate, categoryFilter]);
 
   const resetTransactionState = useCallback(() => {
     setTransactions(null);
@@ -128,6 +131,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
           endDate,
           page,
           pageSize,
+          categoryFilter ?? undefined,
         ),
         statApi.getStats(statRequest),
         statApi.getPeriodStats(statPeriodRequest),
@@ -153,6 +157,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     dateRange.startDate,
     page,
     pageSize,
+    categoryFilter,
     resetTransactionState,
   ]);
 
@@ -192,6 +197,9 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     statPeriodDataset,
     dateRange,
     setDateRange,
+    /** 카테고리 필터 (null = 전체) */
+    categoryFilter,
+    setCategoryFilter,
     /** 현재 페이지 (0-indexed) */
     page,
     /** 페이지 변경 핸들러 (0-indexed) */

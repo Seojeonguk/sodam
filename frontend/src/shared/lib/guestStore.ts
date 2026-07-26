@@ -235,6 +235,7 @@ export const guestStore = {
     endDate?: string,
     page = 0,
     size = 10,
+    categorySeq?: number,
   ): TransactionListResponse {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     let filtered = all;
@@ -242,7 +243,11 @@ export const guestStore = {
     if (startDate && endDate) {
       const start = parseYmd(startDate);
       const end = parseYmd(endDate);
-      filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
+      filtered = filtered.filter((t) => isInRange(t.transactionDate, start, end));
+    }
+
+    if (categorySeq != null) {
+      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
     }
 
     const totalElements = filtered.length;

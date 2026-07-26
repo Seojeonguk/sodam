@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { AddCircle, CalendarMonth, FormatListBulleted } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { AddCircle, CalendarMonth, FilterList, FormatListBulleted } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
   Button,
+  Chip,
   Container,
   Divider,
   Pagination,
@@ -27,6 +28,8 @@ import TransactionDetailModal from "../../../features/transaction/ui/Transaction
 import type { TransactionResponseDto } from "../../../entities/transaction/api/transaction.types";
 import TransactionEditModal from "../../../features/transaction/ui/TransactionEditModal";
 import CalendarView from "./CalendarView";
+import categoryApi from "../../../entities/category/api/categoryApi";
+import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
 dayjs.locale("ko");
 
@@ -52,11 +55,21 @@ function TransactionPage() {
     statPeriodDataset,
     dateRange,
     setDateRange,
+    categoryFilter,
+    setCategoryFilter,
     page,
     setPage,
     totalPages,
     totalElements,
   } = useTransactions({ pageSize: 10 });
+
+  // 카테고리 목록 (필터 칩 렌더링용)
+  const [filterCategories, setFilterCategories] = useState<CategoryListItemResponse[]>([]);
+  useEffect(() => {
+    categoryApi.getCategories(0, 100)
+      .then((res) => setFilterCategories(res.categories ?? []))
+      .catch(() => { /* 조용히 실패 */ });
+  }, []);
 
   const handleOpenCreateModal = () => { setIsCreateModalOpen(true); };
   const handleCloseCreateModal = () => { setIsCreateModalOpen(false); };
@@ -265,6 +278,65 @@ function TransactionPage() {
           </Stack>
         </LocalizationProvider>
       </Paper>
+
+      {/* ── 카테고리 필터 ── */}
+      {filterCategories.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+        >
+          <Stack direction="row" alignItems="center" gap={1} mb={1}>
+            <FilterList sx={{ fontSize: "0.95rem", color: "text.secondary" }} />
+            <Typography variant="caption" fontWeight={700} color="text.secondary"
+              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              카테고리
+            </Typography>
+          </Stack>
+          <Box display="flex" gap={0.75} flexWrap="wrap">
+            {/* 전체 */}
+            <Chip
+              label="전체"
+              size="small"
+              onClick={() => setCategoryFilter(null)}
+              sx={{
+                fontWeight: categoryFilter === null ? 700 : 500,
+                bgcolor: categoryFilter === null ? "primary.main" : "action.hover",
+                color: categoryFilter === null ? "primary.contrastText" : "text.primary",
+                border: "1px solid",
+                borderColor: categoryFilter === null ? "primary.main" : "transparent",
+                "&:hover": { opacity: 0.85 },
+              }}
+            />
+            {filterCategories.map((cat) => {
+              const isSelected = categoryFilter === cat.id;
+              const isIncome = cat.type === "INCOME";
+              return (
+                <Chip
+                  key={cat.id}
+                  label={cat.name}
+                  size="small"
+                  onClick={() => setCategoryFilter(isSelected ? null : cat.id)}
+                  sx={{
+                    fontWeight: isSelected ? 700 : 500,
+                    bgcolor: isSelected
+                      ? isIncome ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15)
+                      : "action.hover",
+                    color: isSelected
+                      ? isIncome ? "success.dark" : "error.dark"
+                      : "text.secondary",
+                    border: "1.5px solid",
+                    borderColor: isSelected
+                      ? isIncome ? alpha(theme.palette.success.main, 0.5) : alpha(theme.palette.error.main, 0.5)
+                      : "transparent",
+                    transition: "all 0.15s ease",
+                    "&:hover": { opacity: 0.85 },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </Paper>
+      )}
 
       {/* ── 통계 ── */}
       <Paper
