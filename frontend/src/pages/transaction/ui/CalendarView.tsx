@@ -39,11 +39,12 @@ function getBlankCount(firstDay: Dayjs): number {
 
 interface CalendarViewProps {
   onViewDetail: (seq: number) => void;
+  categoryFilter?: number[];
 }
 
-export default function CalendarView({ onViewDetail }: CalendarViewProps) {
+export default function CalendarView({ onViewDetail, categoryFilter }: CalendarViewProps) {
   const theme = useTheme();
-  const { month, setMonth, dayMap, loading } = useCalendarTransactions();
+  const { month, setMonth, dayMap, loading } = useCalendarTransactions({ categorySeqs: categoryFilter });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const today = dayjs().format("YYYY-MM-DD");

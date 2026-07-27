@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import transactionApi from "../api/transactionApi";
 import type { TransactionListItemResponse } from "../api/transaction.types";
@@ -11,7 +11,11 @@ export interface CalendarDayData {
   transactions: TransactionListItemResponse[];
 }
 
-export const useCalendarTransactions = () => {
+interface UseCalendarTransactionsOptions {
+  categorySeqs?: number[];
+}
+
+export const useCalendarTransactions = (options?: UseCalendarTransactionsOptions) => {
   const [month, setMonth] = useState<Dayjs>(dayjs().startOf("month"));
   const [dayMap, setDayMap] = useState<Map<string, CalendarDayData>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -19,6 +23,14 @@ export const useCalendarTransactions = () => {
 
   const { currentAccountBook } = useAccountBookContext();
   const currentAccountBookId = currentAccountBook?.id ?? null;
+
+  const categorySeqs = options?.categorySeqs;
+  // 배열 참조가 매 렌더마다 바뀌어도 내용이 같으면 fetchData를 재생성하지 않도록 직렬화 key 사용
+  const categorySeqsKey = useMemo(
+    () => (categorySeqs && categorySeqs.length > 0 ? categorySeqs.slice().sort().join(",") : ""),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categorySeqs?.join(",")],
+  );
 
   const fetchData = useCallback(async () => {
     if (!currentAccountBookId) {
@@ -37,6 +49,7 @@ export const useCalendarTransactions = () => {
         endDate,
         0,
         500,
+        categorySeqs && categorySeqs.length > 0 ? categorySeqs : undefined,
       );
 
       // 날짜별로 그룹화
@@ -63,7 +76,8 @@ export const useCalendarTransactions = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBookId, month]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAccountBookId, month, categorySeqsKey]);
 
   useEffect(() => {
     void fetchData();

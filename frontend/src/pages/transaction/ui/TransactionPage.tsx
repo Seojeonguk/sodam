@@ -227,7 +227,7 @@ function TransactionPage() {
 
       {/* ── 캘린더 뷰 ── */}
       {viewMode === "calendar" && (
-        <CalendarView onViewDetail={handleOpenDetailModal} />
+        <CalendarView onViewDetail={handleOpenDetailModal} categoryFilter={categoryFilter} />
       )}
 
       {/* ── 목록 뷰 전용 섹션 ── */}
