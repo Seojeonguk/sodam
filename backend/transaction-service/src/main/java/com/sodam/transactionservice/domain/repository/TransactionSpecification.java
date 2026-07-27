@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collections;
 
 public class TransactionSpecification {
 
@@ -37,9 +38,10 @@ public class TransactionSpecification {
                     predicates.add(criteriaBuilder.equal(root.get("userSeq"), userSeq))
             );
 
-            Optional.ofNullable(searchRequest.getCategorySeq()).ifPresent(categorySeq ->
-                    predicates.add(criteriaBuilder.equal(root.get("categorySeq"), categorySeq))
-            );
+            List<Long> categorySeqs = searchRequest.getCategorySeqs();
+            if (categorySeqs != null && !categorySeqs.isEmpty()) {
+                predicates.add(root.get("categorySeq").in(categorySeqs));
+            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

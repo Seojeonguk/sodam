@@ -19,8 +19,11 @@
             1=1
             and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
             and tr.transaction_date between #{startDate, javaType = String, jdbcType = VARCHAR} and #{endDate, javaType = String, jdbcType = VARCHAR}
-        <if test="categorySeq != null">
-            and tr.category_seq = #{categorySeq, javaType = Long, jdbcType = BIGINT}
+        <if test="categorySeqs != null and categorySeqs.size() > 0">
+            and tr.category_seq IN
+            <foreach item="cid" collection="categorySeqs" open="(" separator="," close=")">
+                #{cid, javaType=Long, jdbcType=BIGINT}
+            </foreach>
         </if>
         GROUP BY
             tr.category_seq, tr.type
@@ -41,8 +44,11 @@
             1=1
           and tr.user_seq = #{userSeq, javaType = Long, jdbcType = BIGINT}
           and tr.transaction_date between #{startDate, javaType = String, jdbcType = VARCHAR} and #{endDate, javaType = String, jdbcType = VARCHAR}
-        <if test="categorySeq != null">
-          and tr.category_seq = #{categorySeq, javaType = Long, jdbcType = BIGINT}
+        <if test="categorySeqs != null and categorySeqs.size() > 0">
+          and tr.category_seq IN
+          <foreach item="cid" collection="categorySeqs" open="(" separator="," close=")">
+              #{cid, javaType=Long, jdbcType=BIGINT}
+          </foreach>
         </if>
         GROUP BY
             TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type

@@ -293,29 +293,35 @@ function TransactionPage() {
             </Typography>
           </Stack>
           <Box display="flex" gap={0.75} flexWrap="wrap">
-            {/* 전체 */}
+            {/* 전체 초기화 */}
             <Chip
               label="전체"
               size="small"
-              onClick={() => setCategoryFilter(null)}
+              onClick={() => setCategoryFilter([])}
               sx={{
-                fontWeight: categoryFilter === null ? 700 : 500,
-                bgcolor: categoryFilter === null ? "primary.main" : "action.hover",
-                color: categoryFilter === null ? "primary.contrastText" : "text.primary",
+                fontWeight: categoryFilter.length === 0 ? 700 : 500,
+                bgcolor: categoryFilter.length === 0 ? "primary.main" : "action.hover",
+                color: categoryFilter.length === 0 ? "primary.contrastText" : "text.primary",
                 border: "1px solid",
-                borderColor: categoryFilter === null ? "primary.main" : "transparent",
+                borderColor: categoryFilter.length === 0 ? "primary.main" : "transparent",
                 "&:hover": { opacity: 0.85 },
               }}
             />
             {filterCategories.map((cat) => {
-              const isSelected = categoryFilter === cat.id;
+              const isSelected = categoryFilter.includes(cat.id);
               const isIncome = cat.type === "INCOME";
               return (
                 <Chip
                   key={cat.id}
                   label={cat.name}
                   size="small"
-                  onClick={() => setCategoryFilter(isSelected ? null : cat.id)}
+                  onClick={() =>
+                    setCategoryFilter(
+                      isSelected
+                        ? categoryFilter.filter((id) => id !== cat.id)
+                        : [...categoryFilter, cat.id],
+                    )
+                  }
                   sx={{
                     fontWeight: isSelected ? 700 : 500,
                     bgcolor: isSelected

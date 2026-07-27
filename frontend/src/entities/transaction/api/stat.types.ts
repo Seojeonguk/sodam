@@ -1,7 +1,7 @@
 export interface StatRequest {
   startDate: string;
   endDate: string;
-  categorySeq?: number;
+  categorySeqs?: number[];
 }
 
 export interface StatResponse {
@@ -13,7 +13,7 @@ export interface StatResponse {
 export interface StatPeriodRequest {
   startDate: string;
   endDate: string;
-  categorySeq?: number;
+  categorySeqs?: number[];
 }
 
 export interface StatPeriodResponse {

@@ -235,7 +235,7 @@ export const guestStore = {
     endDate?: string,
     page = 0,
     size = 10,
-    categorySeq?: number,
+    categorySeqs?: number[],
   ): TransactionListResponse {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     let filtered = all;
@@ -246,8 +246,8 @@ export const guestStore = {
       filtered = filtered.filter((t) => isInRange(t.transactionDate, start, end));
     }
 
-    if (categorySeq != null) {
-      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
+    if (categorySeqs && categorySeqs.length > 0) {
+      filtered = filtered.filter((t) => t.categorySeq != null && categorySeqs.includes(t.categorySeq));
     }
 
     const totalElements = filtered.length;
@@ -340,13 +340,13 @@ export const guestStore = {
   },
 
   // ── 통계 (거래 데이터에서 계산) ──────────────────────────────────────────────
-  getStats(startDate: string, endDate: string, categorySeq?: number): StatResponse[] {
+  getStats(startDate: string, endDate: string, categorySeqs?: number[]): StatResponse[] {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
     let filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
-    if (categorySeq != null) {
-      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
+    if (categorySeqs && categorySeqs.length > 0) {
+      filtered = filtered.filter((t) => t.categorySeq != null && categorySeqs.includes(t.categorySeq));
     }
 
     const map = new Map<string, StatResponse>();
@@ -366,13 +366,13 @@ export const guestStore = {
     return Array.from(map.values());
   },
 
-  getPeriodStats(startDate: string, endDate: string, categorySeq?: number): StatPeriodResponse[] {
+  getPeriodStats(startDate: string, endDate: string, categorySeqs?: number[]): StatPeriodResponse[] {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
     let filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
-    if (categorySeq != null) {
-      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
+    if (categorySeqs && categorySeqs.length > 0) {
+      filtered = filtered.filter((t) => t.categorySeq != null && categorySeqs.includes(t.categorySeq));
     }
 
     const map = new Map<string, StatPeriodResponse>();

@@ -91,8 +91,8 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     endDate: dayjs().endOf("month"),
   });
 
-  /** 카테고리 필터 (null = 전체) */
-  const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+  /** 카테고리 다건 필터 (빈 배열 = 전체) */
+  const [categoryFilter, setCategoryFilter] = useState<number[]>([]);
 
   /** dateRange / categoryFilter가 바뀌면 첫 페이지로 리셋 */
   useEffect(() => {
@@ -123,12 +123,12 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     const statRequest: StatRequest = {
       startDate,
       endDate,
-      ...(categoryFilter != null && { categorySeq: categoryFilter }),
+      ...(categoryFilter.length > 0 && { categorySeqs: categoryFilter }),
     };
     const statPeriodRequest: StatPeriodRequest = {
       startDate,
       endDate,
-      ...(categoryFilter != null && { categorySeq: categoryFilter }),
+      ...(categoryFilter.length > 0 && { categorySeqs: categoryFilter }),
     };
 
     try {
@@ -139,7 +139,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
           endDate,
           page,
           pageSize,
-          categoryFilter ?? undefined,
+          categoryFilter.length > 0 ? categoryFilter : undefined,
         ),
         statApi.getStats(statRequest),
         statApi.getPeriodStats(statPeriodRequest),
@@ -205,7 +205,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     statPeriodDataset,
     dateRange,
     setDateRange,
-    /** 카테고리 필터 (null = 전체) */
+    /** 카테고리 다건 필터 (빈 배열 = 전체) */
     categoryFilter,
     setCategoryFilter,
     /** 현재 페이지 (0-indexed) */
