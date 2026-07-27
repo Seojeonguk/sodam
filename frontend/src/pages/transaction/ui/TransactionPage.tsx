@@ -225,6 +225,70 @@ function TransactionPage() {
         </Stack>
       </Stack>
 
+      {/* ── 카테고리 필터 (목록·캘린더 공통) ── */}
+      {filterCategories.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+        >
+          <Stack direction="row" alignItems="center" gap={1} mb={1}>
+            <FilterList sx={{ fontSize: "0.95rem", color: "text.secondary" }} />
+            <Typography variant="caption" fontWeight={700} color="text.secondary"
+              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              카테고리
+            </Typography>
+          </Stack>
+          <Box display="flex" gap={0.75} flexWrap="wrap">
+            <Chip
+              label="전체"
+              size="small"
+              onClick={() => setCategoryFilter([])}
+              sx={{
+                fontWeight: categoryFilter.length === 0 ? 700 : 500,
+                bgcolor: categoryFilter.length === 0 ? "primary.main" : "action.hover",
+                color: categoryFilter.length === 0 ? "primary.contrastText" : "text.primary",
+                border: "1px solid",
+                borderColor: categoryFilter.length === 0 ? "primary.main" : "transparent",
+                "&:hover": { opacity: 0.85 },
+              }}
+            />
+            {filterCategories.map((cat) => {
+              const isSelected = categoryFilter.includes(cat.id);
+              const isIncome = cat.type === "INCOME";
+              return (
+                <Chip
+                  key={cat.id}
+                  label={cat.name}
+                  size="small"
+                  onClick={() =>
+                    setCategoryFilter(
+                      isSelected
+                        ? categoryFilter.filter((id) => id !== cat.id)
+                        : [...categoryFilter, cat.id],
+                    )
+                  }
+                  sx={{
+                    fontWeight: isSelected ? 700 : 500,
+                    bgcolor: isSelected
+                      ? isIncome ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15)
+                      : "action.hover",
+                    color: isSelected
+                      ? isIncome ? "success.dark" : "error.dark"
+                      : "text.secondary",
+                    border: "1.5px solid",
+                    borderColor: isSelected
+                      ? isIncome ? alpha(theme.palette.success.main, 0.5) : alpha(theme.palette.error.main, 0.5)
+                      : "transparent",
+                    transition: "all 0.15s ease",
+                    "&:hover": { opacity: 0.85 },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </Paper>
+      )}
+
       {/* ── 캘린더 뷰 ── */}
       {viewMode === "calendar" && (
         <CalendarView onViewDetail={handleOpenDetailModal} categoryFilter={categoryFilter} />
@@ -278,71 +342,6 @@ function TransactionPage() {
           </Stack>
         </LocalizationProvider>
       </Paper>
-
-      {/* ── 카테고리 필터 ── */}
-      {filterCategories.length > 0 && (
-        <Paper
-          elevation={0}
-          sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
-        >
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <FilterList sx={{ fontSize: "0.95rem", color: "text.secondary" }} />
-            <Typography variant="caption" fontWeight={700} color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              카테고리
-            </Typography>
-          </Stack>
-          <Box display="flex" gap={0.75} flexWrap="wrap">
-            {/* 전체 초기화 */}
-            <Chip
-              label="전체"
-              size="small"
-              onClick={() => setCategoryFilter([])}
-              sx={{
-                fontWeight: categoryFilter.length === 0 ? 700 : 500,
-                bgcolor: categoryFilter.length === 0 ? "primary.main" : "action.hover",
-                color: categoryFilter.length === 0 ? "primary.contrastText" : "text.primary",
-                border: "1px solid",
-                borderColor: categoryFilter.length === 0 ? "primary.main" : "transparent",
-                "&:hover": { opacity: 0.85 },
-              }}
-            />
-            {filterCategories.map((cat) => {
-              const isSelected = categoryFilter.includes(cat.id);
-              const isIncome = cat.type === "INCOME";
-              return (
-                <Chip
-                  key={cat.id}
-                  label={cat.name}
-                  size="small"
-                  onClick={() =>
-                    setCategoryFilter(
-                      isSelected
-                        ? categoryFilter.filter((id) => id !== cat.id)
-                        : [...categoryFilter, cat.id],
-                    )
-                  }
-                  sx={{
-                    fontWeight: isSelected ? 700 : 500,
-                    bgcolor: isSelected
-                      ? isIncome ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15)
-                      : "action.hover",
-                    color: isSelected
-                      ? isIncome ? "success.dark" : "error.dark"
-                      : "text.secondary",
-                    border: "1.5px solid",
-                    borderColor: isSelected
-                      ? isIncome ? alpha(theme.palette.success.main, 0.5) : alpha(theme.palette.error.main, 0.5)
-                      : "transparent",
-                    transition: "all 0.15s ease",
-                    "&:hover": { opacity: 0.85 },
-                  }}
-                />
-              );
-            })}
-          </Box>
-        </Paper>
-      )}
 
       {/* ── 통계 ── */}
       <Paper
