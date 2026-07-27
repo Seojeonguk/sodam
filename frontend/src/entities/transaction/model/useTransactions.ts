@@ -120,8 +120,16 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     const startDate = dateRange.startDate.format("YYYYMMDD");
     const endDate = dateRange.endDate.format("YYYYMMDD");
 
-    const statRequest: StatRequest = { startDate, endDate };
-    const statPeriodRequest: StatPeriodRequest = { startDate, endDate };
+    const statRequest: StatRequest = {
+      startDate,
+      endDate,
+      ...(categoryFilter != null && { categorySeq: categoryFilter }),
+    };
+    const statPeriodRequest: StatPeriodRequest = {
+      startDate,
+      endDate,
+      ...(categoryFilter != null && { categorySeq: categoryFilter }),
+    };
 
     try {
       const [nextTransactions, nextStats, nextPeriodStats] = await Promise.all([

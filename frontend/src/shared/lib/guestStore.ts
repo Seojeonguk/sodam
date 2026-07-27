@@ -340,13 +340,14 @@ export const guestStore = {
   },
 
   // ── 통계 (거래 데이터에서 계산) ──────────────────────────────────────────────
-  getStats(startDate: string, endDate: string): StatResponse[] {
+  getStats(startDate: string, endDate: string, categorySeq?: number): StatResponse[] {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
-    const filtered = all.filter((t) =>
-      isInRange(t.transactionDate, start, end),
-    );
+    let filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
+    if (categorySeq != null) {
+      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
+    }
 
     const map = new Map<string, StatResponse>();
     for (const t of filtered) {
@@ -365,13 +366,14 @@ export const guestStore = {
     return Array.from(map.values());
   },
 
-  getPeriodStats(startDate: string, endDate: string): StatPeriodResponse[] {
+  getPeriodStats(startDate: string, endDate: string, categorySeq?: number): StatPeriodResponse[] {
     const all = load<StoredTransaction[]>(KEYS.transactions, []);
     const start = parseYmd(startDate);
     const end = parseYmd(endDate);
-    const filtered = all.filter((t) =>
-      isInRange(t.transactionDate, start, end),
-    );
+    let filtered = all.filter((t) => isInRange(t.transactionDate, start, end));
+    if (categorySeq != null) {
+      filtered = filtered.filter((t) => t.categorySeq === categorySeq);
+    }
 
     const map = new Map<string, StatPeriodResponse>();
     for (const t of filtered) {

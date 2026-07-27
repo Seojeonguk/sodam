@@ -12,14 +12,14 @@ const STAT_BASE_URL = "/stat";
 
 const statApi = {
   getStats: async (data: StatRequest): Promise<StatResponse[]> => {
-    if (guestMode.isActive()) return guestStore.getStats(data.startDate, data.endDate);
+    if (guestMode.isActive()) return guestStore.getStats(data.startDate, data.endDate, data.categorySeq);
     return api.get<StatResponse[]>(STAT_BASE_URL, { params: data });
   },
 
   getPeriodStats: async (
     request: StatPeriodRequest,
   ): Promise<StatPeriodResponse[]> => {
-    if (guestMode.isActive()) return guestStore.getPeriodStats(request.startDate, request.endDate);
+    if (guestMode.isActive()) return guestStore.getPeriodStats(request.startDate, request.endDate, request.categorySeq);
     return api.get<StatPeriodResponse[]>(`${STAT_BASE_URL}/period`, {
       params: request,
     });
