@@ -18,18 +18,23 @@ const transactionApi = {
     page = 0,
     size = 10,
     categorySeqs?: number[],
+    keyword?: string,
+    minAmount?: number,
+    maxAmount?: number,
   ): Promise<TransactionListResponse> => {
     if (guestMode.isActive())
       return guestStore.getTransactions(
-        accountId,
-        startDate,
-        endDate,
-        page,
-        size,
-        categorySeqs,
+        accountId, startDate, endDate, page, size,
+        categorySeqs, keyword, minAmount, maxAmount,
       );
     return api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
-      params: { accountBookSeq: accountId, startDate, endDate, page, size, ...(categorySeqs && categorySeqs.length > 0 && { categorySeqs }) },
+      params: {
+        accountBookSeq: accountId, startDate, endDate, page, size,
+        ...(categorySeqs && categorySeqs.length > 0 && { categorySeqs }),
+        ...(keyword && { keyword }),
+        ...(minAmount != null && { minAmount }),
+        ...(maxAmount != null && { maxAmount }),
+      },
       paramsSerializer: { indexes: null },
     });
   },

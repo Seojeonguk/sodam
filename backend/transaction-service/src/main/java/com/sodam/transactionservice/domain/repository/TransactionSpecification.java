@@ -4,11 +4,11 @@ import com.sodam.transactionservice.application.api.dto.TransactionSearchRequest
 import com.sodam.transactionservice.domain.model.Transaction;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Collections;
 
 public class TransactionSpecification {
 
@@ -42,6 +42,21 @@ public class TransactionSpecification {
             if (categorySeqs != null && !categorySeqs.isEmpty()) {
                 predicates.add(root.get("categorySeq").in(categorySeqs));
             }
+
+            // 설명 키워드 검색 (대소문자 무시 LIKE)
+            if (StringUtils.hasText(searchRequest.getKeyword())) {
+                String pattern = "%" + searchRequest.getKeyword().trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("description")), pattern));
+            }
+
+            // 금액 범위
+            Optional.ofNullable(searchRequest.getMinAmount()).ifPresent(min ->
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("amount"), min))
+            );
+            Optional.ofNullable(searchRequest.getMaxAmount()).ifPresent(max ->
+                    predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("amount"), max))
+            );
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

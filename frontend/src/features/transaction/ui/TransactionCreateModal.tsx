@@ -362,10 +362,10 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             )}
           </Box>
 
-          {/* ── 4. 메모 (선택) ── */}
+          {/* ── 4. 설명 (선택) ── */}
           <TextField
             fullWidth
-            label="메모 (선택)"
+            label="설명 (선택)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             size="small"

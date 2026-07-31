@@ -248,7 +248,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
 
         <TextField
           fullWidth
-          label="내용 (선택 사항)"
+          label="설명 (선택)"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           margin="normal"

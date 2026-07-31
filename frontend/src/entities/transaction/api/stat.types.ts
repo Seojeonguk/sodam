@@ -2,6 +2,9 @@ export interface StatRequest {
   startDate: string;
   endDate: string;
   categorySeqs?: number[];
+  keyword?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface StatResponse {
@@ -14,6 +17,9 @@ export interface StatPeriodRequest {
   startDate: string;
   endDate: string;
   categorySeqs?: number[];
+  keyword?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface StatPeriodResponse {

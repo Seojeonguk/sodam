@@ -1,16 +1,21 @@
-import { useEffect, useState } from "react";
-import { AddCircle, CalendarMonth, FilterList, FormatListBulleted } from "@mui/icons-material";
+import { useEffect, useRef, useState } from "react";
+import { AddCircle, CalendarMonth, Clear, FilterList, FormatListBulleted, Search, TuneOutlined } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
   Button,
   Chip,
+  Collapse,
   Container,
   Divider,
+  IconButton,
+  InputAdornment,
+  LinearProgress,
   Pagination,
   Paper,
   Skeleton,
   Stack,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -57,11 +62,59 @@ function TransactionPage() {
     setDateRange,
     categoryFilter,
     setCategoryFilter,
+    keyword,
+    setKeyword,
+    minAmount,
+    setMinAmount,
+    maxAmount,
+    setMaxAmount,
     page,
     setPage,
     totalPages,
     totalElements,
   } = useTransactions({ pageSize: 10 });
+
+  // 검색창 로컬 상태 (debounce용)
+  const [keywordInput, setKeywordInput] = useState("");
+  const [minAmountInput, setMinAmountInput] = useState("");
+  const [maxAmountInput, setMaxAmountInput] = useState("");
+  const [showAmountFilter, setShowAmountFilter] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // keyword debounce (300ms)
+  const handleKeywordChange = (val: string) => {
+    setKeywordInput(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { setKeyword(val); }, 300);
+  };
+
+  const handleAmountApply = () => {
+    const min = minAmountInput ? Number(minAmountInput.replace(/,/g, "")) : undefined;
+    const max = maxAmountInput ? Number(maxAmountInput.replace(/,/g, "")) : undefined;
+    setMinAmount(min);
+    setMaxAmount(max);
+  };
+
+  const handleAmountReset = () => {
+    setKeywordInput("");
+    setKeyword("");
+    setMinAmountInput("");
+    setMaxAmountInput("");
+    setMinAmount(undefined);
+    setMaxAmount(undefined);
+  };
+
+  const handleClearAll = () => {
+    setKeywordInput("");
+    setKeyword("");
+    setMinAmountInput("");
+    setMaxAmountInput("");
+    setMinAmount(undefined);
+    setMaxAmount(undefined);
+    setCategoryFilter([]);
+  };
+
+  const hasActiveSearch = keyword.trim() || minAmount != null || maxAmount != null || categoryFilter.length > 0;
 
   // 카테고리 목록 (필터 칩 렌더링용)
   const [filterCategories, setFilterCategories] = useState<CategoryListItemResponse[]>([]);
@@ -103,7 +156,7 @@ function TransactionPage() {
     }
   };
 
-  if (loading) {
+  if (loading && transactions === null) {
     return (
       <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
@@ -166,6 +219,13 @@ function TransactionPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
+
+      {/* 데이터 갱신 중 표시 */}
+      {loading && (
+        <LinearProgress
+          sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1300, height: 2 }}
+        />
+      )}
 
       {/* ── 페이지 헤더: 항상 한 줄 ── */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5} gap={1}>
@@ -297,11 +357,12 @@ function TransactionPage() {
       {/* ── 목록 뷰 전용 섹션 ── */}
       {viewMode === "list" && (<>
 
-      {/* ── 날짜 필터: 모바일 세로, 데스크톱 가로 ── */}
+      {/* ── 날짜 + 추가 필터 ── */}
       <Paper
         elevation={0}
         sx={{ p: { xs: 1.5, sm: 2.5 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
       >
+        {/* 날짜 범위 */}
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -341,6 +402,122 @@ function TransactionPage() {
             />
           </Stack>
         </LocalizationProvider>
+
+        {/* 추가 필터 토글 */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mt={1.5}>
+          <Button
+            size="small"
+            startIcon={<TuneOutlined sx={{ fontSize: "0.95rem" }} />}
+            onClick={() => setShowAmountFilter((v) => !v)}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.78rem",
+              color: (keyword.trim() || minAmount != null || maxAmount != null) ? "primary.main" : "text.secondary",
+              px: 0.5,
+            }}
+          >
+            추가 필터
+            {(keyword.trim() || minAmount != null || maxAmount != null) && (
+              <Box
+                component="span"
+                sx={{
+                  ml: 0.75,
+                  px: 0.75,
+                  py: 0.1,
+                  borderRadius: 99,
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  lineHeight: 1.6,
+                }}
+              >
+                {[keyword.trim() ? 1 : 0, minAmount != null || maxAmount != null ? 1 : 0].reduce((a, b) => a + b, 0)}
+              </Box>
+            )}
+          </Button>
+          {hasActiveSearch && (
+            <Button
+              size="small"
+              onClick={handleClearAll}
+              sx={{ textTransform: "none", fontSize: "0.78rem", color: "text.secondary", px: 0.5 }}
+            >
+              필터 초기화
+            </Button>
+          )}
+        </Stack>
+
+        {/* 추가 필터 입력 (Collapse) */}
+        <Collapse in={showAmountFilter}>
+          <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+            {/* 설명 검색 */}
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="설명으로 검색..."
+              value={keywordInput}
+              onChange={(e) => handleKeywordChange(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ fontSize: "1.1rem", color: "text.disabled" }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: keywordInput ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => handleKeywordChange("")} edge="end">
+                        <Clear sx={{ fontSize: "1rem" }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : undefined,
+                },
+              }}
+              sx={{ mb: 1.5, "& fieldset": { borderRadius: 1.5 } }}
+            />
+            {/* 금액 범위 */}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center">
+              <TextField
+                label="최소 금액"
+                size="small"
+                value={minAmountInput}
+                onChange={(e) => setMinAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="0"
+                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
+                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
+              />
+              <Typography color="text.disabled" fontWeight={700} sx={{ display: { xs: "none", sm: "block" } }}>~</Typography>
+              <TextField
+                label="최대 금액"
+                size="small"
+                value={maxAmountInput}
+                onChange={(e) => setMaxAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="제한 없음"
+                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
+                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
+              />
+            </Stack>
+            <Stack direction="row" spacing={1} mt={1} justifyContent="flex-end">
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleAmountReset}
+                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}
+              >
+                초기화
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleAmountApply}
+                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}
+              >
+                적용
+              </Button>
+            </Stack>
+          </Box>
+        </Collapse>
       </Paper>
 
       {/* ── 통계 ── */}

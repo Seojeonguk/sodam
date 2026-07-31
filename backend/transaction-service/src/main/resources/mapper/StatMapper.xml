@@ -25,6 +25,15 @@
                 #{cid, javaType=Long, jdbcType=BIGINT}
             </foreach>
         </if>
+        <if test="keyword != null and keyword != ''">
+            and LOWER(tr.description) LIKE CONCAT('%', LOWER(#{keyword, jdbcType=VARCHAR}), '%')
+        </if>
+        <if test="minAmount != null">
+            and tr.amount &gt;= #{minAmount, jdbcType=DECIMAL}
+        </if>
+        <if test="maxAmount != null">
+            and tr.amount &lt;= #{maxAmount, jdbcType=DECIMAL}
+        </if>
         GROUP BY
             tr.category_seq, tr.type
     </select>
@@ -49,6 +58,15 @@
           <foreach item="cid" collection="categorySeqs" open="(" separator="," close=")">
               #{cid, javaType=Long, jdbcType=BIGINT}
           </foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            and LOWER(tr.description) LIKE CONCAT('%', LOWER(#{keyword, jdbcType=VARCHAR}), '%')
+        </if>
+        <if test="minAmount != null">
+            and tr.amount &gt;= #{minAmount, jdbcType=DECIMAL}
+        </if>
+        <if test="maxAmount != null">
+            and tr.amount &lt;= #{maxAmount, jdbcType=DECIMAL}
         </if>
         GROUP BY
             TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type

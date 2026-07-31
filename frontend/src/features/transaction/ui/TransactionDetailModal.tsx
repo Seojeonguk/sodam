@@ -211,7 +211,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   <Divider />
                   <Stack direction="row" spacing={2} alignItems="flex-start">
                     <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60, pt: 0.25 }}>
-                      내용
+                      설명
                     </Typography>
                     <Typography variant="body1">{transaction.description}</Typography>
                   </Stack>
