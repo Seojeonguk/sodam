@@ -19,13 +19,28 @@ import type {
   StatPeriodResponse,
   StatResponse,
 } from "../../entities/transaction/api/stat.types";
+import type {
+  BudgetRequest,
+  BudgetResponse,
+  BudgetSummaryResponse,
+} from "../../entities/budget/api/budget.types";
 
 // ─── 키 ──────────────────────────────────────────────────────────────────────
 const KEYS = {
   transactions: "sodam_guest_transactions",
   categories: "sodam_guest_categories",
   counter: "sodam_guest_counter",
+  budgets: "sodam_guest_budgets",
 } as const;
+
+// ─── 내부 Budget 저장 타입 ────────────────────────────────────────────────────
+interface StoredBudget {
+  id: number;
+  accountBookSeq: number;
+  categorySeq: number;
+  yearMonth: string;
+  amount: number;
+}
 
 // ─── 내부 저장 타입 ───────────────────────────────────────────────────────────
 export interface StoredTransaction {
@@ -337,6 +352,131 @@ export const guestStore = {
   /** 마이그레이션용: categorySeq 포함 전체 거래 반환 */
   getRawTransactions(): StoredTransaction[] {
     return load<StoredTransaction[]>(KEYS.transactions, []);
+  },
+
+  // ── 예산 ─────────────────────────────────────────────────────────────────────
+  upsertBudget(data: BudgetRequest): BudgetResponse {
+    const all = load<StoredBudget[]>(KEYS.budgets, []);
+    const existing = all.find(
+      (b) => b.accountBookSeq === data.accountBookSeq &&
+             b.categorySeq === data.categorySeq &&
+             b.yearMonth === data.yearMonth,
+    );
+    if (existing) {
+      existing.amount = data.amount;
+      save(KEYS.budgets, all);
+      return { ...existing };
+    }
+    const newId = load<number>(KEYS.counter, 0) + 1;
+    save(KEYS.counter, newId);
+    const newBudget: StoredBudget = {
+      id: newId,
+      accountBookSeq: data.accountBookSeq,
+      categorySeq: data.categorySeq,
+      yearMonth: data.yearMonth,
+      amount: data.amount,
+    };
+    save(KEYS.budgets, [...all, newBudget]);
+    return { ...newBudget };
+  },
+
+  deleteBudget(id: number): void {
+    const all = load<StoredBudget[]>(KEYS.budgets, []);
+    save(KEYS.budgets, all.filter((b) => b.id !== id));
+  },
+
+  copyBudgets(accountBookSeq: number, fromYearMonth: string, toYearMonth: string): number {
+    const all = load<StoredBudget[]>(KEYS.budgets, []);
+    const sources = all.filter(
+      (b) => b.accountBookSeq === accountBookSeq && b.yearMonth === fromYearMonth,
+    );
+    if (sources.length === 0) return 0;
+
+    const updated = [...all];
+    let count = 0;
+    for (const src of sources) {
+      const existingIdx = updated.findIndex(
+        (b) => b.accountBookSeq === accountBookSeq &&
+               b.categorySeq === src.categorySeq &&
+               b.yearMonth === toYearMonth,
+      );
+      if (existingIdx >= 0) {
+        updated[existingIdx] = { ...updated[existingIdx], amount: src.amount };
+      } else {
+        const newId = load<number>(KEYS.counter, 0) + 1;
+        save(KEYS.counter, newId);
+        updated.push({ id: newId, accountBookSeq, categorySeq: src.categorySeq, yearMonth: toYearMonth, amount: src.amount });
+      }
+      count++;
+    }
+    save(KEYS.budgets, updated);
+    return count;
+  },
+
+  getBudgetSummary(accountBookSeq: number, yearMonth: string): BudgetSummaryResponse[] {
+    const budgets = load<StoredBudget[]>(KEYS.budgets, []).filter(
+      (b) => b.accountBookSeq === accountBookSeq && b.yearMonth === yearMonth,
+    );
+    const categories = load<CategoryListItemResponse[]>(KEYS.categories, DEFAULT_CATEGORIES);
+    const transactions = load<StoredTransaction[]>(KEYS.transactions, []);
+
+    // yearMonth → 해당 월 거래만 필터
+    const start = parseYmd(yearMonth + "01");
+    const endRaw = new Date(parseInt(yearMonth.slice(0, 4)), parseInt(yearMonth.slice(4, 6)), 0);
+    const end = new Date(endRaw.getFullYear(), endRaw.getMonth(), endRaw.getDate());
+    const monthTx = transactions.filter((t) => isInRange(t.transactionDate, start, end));
+
+    // 카테고리별 실사용 합산
+    const actualMap = new Map<number, number>();
+    for (const tx of monthTx) {
+      if (tx.categorySeq == null) continue;
+      actualMap.set(tx.categorySeq, (actualMap.get(tx.categorySeq) ?? 0) + tx.amount);
+    }
+
+    const result: BudgetSummaryResponse[] = [];
+    const processedCats = new Set<number>();
+
+    for (const b of budgets) {
+      const cat = categories.find((c) => c.id === b.categorySeq);
+      const actual = actualMap.get(b.categorySeq) ?? 0;
+      const ratio = b.amount > 0 ? (actual / b.amount) * 100 : -1;
+      result.push({
+        budgetId: b.id,
+        categorySeq: b.categorySeq,
+        categoryName: cat?.name ?? "미분류",
+        categoryColor: cat?.color ?? null,
+        categoryType: cat?.type ?? "EXPENSE",
+        budgetAmount: b.amount,
+        actualAmount: actual,
+        ratio,
+        over: actual > b.amount,
+        hasBudget: true,
+      });
+      processedCats.add(b.categorySeq);
+    }
+
+    // 예산 미설정 카테고리
+    for (const [catSeq, actual] of actualMap.entries()) {
+      if (processedCats.has(catSeq)) continue;
+      const cat = categories.find((c) => c.id === catSeq);
+      result.push({
+        budgetId: null,
+        categorySeq: catSeq,
+        categoryName: cat?.name ?? "미분류",
+        categoryColor: cat?.color ?? null,
+        categoryType: cat?.type ?? "EXPENSE",
+        budgetAmount: 0,
+        actualAmount: actual,
+        ratio: -1,
+        over: false,
+        hasBudget: false,
+      });
+    }
+
+    return result.sort((a, b) =>
+      (b.hasBudget ? 1 : 0) - (a.hasBudget ? 1 : 0) ||
+      a.categoryName.localeCompare(b.categoryName),
+    );
   },
 
   // ── 통계 (거래 데이터에서 계산) ──────────────────────────────────────────────

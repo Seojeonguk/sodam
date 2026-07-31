@@ -10,4 +10,5 @@ public class CategoryListItemResponse {
     private String name;
     private String description;
     private String color;
+    private String type; // INCOME / EXPENSE
 }

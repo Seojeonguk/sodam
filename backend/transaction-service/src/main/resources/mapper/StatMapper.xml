@@ -53,4 +53,21 @@
         GROUP BY
             TO_CHAR(tr.transaction_date, 'YYYYMM'), tr.type
     </select>
+
+    <select id="getCategorySpending"
+            resultType="com.sodam.transactionservice.application.api.dto.CategorySpendingResponse">
+        SELECT
+            tr.category_seq AS categorySeq,
+            tr.type AS type,
+            SUM(tr.amount) AS total
+        FROM
+            transaction tr
+        WHERE
+            tr.account_book_seq = #{accountBookSeq, jdbcType=BIGINT}
+          AND tr.user_seq = #{userSeq, jdbcType=BIGINT}
+          AND tr.transaction_date BETWEEN #{startDate, jdbcType=VARCHAR} AND #{endDate, jdbcType=VARCHAR}
+        GROUP BY
+            tr.category_seq, tr.type
+    </select>
+
 </mapper>
