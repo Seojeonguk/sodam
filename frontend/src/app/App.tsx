@@ -6,6 +6,7 @@ import TransactionPage from "../pages/transaction/ui/TransactionPage";
 import CategoryPage from "../pages/category/ui/CategoryPage";
 import DashboardPage from "../pages/dashboard/ui/DashboardPage";
 import BudgetPage from "../pages/budget/ui/BudgetPage";
+import RecurringPage from "../pages/recurring/ui/RecurringPage";
 import SignupPage from "../pages/signup/ui/SignupPage";
 import { getAccessToken, restoreSession } from "../shared/api/api";
 import { AccountBookProvider } from "../entities/accountbook/model/AccountBookContext";
@@ -90,6 +91,7 @@ const AppRoutes = memo(function AppRoutes() {
         <Route path="/transactions" element={<TransactionPage />} />
         <Route path="/category" element={<CategoryPage />} />
         <Route path="/budget" element={<BudgetPage />} />
+        <Route path="/recurring" element={<RecurringPage />} />
       </Route>
     </Routes>
   );

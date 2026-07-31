@@ -21,6 +21,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from "@mui/icons-material/Category";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import RepeatOutlinedIcon from "@mui/icons-material/RepeatOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -42,6 +43,7 @@ const SIDE_MENU_ITEMS = [
   { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
   { label: "거래 내역", path: "/transactions", icon: <ReceiptLongIcon /> },
   { label: "예산 관리", path: "/budget", icon: <SavingsOutlinedIcon /> },
+  { label: "반복 거래", path: "/recurring", icon: <RepeatOutlinedIcon /> },
   { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
 ];
 

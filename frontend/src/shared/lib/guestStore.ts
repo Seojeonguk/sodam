@@ -24,6 +24,10 @@ import type {
   BudgetResponse,
   BudgetSummaryResponse,
 } from "../../entities/budget/api/budget.types";
+import type {
+  RecurringTransactionRequest,
+  RecurringTransactionResponse,
+} from "../../entities/recurringTransaction/api/recurring.types";
 
 // ─── 키 ──────────────────────────────────────────────────────────────────────
 const KEYS = {
@@ -31,6 +35,7 @@ const KEYS = {
   categories: "sodam_guest_categories",
   counter: "sodam_guest_counter",
   budgets: "sodam_guest_budgets",
+  recurring: "sodam_guest_recurring",
 } as const;
 
 // ─── 내부 Budget 저장 타입 ────────────────────────────────────────────────────
@@ -555,6 +560,53 @@ export const guestStore = {
       }
     }
     return Array.from(map.values());
+  },
+
+  // ── 반복 거래 ─────────────────────────────────────────────────────────────
+  getRecurringList(accountBookSeq: number): RecurringTransactionResponse[] {
+    return load<RecurringTransactionResponse[]>(KEYS.recurring, [])
+      .filter((r) => r.accountBookSeq === accountBookSeq);
+  },
+
+  createRecurring(data: RecurringTransactionRequest): RecurringTransactionResponse {
+    const all = load<RecurringTransactionResponse[]>(KEYS.recurring, []);
+    const item: RecurringTransactionResponse = {
+      id: nextSeq(),
+      accountBookSeq: data.accountBookSeq,
+      categorySeq: data.categorySeq ?? null,
+      categoryName: "미분류",
+      amount: data.amount,
+      description: data.description,
+      type: data.type,
+      dayOfMonth: data.dayOfMonth,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    save(KEYS.recurring, [item, ...all]);
+    return item;
+  },
+
+  updateRecurring(id: number, data: RecurringTransactionRequest): RecurringTransactionResponse {
+    const all = load<RecurringTransactionResponse[]>(KEYS.recurring, []);
+    const updated = all.map((r) =>
+      r.id === id
+        ? { ...r, categorySeq: data.categorySeq ?? null, amount: data.amount, description: data.description, type: data.type, dayOfMonth: data.dayOfMonth }
+        : r,
+    );
+    save(KEYS.recurring, updated);
+    return updated.find((r) => r.id === id)!;
+  },
+
+  toggleRecurring(id: number): RecurringTransactionResponse {
+    const all = load<RecurringTransactionResponse[]>(KEYS.recurring, []);
+    const updated = all.map((r) => r.id === id ? { ...r, isActive: !r.isActive } : r);
+    save(KEYS.recurring, updated);
+    return updated.find((r) => r.id === id)!;
+  },
+
+  deleteRecurring(id: number): void {
+    const all = load<RecurringTransactionResponse[]>(KEYS.recurring, []);
+    save(KEYS.recurring, all.filter((r) => r.id !== id));
   },
 };
 
