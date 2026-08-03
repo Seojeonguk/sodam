@@ -93,6 +93,18 @@ function LoginPage() {
   useEffect(() => {
     let isMounted = true;
 
+    // OAuth 리다이렉트 후 세션 감지 (SIGNED_IN 이벤트)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!isMounted) return;
+        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+          setAccessToken(session.access_token);
+          sessionCache.set(session.user.email ?? "");
+          void moveToDashboard();
+        }
+      }
+    );
+
     void (async () => {
       if (!navigator.onLine && !sessionCache.get()) {
         if (isMounted) setIsLoading(false);
@@ -117,6 +129,7 @@ function LoginPage() {
 
     return () => {
       isMounted = false;
+      subscription.unsubscribe();
     };
   }, [moveToDashboard]);
 
