@@ -11,9 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import SignupApi from "../../../features/auth/api/SignupApi";
-import type { SignupRequestDto } from "../../../features/auth/api/signup.types";
-import { OFFLINE_QUEUED } from "../../../shared/api/api";
+import { supabase } from "../../../shared/lib/supabase";
 
 function SignupPage() {
   const theme = useTheme();
@@ -23,42 +21,35 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMsg("");
+    setSuccessMsg("");
 
     if (!email || !password || !name) {
       setErrorMsg("모든 필드를 입력해 주세요.");
       return;
     }
 
-    const signupRequestDto: SignupRequestDto = {
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      name,
-    };
+      options: {
+        data: { full_name: name },
+      },
+    });
 
-    try {
-      const result = await SignupApi.signup(signupRequestDto);
-
-      // 오프라인으로 인해 큐에 저장된 경우
-      if ((result as unknown) === OFFLINE_QUEUED) {
-        setErrorMsg(
-          "현재 오프라인 상태입니다. 네트워크 연결 후 다시 시도해 주세요.",
-        );
-        return;
-      }
-
-      alert("회원가입이 완료되었습니다. 로그인해 주세요.");
-      void navigate("/");
-    } catch (error: unknown) {
-      setErrorMsg(
-        error instanceof Error
-          ? error.message
-          : "회원가입 중 오류가 발생했습니다.",
-      );
+    if (error) {
+      setErrorMsg(error.message ?? "회원가입 중 오류가 발생했습니다.");
+      return;
     }
+
+    // 이메일 확인이 필요한 경우 안내 메시지 표시
+    setSuccessMsg(
+      "가입이 완료되었습니다. 이메일 확인 링크를 클릭한 후 로그인해 주세요.",
+    );
   };
 
   return (
@@ -85,9 +76,7 @@ function SignupPage() {
           />
 
           <Stack spacing={1} mb={4} position="relative">
-            <Typography variant="overline" color="text.secondary">
-              CREATE ACCOUNT
-            </Typography>
+            <Typography variant="overline" color="text.secondary">CREATE ACCOUNT</Typography>
             <Typography variant="h4">회원가입</Typography>
             <Typography color="text.secondary">
               가계부를 시작하기 위한 기본 정보를 입력해 주세요.
@@ -101,40 +90,36 @@ function SignupPage() {
             flexDirection="column"
             gap={2}
             position="relative"
-            onSubmit={(event) => {
-              void handleSubmit(event);
-            }}
+            onSubmit={(e) => void handleSubmit(e)}
           >
             <TextField
               label="이메일"
               type="email"
               value={email}
-              onChange={(nextEvent) => setEmail(nextEvent.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               label="비밀번호"
               type="password"
               value={password}
-              onChange={(nextEvent) => setPassword(nextEvent.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <TextField
               label="이름"
               value={name}
-              onChange={(nextEvent) => setName(nextEvent.target.value)}
+              onChange={(e) => setName(e.target.value)}
             />
 
             {errorMsg ? <Alert severity="error">{errorMsg}</Alert> : null}
+            {successMsg ? <Alert severity="success">{successMsg}</Alert> : null}
 
-            <Button type="submit" variant="contained" color="primary" sx={{ mt: 1 }}>
-              가입하기
-            </Button>
+            {!successMsg && (
+              <Button type="submit" variant="contained" color="primary" sx={{ mt: 1 }}>
+                가입하기
+              </Button>
+            )}
 
-            <Button
-              variant="text"
-              onClick={() => {
-                void navigate("/");
-              }}
-            >
+            <Button variant="text" onClick={() => void navigate("/")}>
               로그인으로 돌아가기
             </Button>
           </Box>

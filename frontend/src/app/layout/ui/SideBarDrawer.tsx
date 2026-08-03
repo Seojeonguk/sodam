@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, lazy, Suspense } from "react";
 import { styled, useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
@@ -22,16 +22,20 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import RepeatOutlinedIcon from "@mui/icons-material/RepeatOutlined";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+
+const MemberManageModal = lazy(() => import("../../../features/member/ui/MemberManageModal"));
 import { useLocation, useNavigate } from "react-router-dom";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import type { AccountBookListResponse } from "../../../entities/accountbook/api/accountbook.types";
-import LoginApi from "../../../features/auth/api/LoginApi";
 import { clearAccessToken } from "../../../shared/api/api";
+import { supabase } from "../../../shared/lib/supabase";
+import { guestMode } from "../../../shared/lib/guestMode";
 
 interface SideBarDrawerProps {
   openSide: boolean;
@@ -67,6 +71,7 @@ function SideBarDrawerComponent({
   const { accountBooks, currentAccountBook, setCurrentAccountBook, resetAccountBooks } =
     useAccountBookContext();
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
 
   const openRepoMenu = (event: React.MouseEvent<HTMLElement>) => {
     setRepoAnchor(event.currentTarget);
@@ -302,6 +307,33 @@ function SideBarDrawerComponent({
 
         <Box sx={{ mt: "auto", px: 1, pt: 1 }}>
           <Divider sx={{ mb: 1 }} />
+
+          {/* 멤버 관리 — OWNER 전용, 게스트 모드 제외 */}
+          {!guestMode.isActive() && currentAccountBook?.isOwner ? (
+            <ListItem disablePadding>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  borderRadius: 2,
+                  mb: 0.5,
+                  color: "text.secondary",
+                  "&:hover": {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+                onClick={() => setMemberModalOpen(true)}
+              >
+                <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>
+                  <GroupsOutlinedIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="멤버 관리"
+                  primaryTypographyProps={{ fontWeight: 700 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ) : null}
+
           <ListItem disablePadding>
             <ListItemButton
               sx={{
@@ -316,9 +348,9 @@ function SideBarDrawerComponent({
                 void (async () => {
                   if (window.confirm("로그아웃 하시겠습니까?")) {
                     try {
-                      await LoginApi.logout();
+                      await supabase.auth.signOut();
                     } catch (error) {
-                      console.error("Logout API failed", error);
+                      console.error("Logout failed", error);
                     } finally {
                       clearAccessToken();
                       resetAccountBooks();
@@ -342,6 +374,18 @@ function SideBarDrawerComponent({
           </ListItem>
         </Box>
       </Drawer>
+
+      {/* 멤버 관리 모달 */}
+      {currentAccountBook && memberModalOpen && (
+        <Suspense fallback={null}>
+          <MemberManageModal
+            open={memberModalOpen}
+            onClose={() => setMemberModalOpen(false)}
+            accountBookId={currentAccountBook.id}
+            accountBookName={currentAccountBook.name}
+          />
+        </Suspense>
+      )}
     </Box>
   );
 }

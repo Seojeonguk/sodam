@@ -1,10 +1,10 @@
 /**
- * 게스트 데이터 → 서버 마이그레이션
+ * 게스트 데이터 → 서버 마이그레이션 (Supabase Auth)
  *
  * 순서:
  * 1. 온라인 여부 확인
- * 2. 회원가입
- * 3. 자동 로그인 (액세스 토큰 발급)
+ * 2. Supabase 회원가입
+ * 3. Supabase 로그인 (액세스 토큰 발급)
  * 4. 가계부 생성
  * 5. 카테고리 업로드 (게스트 ID → 서버 ID 매핑)
  * 6. 거래 업로드 (매핑된 카테고리 ID 사용)
@@ -14,8 +14,7 @@
 import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
-import LoginApi from "../api/LoginApi";
-import SignupApi from "../api/SignupApi";
+import { supabase } from "../../../shared/lib/supabase";
 import { OFFLINE_QUEUED, setAccessToken } from "../../../shared/api/api";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
@@ -56,16 +55,27 @@ export async function migrateGuestData(
   const report = (step: MigrationProgress["step"], current = 0, total = 0) =>
     onProgress?.({ step, current, total });
 
-  // ── 1. 회원가입 ────────────────────────────────────────────────────────────
+  // ── 1. 회원가입 (Supabase) ─────────────────────────────────────────────────
   report("signup");
-  const signupRes = await SignupApi.signup({ email, password, name });
-  assertOnline(signupRes, "회원가입");
+  const { error: signupError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: name } },
+  });
+  if (signupError) {
+    throw new Error(signupError.message ?? "회원가입에 실패했습니다.");
+  }
 
   // ── 2. 로그인 (토큰 발급) ──────────────────────────────────────────────────
   report("login");
-  const loginRes = await LoginApi.login({ email, password });
-  assertOnline(loginRes, "로그인");
-  setAccessToken(loginRes.accessToken);
+  const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (loginError || !loginData.session) {
+    throw new Error(loginError?.message ?? "로그인에 실패했습니다.");
+  }
+  setAccessToken(loginData.session.access_token);
   sessionCache.set(email, name);
 
   // ── 3. 가계부 생성 ─────────────────────────────────────────────────────────
@@ -90,7 +100,6 @@ export async function migrateGuestData(
       assertOnline(serverCat, "카테고리 업로드");
       categoryIdMap.set(cat.id, serverCat.id);
     } catch (err) {
-      // 서버 연결 실패면 중단, 그 외(중복 등)는 계속 진행
       if (err instanceof Error && err.message.includes("서버에 연결")) throw err;
     }
   }

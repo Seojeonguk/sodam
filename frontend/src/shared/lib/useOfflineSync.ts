@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
-import { isOfflineToken, requestNewAccessToken } from "../api/api";
+import { isOfflineToken, refreshSupabaseToken } from "../api/api";
 import { offlineQueue } from "./offlineQueue";
 
 export function useOfflineSync() {
@@ -14,7 +14,7 @@ export function useOfflineSync() {
       // 오프라인 토큰으로 접속 중이었다면 실제 토큰으로 교체
       if (isOfflineToken()) {
         try {
-          await requestNewAccessToken();
+          await refreshSupabaseToken();
           console.log("[Offline] 재연결 후 세션 복구 성공");
         } catch {
           console.warn("[Offline] 재연결 후 세션 복구 실패 — 로그인 필요");

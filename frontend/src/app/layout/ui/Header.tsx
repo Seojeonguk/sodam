@@ -18,10 +18,10 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useNavigate } from "react-router-dom";
-import LoginApi from "../../../features/auth/api/LoginApi";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { clearAccessToken } from "../../../shared/api/api";
+import { supabase } from "../../../shared/lib/supabase";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { GuestMigrationModal } from "../../../features/auth/ui/GuestMigrationModal";
@@ -89,9 +89,9 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         return;
       }
       try {
-        await LoginApi.logout();
+        await supabase.auth.signOut();
       } catch (error) {
-        console.error("Logout API failed", error);
+        console.error("Logout failed", error);
       } finally {
         clearAccessToken();
         resetAccountBooks();

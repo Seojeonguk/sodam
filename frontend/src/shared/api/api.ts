@@ -8,6 +8,7 @@ import axios, {
 import { API_BASE_URL } from "../config/app";
 import { buildCacheKey, localCache, sessionCache } from "../lib/localCache";
 import { offlineQueue } from "../lib/offlineQueue";
+import { supabase } from "../lib/supabase";
 
 const BASE_URL = API_BASE_URL;
 
@@ -15,10 +16,6 @@ export interface ApiResponse<T> {
   code: string;
   message: string;
   data: T;
-}
-
-interface ReissueData {
-  accessToken: string;
 }
 
 export interface ApiErrorPayload {
@@ -48,7 +45,6 @@ const http: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
 });
 
 const subscribeTokenRefresh = (callback: (token: string) => void): void => {
@@ -101,28 +97,18 @@ export const clearAccessToken = (): void => {
   setAccessToken(null);
 };
 
-export async function requestNewAccessToken(): Promise<string> {
-  const response = await axios.post<ApiResponse<ReissueData>>(
-    `${BASE_URL}/auth/reissue`,
-    {},
-    {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
-
-  const nextToken = response.data.data.accessToken;
-  if (!nextToken) {
+/** Supabase 세션에서 토큰을 갱신 */
+export async function refreshSupabaseToken(): Promise<string> {
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error || !data.session) {
     throw new ApiClientError({
-      code: "INVALID_REFRESH_RESPONSE",
-      message: "Invalid refresh response",
+      code: "REFRESH_FAILED",
+      message: "Supabase 세션 갱신 실패",
     });
   }
-
-  setAccessToken(nextToken);
-  return nextToken;
+  const newToken = data.session.access_token;
+  setAccessToken(newToken);
+  return newToken;
 }
 
 /** 오프라인 전용 플레이스홀더 토큰 */
@@ -132,8 +118,9 @@ export function isOfflineToken(): boolean {
   return accessToken === OFFLINE_TOKEN;
 }
 
+/** 앱 초기화 시 Supabase 세션 복구 */
 export async function restoreSession(): Promise<boolean> {
-  // 오프라인이고 이전 세션이 있으면 → 네트워크 시도 없이 오프라인 통과
+  // 오프라인이고 이전 세션이 있으면 → 오프라인 통과
   if (!navigator.onLine) {
     const session = sessionCache.get();
     if (session) {
@@ -145,13 +132,29 @@ export async function restoreSession(): Promise<boolean> {
   }
 
   try {
-    await requestNewAccessToken();
-    return true;
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      setAccessToken(data.session.access_token);
+      sessionCache.set(data.session.user.email ?? "");
+      return true;
+    }
+    return false;
   } catch {
     clearAccessToken();
     return false;
   }
 }
+
+// Supabase 세션 변경 시 axios 헤더 자동 동기화
+supabase.auth.onAuthStateChange((event, session) => {
+  if (session?.access_token) {
+    setAccessToken(session.access_token);
+    sessionCache.set(session.user.email ?? "");
+  } else if (event === "SIGNED_OUT") {
+    clearAccessToken();
+    sessionCache.clear();
+  }
+});
 
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
@@ -176,7 +179,6 @@ http.interceptors.response.use(
             if (originalRequest.headers) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
             }
-
             http(originalRequest).then(resolve).catch((retryError: unknown) => {
               reject(
                 retryError instanceof Error
@@ -195,7 +197,7 @@ http.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const newToken = await requestNewAccessToken();
+        const newToken = await refreshSupabaseToken();
         onRefreshed(newToken);
 
         if (originalRequest.headers) {
