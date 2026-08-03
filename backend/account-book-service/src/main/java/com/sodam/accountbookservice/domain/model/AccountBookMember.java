@@ -50,6 +50,10 @@ public class AccountBookMember {
     @Column(name = "updated_by")
     private Long updatedBy;
 
+    public void updateAuthority(Authority newAuthority) {
+        this.authority = newAuthority;
+    }
+
     @PrePersist
     public void prePersist() {
         String now = now();

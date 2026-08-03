@@ -1,6 +1,7 @@
 package com.sodam.userservice.domain.service;
 
 import com.sodam.userservice.domain.model.User;
+import java.util.List;
 
 public interface UserService {
     /**
@@ -36,4 +37,6 @@ public interface UserService {
      * @param userId 삭제할 사용자의 ID
      */
     void deleteUser(Long userId);
+
+    List<User> findUsersByIds(List<Long> ids);
 }

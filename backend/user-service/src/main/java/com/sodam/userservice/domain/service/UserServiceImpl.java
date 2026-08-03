@@ -6,6 +6,7 @@ import com.sodam.userservice.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +51,11 @@ public class UserServiceImpl implements UserService {
         // existingUser.setPassword(user.getPassword());
 
         return userRepository.save(existingUser);
+    }
+
+    @Override
+    public List<User> findUsersByIds(List<Long> ids) {
+        return userRepository.findAllByIdIn(ids);
     }
 
     @Override

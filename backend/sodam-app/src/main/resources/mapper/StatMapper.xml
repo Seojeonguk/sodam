@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sodam.transaction.repository.StatMapper">
+
+    <select id="getStat"
+            parameterType="com.sodam.transaction.dto.StatRequest"
+            resultType="com.sodam.transaction.dto.StatResponse">
+        SELECT
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            COALESCE(cg.name, '미분류') AS name
+        FROM
+            transaction tr
+            LEFT JOIN category cg ON tr.category_seq = cg.id
+        WHERE
+            1=1
+            AND tr.user_seq = #{userSeq, javaType=Long, jdbcType=BIGINT}
+            AND tr.transaction_date BETWEEN #{startDate, javaType=String, jdbcType=VARCHAR}
+                                       AND #{endDate, javaType=String, jdbcType=VARCHAR}
+        <if test="categorySeqs != null and categorySeqs.size() > 0">
+            AND tr.category_seq IN
+            <foreach item="cid" collection="categorySeqs" open="(" separator="," close=")">
+                #{cid, javaType=Long, jdbcType=BIGINT}
+            </foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND LOWER(tr.description) LIKE CONCAT('%', LOWER(#{keyword, jdbcType=VARCHAR}), '%')
+        </if>
+        <if test="minAmount != null">
+            AND tr.amount &gt;= #{minAmount, jdbcType=DECIMAL}
+        </if>
+        <if test="maxAmount != null">
+            AND tr.amount &lt;= #{maxAmount, jdbcType=DECIMAL}
+        </if>
+        GROUP BY
+            tr.category_seq, tr.type
+    </select>
+
+    <select id="getPeriodStat"
+            parameterType="com.sodam.transaction.dto.StatPeriodRequest"
+            resultType="com.sodam.transaction.dto.StatPeriodResponse">
+        SELECT
+            SUM(tr.amount) AS total,
+            tr.type AS type,
+            SUBSTRING(tr.transaction_date, 1, 6) AS transaction_date
+        FROM
+            transaction tr
+            LEFT JOIN category cg ON tr.category_seq = cg.id
+        WHERE
+            1=1
+            AND tr.user_seq = #{userSeq, javaType=Long, jdbcType=BIGINT}
+            AND tr.transaction_date BETWEEN #{startDate, javaType=String, jdbcType=VARCHAR}
+                                       AND #{endDate, javaType=String, jdbcType=VARCHAR}
+        <if test="categorySeqs != null and categorySeqs.size() > 0">
+            AND tr.category_seq IN
+            <foreach item="cid" collection="categorySeqs" open="(" separator="," close=")">
+                #{cid, javaType=Long, jdbcType=BIGINT}
+            </foreach>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND LOWER(tr.description) LIKE CONCAT('%', LOWER(#{keyword, jdbcType=VARCHAR}), '%')
+        </if>
+        <if test="minAmount != null">
+            AND tr.amount &gt;= #{minAmount, jdbcType=DECIMAL}
+        </if>
+        <if test="maxAmount != null">
+            AND tr.amount &lt;= #{maxAmount, jdbcType=DECIMAL}
+        </if>
+        GROUP BY
+            SUBSTRING(tr.transaction_date, 1, 6), tr.type
+    </select>
+
+    <select id="getCategorySpending"
+            resultType="com.sodam.transaction.dto.CategorySpendingResponse">
+        SELECT
+            tr.category_seq AS categorySeq,
+            tr.type AS type,
+            SUM(tr.amount) AS total
+        FROM
+            transaction tr
+        WHERE
+            tr.account_book_seq = #{accountBookSeq, jdbcType=BIGINT}
+          AND tr.user_seq = #{userSeq, jdbcType=BIGINT}
+          AND tr.transaction_date BETWEEN #{startDate, jdbcType=VARCHAR} AND #{endDate, jdbcType=VARCHAR}
+        GROUP BY
+            tr.category_seq, tr.type
+    </select>
+
+</mapper>

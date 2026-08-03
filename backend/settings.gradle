@@ -5,10 +5,4 @@ pluginManagement {
 }
 
 rootProject.name = 'backend'
-include 'eureka-server'
-include 'transaction-service'
-include 'user-service'
-include 'gateway-service'
-include 'category-service'
-include 'account-book-service'
-include 'common-module'
+include 'sodam-app'

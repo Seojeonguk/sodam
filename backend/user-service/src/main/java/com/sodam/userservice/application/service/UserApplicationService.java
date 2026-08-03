@@ -4,6 +4,7 @@ import com.sodam.userservice.application.api.dto.LoginRequest;
 import com.sodam.userservice.application.api.dto.LoginResponse;
 import com.sodam.userservice.application.api.dto.RegisterRequest;
 import com.sodam.userservice.application.api.dto.UserResponse;
+import java.util.List;
 import com.sodam.userservice.config.JwtTokenProvider;
 import com.sodam.userservice.domain.model.Role;
 import com.sodam.userservice.domain.model.User;
@@ -89,6 +90,13 @@ public class UserApplicationService {
     @Transactional
     public User findUserById(Long userId) {
         return userService.findUserById(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> findUsersByIds(List<Long> ids) {
+        return userService.findUsersByIds(ids).stream()
+                .map(UserResponse::fromEntity)
+                .toList();
     }
 
     @Transactional
