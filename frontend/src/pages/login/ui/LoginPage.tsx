@@ -41,10 +41,15 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
-        setErrorMsg(error.message ?? "로그인에 실패했습니다. 다시 시도해 주세요.");
+        setErrorMsg(
+          error.message ?? "로그인에 실패했습니다. 다시 시도해 주세요.",
+        );
         return;
       }
 
@@ -74,14 +79,14 @@ function LoginPage() {
   const handleKakaoLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "kakao",
-      options: { redirectTo: window.location.origin + "/dashboard" },
+      options: { redirectTo: window.location.origin },
     });
   };
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/dashboard" },
+      options: { redirectTo: window.location.origin },
     });
   };
 
@@ -119,12 +124,27 @@ function LoginPage() {
     return (
       <Container
         maxWidth="sm"
-        sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <Paper sx={{ p: 4, width: "100%", maxWidth: 420, borderRadius: 4, textAlign: "center" }}>
+        <Paper
+          sx={{
+            p: 4,
+            width: "100%",
+            maxWidth: 420,
+            borderRadius: 4,
+            textAlign: "center",
+          }}
+        >
           <Stack spacing={2} alignItems="center">
             <CircularProgress color="primary" />
-            <Typography fontWeight={700}>로그인 상태를 확인하고 있어요.</Typography>
+            <Typography fontWeight={700}>
+              로그인 상태를 확인하고 있어요.
+            </Typography>
           </Stack>
         </Paper>
       </Container>
@@ -132,7 +152,14 @@ function LoginPage() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", py: { xs: 4, md: 8 } }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        py: { xs: 4, md: 8 },
+      }}
+    >
       <Container maxWidth="lg">
         <Box
           display="grid"
@@ -157,13 +184,25 @@ function LoginPage() {
           >
             <Stack spacing={3}>
               <Box>
-                <Typography variant="overline" color="primary" sx={{ letterSpacing: 2, fontWeight: 700 }}>
+                <Typography
+                  variant="overline"
+                  color="primary"
+                  sx={{ letterSpacing: 2, fontWeight: 700 }}
+                >
                   PERSONAL FINANCE SPACE
                 </Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ mt: 1, mb: 2, maxWidth: 400, lineHeight: 1.2 }}>
+                <Typography
+                  variant="h3"
+                  fontWeight={700}
+                  sx={{ mt: 1, mb: 2, maxWidth: 400, lineHeight: 1.2 }}
+                >
                   가계부를 더 차분하고 선명하게.
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 420 }}>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ maxWidth: 420 }}
+                >
                   수입과 지출을 한눈에 정리하고, 계정별 흐름과 통계를 안정적으로
                   이어서 관리할 수 있는 개인 자산 공간입니다.
                 </Typography>
@@ -174,32 +213,87 @@ function LoginPage() {
                   "Supabase 인증으로 안전하고 빠른 로그인을 제공합니다.",
                   "데스크톱과 모바일 모두에서 같은 감각으로 이어집니다.",
                 ].map((item) => (
-                  <Stack key={item} direction="row" spacing={1.5} alignItems="flex-start">
-                    <Box sx={{ mt: 0.6, width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>{item}</Typography>
+                  <Stack
+                    key={item}
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="flex-start"
+                  >
+                    <Box
+                      sx={{
+                        mt: 0.6,
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        bgcolor: "primary.main",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={500}
+                    >
+                      {item}
+                    </Typography>
                   </Stack>
                 ))}
               </Stack>
             </Stack>
-            <Typography variant="caption" color="text.disabled">Sodam · 개인 자산 관리 서비스</Typography>
+            <Typography variant="caption" color="text.disabled">
+              Sodam · 개인 자산 관리 서비스
+            </Typography>
           </Paper>
 
-          <Paper sx={{ p: { xs: 3, md: 4 }, borderRadius: 5, display: "flex", alignItems: "center" }}>
+          <Paper
+            sx={{
+              p: { xs: 3, md: 4 },
+              borderRadius: 5,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <Box width="100%">
               {/* 모바일 전용 상단 브랜딩 */}
-              <Box sx={{ display: { xs: "block", md: "none" }, mb: 3, pb: 3, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}` }}>
-                <Typography variant="h5" fontWeight={800} color="primary" mb={0.5}>Sodam</Typography>
-                <Typography variant="body2" color="text.secondary">가계부를 더 차분하고 선명하게.</Typography>
+              <Box
+                sx={{
+                  display: { xs: "block", md: "none" },
+                  mb: 3,
+                  pb: 3,
+                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight={800}
+                  color="primary"
+                  mb={0.5}
+                >
+                  Sodam
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  가계부를 더 차분하고 선명하게.
+                </Typography>
               </Box>
 
               <Stack spacing={1} mb={4}>
                 <Typography variant="h4">로그인</Typography>
-                <Typography color="text.secondary">계정에 다시 연결해서 오늘의 가계부 흐름을 이어가세요.</Typography>
+                <Typography color="text.secondary">
+                  계정에 다시 연결해서 오늘의 가계부 흐름을 이어가세요.
+                </Typography>
               </Stack>
 
-              <Box component="form" display="flex" flexDirection="column" gap={2} onSubmit={(e) => void handleSubmit(e)}>
+              <Box
+                component="form"
+                display="flex"
+                flexDirection="column"
+                gap={2}
+                onSubmit={(e) => void handleSubmit(e)}
+              >
                 <Stack spacing={1.5}>
-                  <Typography variant="body2" fontWeight={700}>이메일</Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    이메일
+                  </Typography>
                   <TextField
                     placeholder="name@example.com"
                     value={email}
@@ -209,7 +303,9 @@ function LoginPage() {
                 </Stack>
 
                 <Stack spacing={1.5}>
-                  <Typography variant="body2" fontWeight={700}>비밀번호</Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    비밀번호
+                  </Typography>
                   <TextField
                     placeholder="비밀번호를 입력해 주세요."
                     type="password"
@@ -221,7 +317,13 @@ function LoginPage() {
 
                 {errorMsg ? <Alert severity="error">{errorMsg}</Alert> : null}
 
-                <Button type="submit" variant="contained" color="primary" sx={{ mt: 1 }} disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 1 }}
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "로그인 중..." : "로그인"}
                 </Button>
 
@@ -229,7 +331,11 @@ function LoginPage() {
 
                 <Button
                   variant="contained"
-                  sx={{ bgcolor: "#FEE500", color: "#2b2b2b", "&:hover": { bgcolor: "#f2da00" } }}
+                  sx={{
+                    bgcolor: "#FEE500",
+                    color: "#2b2b2b",
+                    "&:hover": { bgcolor: "#f2da00" },
+                  }}
                   onClick={() => void handleKakaoLogin()}
                 >
                   카카오로 계속하기
@@ -238,7 +344,10 @@ function LoginPage() {
                 <Button
                   variant="outlined"
                   color="inherit"
-                  sx={{ bgcolor: "#ffffff", borderColor: alpha(theme.palette.text.primary, 0.14) }}
+                  sx={{
+                    bgcolor: "#ffffff",
+                    borderColor: alpha(theme.palette.text.primary, 0.14),
+                  }}
                   onClick={() => void handleGoogleLogin()}
                 >
                   구글로 계속하기
@@ -246,7 +355,16 @@ function LoginPage() {
 
                 <Button
                   variant="text"
-                  sx={{ mt: 1, color: "secondary.dark", "&:hover": { backgroundColor: alpha(theme.palette.secondary.main, 0.12) } }}
+                  sx={{
+                    mt: 1,
+                    color: "secondary.dark",
+                    "&:hover": {
+                      backgroundColor: alpha(
+                        theme.palette.secondary.main,
+                        0.12,
+                      ),
+                    },
+                  }}
                   onClick={() => void navigate("/signup")}
                 >
                   회원가입
@@ -257,7 +375,13 @@ function LoginPage() {
                 <Button
                   variant="text"
                   color="inherit"
-                  sx={{ color: "text.secondary", fontSize: "0.8rem", "&:hover": { backgroundColor: alpha(theme.palette.action.hover, 0.06) } }}
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.8rem",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.action.hover, 0.06),
+                    },
+                  }}
                   onClick={() => void handleGuestStart()}
                 >
                   로그인 없이 둘러보기
