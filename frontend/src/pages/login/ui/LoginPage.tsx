@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -31,10 +31,32 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // 이중 navigation 방지 (restoreSession + onAuthStateChange 동시 실행 대비)
+  const navigatedRef = useRef(false);
+
   const moveToDashboard = useCallback(async () => {
+    if (navigatedRef.current) return;
+    navigatedRef.current = true;
     await fetchAccountBooks();
     void navigate("/dashboard");
   }, [fetchAccountBooks, navigate]);
+
+  /**
+   * 세션에서 유저 정보를 추출해 syncUser 실행.
+   * OAuth(구글/카카오) 및 이메일 로그인 공통으로 사용.
+   */
+  const syncFromSession = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const userEmail = session.user.email ?? "";
+    const userName =
+      (session.user.user_metadata?.full_name as string | undefined) ??
+      (session.user.user_metadata?.name as string | undefined) ??
+      userEmail.split("@")[0];
+    sessionCache.set(userEmail);
+    setAccessToken(session.access_token);
+    await syncUser(userEmail, userName);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,13 +77,8 @@ function LoginPage() {
       }
 
       if (data.session) {
-        setAccessToken(data.session.access_token);
-        sessionCache.set(email);
-        // users 테이블 동기화 (없으면 생성 + 기본 가계부)
-        const name =
-          (data.session.user.user_metadata?.full_name as string | undefined) ??
-          email.split("@")[0];
-        await syncUser(email, name);
+        // syncUser: users 테이블 동기화 + 기본 가계부/분류 생성
+        await syncFromSession();
       }
 
       await moveToDashboard();
@@ -99,20 +116,32 @@ function LoginPage() {
   useEffect(() => {
     let isMounted = true;
 
-    // OAuth 리다이렉트 후 세션 감지 (SIGNED_IN 이벤트)
+    /**
+     * OAuth 리다이렉트 전용 핸들러.
+     * - SIGNED_IN: 신규 로그인 (OAuth 리다이렉트 포함)
+     * - TOKEN_REFRESHED: 세션 갱신 → 이미 로그인된 상태이므로 navigation 불필요
+     *
+     * restoreSession이 먼저 처리한 경우 navigatedRef로 이중 이동 방지.
+     */
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!isMounted) return;
-        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
-          setAccessToken(session.access_token);
-          const email = session.user.email ?? "";
-          const name =
-            (session.user.user_metadata?.full_name as string | undefined) ??
-            email.split("@")[0];
-          sessionCache.set(email);
-          void syncUser(email, name).then(() => moveToDashboard());
+        if (!isMounted || !session) return;
+
+        if (event === "SIGNED_IN") {
+          // syncUser 완료 후 이동 (기본 데이터 생성 보장)
+          syncFromSession()
+            .then(() => moveToDashboard())
+            .catch((err: unknown) => {
+              if (!isMounted) return;
+              setErrorMsg(
+                err instanceof Error
+                  ? err.message
+                  : "로그인 처리 중 오류가 발생했습니다.",
+              );
+              setIsLoading(false);
+            });
         }
-      }
+      },
     );
 
     void (async () => {
@@ -127,6 +156,8 @@ function LoginPage() {
 
       if (restored) {
         try {
+          // syncUser 먼저 실행 (OAuth 첫 로그인 시 기본 데이터 생성 보장)
+          await syncFromSession();
           await moveToDashboard();
           return;
         } catch (error) {
@@ -141,7 +172,7 @@ function LoginPage() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [moveToDashboard]);
+  }, [moveToDashboard, syncFromSession]);
 
   if (isLoading) {
     return (
