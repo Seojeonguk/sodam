@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import categoryApi from "../api/categoryApi";
 import type { CategoryListItemResponse } from "../../transaction/api/category.types";
-import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<CategoryListItemResponse[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { currentAccountBook } = useAccountBookContext();
 
   const fetchCategories = useCallback(async () => {
-    if (!currentAccountBook?.id) {
-      setCategories(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -34,7 +25,7 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentAccountBook?.id]);
+  }, []);
 
   const deleteCategory = useCallback(
     async (id: number, replacementId: number) => {

@@ -26,12 +26,12 @@ const categoryApi = {
       return res.categories ?? [];
     }
 
-    const userSeq = await getUserSeq();
+    // getUserSeq() 호출로 세션 유효성 확인 (RLS가 user_seq 필터링 담당)
+    await getUserSeq();
 
     let query = supabase
       .from("category")
       .select("id, name, description, color, type")
-      .eq("user_seq", userSeq)
       .order("name");
 
     if (type) query = query.eq("type", type);
