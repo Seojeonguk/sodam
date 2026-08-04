@@ -49,7 +49,7 @@ function CategoryPage() {
     refetchClassifications,
   } = useClassifications(currentAccountBook?.id);
 
-  const allCategoryList = categories?.categories ?? [];
+  const allCategoryList = categories ?? [];
   const filteredCategories = useMemo(
     () =>
       categoryTypeFilter === "ALL"
@@ -338,7 +338,7 @@ function CategoryPage() {
         isOpen={isReplaceModalOpen}
         onClose={handleCloseReplaceModal}
         categories={
-          categories?.categories?.filter((c) => c.id !== deleteTargetCategoryId) ?? []
+          categories?.filter((c) => c.id !== deleteTargetCategoryId) ?? []
         }
         onConfirm={(replacementId: number) => {
           void (async () => {

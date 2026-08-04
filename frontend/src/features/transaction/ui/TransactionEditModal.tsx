@@ -105,7 +105,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
           CATEGORY_SELECTION_PAGE_SIZE,
           type,
         );
-        setCategories(fetchedCategories.categories ?? []);
+        setCategories(fetchedCategories ?? []);
       } catch (nextError) {
         if (axios.isAxiosError(nextError)) {
           setError(nextError.message);

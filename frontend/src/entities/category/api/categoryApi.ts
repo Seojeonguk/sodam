@@ -1,16 +1,9 @@
 import dayjs from "dayjs";
 import { supabase } from "../../../shared/lib/supabase";
 import { getUserSeq } from "../../../shared/lib/userSync";
-import {
-  CATEGORY_SELECTION_PAGE_SIZE,
-  DEFAULT_PAGE_INDEX,
-} from "../../../shared/config/app";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
-import type {
-  CategoryListItemResponse,
-  CategoryListResponse,
-} from "../../transaction/api/category.types";
+import type { CategoryListItemResponse } from "../../transaction/api/category.types";
 
 export interface CategoryUpsertRequest {
   name: string;
@@ -22,42 +15,37 @@ export interface CategoryUpsertRequest {
 const now = () => dayjs().format("YYYYMMDDHHmmss");
 
 const categoryApi = {
+  /** 카테고리 전체 목록 (배열 직접 반환) */
   getCategories: async (
-    page = DEFAULT_PAGE_INDEX,
-    size = CATEGORY_SELECTION_PAGE_SIZE,
+    _page?: number,
+    _size?: number,
     type?: "INCOME" | "EXPENSE",
-  ): Promise<CategoryListResponse> => {
-    if (guestMode.isActive()) return guestStore.getCategories(page, size, type);
+  ): Promise<CategoryListItemResponse[]> => {
+    if (guestMode.isActive()) {
+      const res = guestStore.getCategories(0, 1000, type);
+      return res.categories ?? [];
+    }
 
     const userSeq = await getUserSeq();
 
     let query = supabase
       .from("category")
-      .select("id, name, description, color, type", { count: "exact" })
+      .select("id, name, description, color, type")
       .eq("user_seq", userSeq)
-      .order("name")
-      .range(page * size, (page + 1) * size - 1);
+      .order("name");
 
     if (type) query = query.eq("type", type);
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    const categories = (data ?? []).map((row: any) => ({
+    return (data ?? []).map((row: any) => ({
       id: row.id as number,
       name: row.name as string,
       description: row.description as string | undefined,
       color: row.color as string | undefined,
       type: row.type as "INCOME" | "EXPENSE",
     }));
-
-    return {
-      categories,
-      totalElements: count ?? 0,
-      totalPages: Math.max(1, Math.ceil((count ?? 0) / size)),
-      pageNumber: page,
-      pageSize: size,
-    } as CategoryListResponse;
   },
 
   createCategory: async (
@@ -126,7 +114,6 @@ const categoryApi = {
   deleteCategory: async (id: number, replacementId: number): Promise<void> => {
     if (guestMode.isActive()) { guestStore.deleteCategory(id, replacementId); return; }
 
-    // 해당 카테고리의 거래를 대체 카테고리로 이동
     if (replacementId) {
       await supabase
         .from("transaction")

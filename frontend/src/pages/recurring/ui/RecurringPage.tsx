@@ -32,7 +32,7 @@ export default function RecurringPage() {
 
   useEffect(() => {
     categoryApi.getCategories(0, 100)
-      .then((res) => setCategories(res.categories ?? []))
+      .then((res) => setCategories(res ?? []))
       .catch(() => {});
   }, []);
 

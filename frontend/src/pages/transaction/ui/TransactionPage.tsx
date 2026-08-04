@@ -120,7 +120,7 @@ function TransactionPage() {
   const [filterCategories, setFilterCategories] = useState<CategoryListItemResponse[]>([]);
   useEffect(() => {
     categoryApi.getCategories(0, 100)
-      .then((res) => setFilterCategories(res.categories ?? []))
+      .then((res) => setFilterCategories(res ?? []))
       .catch(() => { /* 조용히 실패 */ });
   }, []);
 

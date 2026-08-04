@@ -74,7 +74,7 @@ export default function BudgetPage() {
   // 전체 카테고리 로드 (예산 추가 시 선택용)
   useEffect(() => {
     categoryApi.getCategories(0, 100)
-      .then((res) => setAllCategories(res.categories ?? []))
+      .then((res) => setAllCategories(res ?? []))
       .catch(() => { /* 조용히 실패 */ });
   }, []);
 

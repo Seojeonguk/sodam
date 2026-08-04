@@ -89,7 +89,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
           CATEGORY_SELECTION_PAGE_SIZE,
           type,
         );
-        setCategories(res.categories ?? []);
+        setCategories(res ?? []);
         setCategory("");
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {

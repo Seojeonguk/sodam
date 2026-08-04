@@ -122,7 +122,7 @@ function DashboardPage() {
       );
     });
 
-    return (categories?.categories ?? [])
+    return (categories ?? [])
       .map((category) => ({
         ...category,
         usageCount: categoryUsage.get(category.name) ?? 0,
@@ -150,7 +150,7 @@ function DashboardPage() {
     {
       title: "활성 카테고리",
       subtitle: "기준: 현재 가계부에 등록된 카테고리",
-      value: `${categories?.categories.length ?? 0}개`,
+      value: `${categories?.length ?? 0}개`,
       icon: <CategoryIcon />,
       accent: "#ab47bc",
     },
