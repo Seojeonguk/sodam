@@ -18,6 +18,69 @@ export function getCachedUserSeq(): number | null {
 }
 
 /**
+ * 기존 유저의 기본 데이터(가계부, 분류)가 빠진 경우 보완.
+ * 실패해도 로그인은 정상 진행 (백그라운드 실행).
+ */
+async function ensureDefaultData(userId: number): Promise<void> {
+  const now = dayjs().format("YYYYMMDDHHmmss");
+
+  // 가계부 멤버십 조회
+  const { data: memberships } = await supabase
+    .from("account_book_member")
+    .select("account_book_id")
+    .eq("user_id", userId);
+
+  let accountBookId: number;
+
+  if (!memberships || memberships.length === 0) {
+    // 가계부가 없으면 생성
+    const { data: book, error: bookErr } = await supabase
+      .from("account_book")
+      .insert({
+        name: "가계부",
+        created_at: now,
+        created_by: userId,
+        updated_at: now,
+        updated_by: userId,
+      })
+      .select("id")
+      .single();
+
+    if (bookErr || !book) return;
+
+    accountBookId = book.id as number;
+
+    await supabase.from("account_book_member").insert({
+      account_book_id: accountBookId,
+      user_id: userId,
+      authority: "OWNER",
+      is_available: "Y",
+      created_at: now,
+      created_by: userId,
+      updated_at: now,
+      updated_by: userId,
+    });
+  } else {
+    accountBookId = memberships[0].account_book_id as number;
+  }
+
+  // classification 누락 보완
+  const { data: existing } = await supabase
+    .from("classification")
+    .select("name")
+    .eq("account_book_seq", accountBookId);
+
+  const existingNames = new Set((existing ?? []).map((r: { name: string }) => r.name));
+  const toInsert = (["INCOME", "EXPENSE"] as const)
+    .filter((n) => !existingNames.has(n))
+    .map((name) => ({ name, account_book_seq: accountBookId, created_at: now, updated_at: now }));
+
+  if (toInsert.length > 0) {
+    await supabase.from("classification").insert(toInsert);
+  }
+}
+
+/**
  * Supabase 세션에서 email/name을 읽어 users 테이블에 동기화.
  * 이미 존재하면 id만 반환, 없으면 user + 기본 가계부 생성.
  */
@@ -33,6 +96,8 @@ export async function syncUser(email: string, name: string): Promise<number> {
 
   if (existing?.id) {
     cachedUserSeq = existing.id as number;
+    // 기존 유저도 기본 데이터 보완 (백그라운드, 실패해도 무시)
+    void ensureDefaultData(cachedUserSeq);
     return cachedUserSeq;
   }
 
@@ -64,7 +129,7 @@ export async function syncUser(email: string, name: string): Promise<number> {
   if (bookErr || !book) throw new Error("가계부 생성 실패: " + bookErr?.message);
 
   // OWNER로 멤버 등록
-  await supabase.from("account_book_member").insert({
+  const { error: memberErr } = await supabase.from("account_book_member").insert({
     account_book_id: book.id,
     user_id: userId,
     authority: "OWNER",
@@ -74,6 +139,26 @@ export async function syncUser(email: string, name: string): Promise<number> {
     updated_at: now,
     updated_by: userId,
   });
+
+  if (memberErr) throw new Error("멤버 등록 실패: " + memberErr.message);
+
+  // 기본 분류 생성 (INCOME / EXPENSE)
+  const { error: classErr } = await supabase.from("classification").insert([
+    {
+      name: "INCOME",
+      account_book_seq: book.id,
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      name: "EXPENSE",
+      account_book_seq: book.id,
+      created_at: now,
+      updated_at: now,
+    },
+  ]);
+
+  if (classErr) throw new Error("분류 생성 실패: " + classErr.message);
 
   cachedUserSeq = userId;
   return userId;
