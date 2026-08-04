@@ -19,9 +19,11 @@ export function getCachedUserSeq(): number | null {
 
 /**
  * 기존 유저의 기본 데이터(가계부, 분류)가 빠진 경우 보완.
- * 실패해도 로그인은 정상 진행 (백그라운드 실행).
+ * - 가계부 없으면 생성
+ * - classification(INCOME/EXPENSE) 없으면 생성
+ * 외부에서 "기본 데이터 초기화" 버튼으로도 호출 가능.
  */
-async function ensureDefaultData(userId: number): Promise<void> {
+export async function ensureDefaultData(userId: number): Promise<void> {
   const now = dayjs().format("YYYYMMDDHHmmss");
 
   // 가계부 멤버십 조회

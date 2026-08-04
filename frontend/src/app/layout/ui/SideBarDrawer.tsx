@@ -2,6 +2,7 @@ import { memo, useCallback, useState, lazy, Suspense } from "react";
 import { styled, useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
+  CircularProgress,
   Divider,
   Drawer,
   IconButton,
@@ -13,6 +14,7 @@ import {
   Menu,
   MenuItem,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -26,6 +28,7 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const MemberManageModal = lazy(() => import("../../../features/member/ui/MemberManageModal"));
 import { useLocation, useNavigate } from "react-router-dom";
@@ -35,6 +38,7 @@ import { useAccountBookContext } from "../../../entities/accountbook/model/Accou
 import type { AccountBookListResponse } from "../../../entities/accountbook/api/accountbook.types";
 import { clearAccessToken } from "../../../shared/api/api";
 import { supabase } from "../../../shared/lib/supabase";
+import { clearUserSeq, ensureDefaultData, getUserSeq } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 
 interface SideBarDrawerProps {
@@ -68,10 +72,31 @@ function SideBarDrawerComponent({
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useIsDesktop();
-  const { accountBooks, currentAccountBook, setCurrentAccountBook, resetAccountBooks } =
+  const { accountBooks, currentAccountBook, setCurrentAccountBook, resetAccountBooks, fetchAccountBooks } =
     useAccountBookContext();
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [initLoading, setInitLoading] = useState(false);
+  const [initResult, setInitResult] = useState<"success" | "error" | null>(null);
+
+  const handleInitDefaultData = async () => {
+    if (initLoading) return;
+    setInitLoading(true);
+    setInitResult(null);
+    try {
+      const userSeq = await getUserSeq();
+      await ensureDefaultData(userSeq);
+      await fetchAccountBooks();
+      setInitResult("success");
+    } catch (err) {
+      console.error("기본 데이터 초기화 실패", err);
+      setInitResult("error");
+    } finally {
+      setInitLoading(false);
+      // 3초 후 결과 메시지 초기화
+      setTimeout(() => setInitResult(null), 3000);
+    }
+  };
 
   const openRepoMenu = (event: React.MouseEvent<HTMLElement>) => {
     setRepoAnchor(event.currentTarget);
@@ -334,6 +359,71 @@ function SideBarDrawerComponent({
             </ListItem>
           ) : null}
 
+          {/* 기본 데이터 초기화 — 비게스트 전용 */}
+          {!guestMode.isActive() && (
+            <ListItem disablePadding>
+              <Tooltip
+                title={
+                  initResult === "success"
+                    ? "초기화 완료!"
+                    : initResult === "error"
+                      ? "초기화 실패. 다시 시도해 주세요."
+                      : "가계부·분류 기본 데이터가 없을 때 복구합니다"
+                }
+                placement="right"
+              >
+                <ListItemButton
+                  disabled={initLoading}
+                  onClick={() => void handleInitDefaultData()}
+                  sx={{
+                    minHeight: 48,
+                    borderRadius: 2,
+                    mb: 0.5,
+                    color:
+                      initResult === "success"
+                        ? "success.main"
+                        : initResult === "error"
+                          ? "error.main"
+                          : "text.secondary",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.warning.main, 0.08),
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                      color:
+                        initResult === "success"
+                          ? "success.main"
+                          : initResult === "error"
+                            ? "error.main"
+                            : "text.secondary",
+                    }}
+                  >
+                    {initLoading ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      <RestartAltIcon />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      initLoading
+                        ? "초기화 중..."
+                        : initResult === "success"
+                          ? "초기화 완료!"
+                          : initResult === "error"
+                            ? "초기화 실패"
+                            : "기본 데이터 초기화"
+                    }
+                    primaryTypographyProps={{ fontWeight: 700 }}
+                  />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          )}
+
           <ListItem disablePadding>
             <ListItemButton
               sx={{
@@ -353,6 +443,7 @@ function SideBarDrawerComponent({
                       console.error("Logout failed", error);
                     } finally {
                       clearAccessToken();
+                      clearUserSeq();
                       resetAccountBooks();
                       void navigate("/");
                       if (!isDesktop) {
