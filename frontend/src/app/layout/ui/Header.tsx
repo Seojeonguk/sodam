@@ -22,6 +22,7 @@ import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { clearAccessToken } from "../../../shared/api/api";
 import { supabase } from "../../../shared/lib/supabase";
+import { clearUserSeq } from "../../../shared/lib/userSync";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { GuestMigrationModal } from "../../../features/auth/ui/GuestMigrationModal";
@@ -94,6 +95,7 @@ function HeaderComponent({ openSide, toggleDrawer }: HeaderProps) {
         console.error("Logout failed", error);
       } finally {
         clearAccessToken();
+        clearUserSeq();
         resetAccountBooks();
         void nav("/");
       }

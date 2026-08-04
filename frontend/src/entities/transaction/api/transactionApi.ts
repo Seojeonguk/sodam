@@ -1,4 +1,6 @@
-import api from "../../../shared/api/api";
+import dayjs from "dayjs";
+import { supabase } from "../../../shared/lib/supabase";
+import { getUserSeq } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
 import type {
@@ -8,7 +10,10 @@ import type {
   TransactionUpdateRequestDto,
 } from "./transaction.types";
 
-const TRANSACTION_BASE_URL = "/transactions";
+const now = () => dayjs().format("YYYYMMDDHHmmss");
+
+/** ISO 날짜 → DB 포맷 (YYYYMMDDHHmmss) */
+const toDbDate = (iso: string) => dayjs(iso).format("YYYYMMDDHHmmss");
 
 const transactionApi = {
   getTransactions: async (
@@ -27,37 +32,114 @@ const transactionApi = {
         accountId, startDate, endDate, page, size,
         categorySeqs, keyword, minAmount, maxAmount,
       );
-    return api.get<TransactionListResponse>(TRANSACTION_BASE_URL, {
-      params: {
-        accountBookSeq: accountId, startDate, endDate, page, size,
-        ...(categorySeqs && categorySeqs.length > 0 && { categorySeqs }),
-        ...(keyword && { keyword }),
-        ...(minAmount != null && { minAmount }),
-        ...(maxAmount != null && { maxAmount }),
-      },
-      paramsSerializer: { indexes: null },
-    });
+
+    const userSeq = await getUserSeq();
+
+    let query = supabase
+      .from("transaction")
+      .select(
+        `seq, amount, description, transaction_date, type,
+         category:category_seq(name)`,
+        { count: "exact" },
+      )
+      .eq("account_book_seq", accountId)
+      .eq("user_seq", userSeq)
+      .order("transaction_date", { ascending: false })
+      .range(page * size, (page + 1) * size - 1);
+
+    if (startDate) query = query.gte("transaction_date", startDate);
+    if (endDate)   query = query.lte("transaction_date", endDate + "235959");
+    if (categorySeqs && categorySeqs.length > 0)
+      query = query.in("category_seq", categorySeqs);
+    if (keyword)
+      query = query.ilike("description", `%${keyword}%`);
+    if (minAmount != null) query = query.gte("amount", minAmount);
+    if (maxAmount != null) query = query.lte("amount", maxAmount);
+
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
+
+    const transactions = (data ?? []).map((row: any) => ({
+      seq: row.seq as number,
+      amount: Number(row.amount),
+      description: row.description as string,
+      transactionDate: row.transaction_date as string,
+      type: row.type as "INCOME" | "EXPENSE",
+      categoryName: (row.category as any)?.name ?? null,
+    }));
+
+    const totalElements = count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(totalElements / size));
+
+    return { transactions, pageNumber: page, pageSize: size, totalElements, totalPages };
   },
 
   createTransaction: async (
     data: TransactionCreateRequestDto,
   ): Promise<TransactionResponseDto> => {
     if (guestMode.isActive()) return guestStore.createTransaction(data);
-    return api.post<TransactionResponseDto, TransactionCreateRequestDto>(
-      TRANSACTION_BASE_URL,
-      data,
-    );
+
+    const userSeq = await getUserSeq();
+    const ts = now();
+
+    const { data: row, error } = await supabase
+      .from("transaction")
+      .insert({
+        account_book_seq: data.accountBookSeq,
+        user_seq: userSeq,
+        category_seq: data.categorySeq,
+        amount: data.amount,
+        description: data.description ?? "",
+        transaction_date: toDbDate(data.transactionDate),
+        type: data.type,
+        satisfaction_rating: 0,
+        created_at: ts,
+        updated_at: ts,
+      })
+      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .single();
+
+    if (error || !row) throw new Error(error?.message ?? "거래 생성 실패");
+
+    return {
+      seq: row.seq as number,
+      accountBookSeq: row.account_book_seq as number,
+      userSeq: row.user_seq as number,
+      categorySeq: row.category_seq as number | undefined,
+      amount: Number(row.amount),
+      description: row.description as string,
+      transactionDate: row.transaction_date as string,
+      type: row.type as "INCOME" | "EXPENSE",
+      satisfactionRating: row.satisfaction_rating as number,
+    };
   },
 
-  getTransactionBySeq: async (
-    seq: number | null,
-  ): Promise<TransactionResponseDto> => {
+  getTransactionBySeq: async (seq: number | null): Promise<TransactionResponseDto> => {
     if (guestMode.isActive()) {
       const tx = guestStore.getTransactionBySeq(seq!);
       if (!tx) throw new Error("거래를 찾을 수 없습니다.");
       return tx;
     }
-    return api.get<TransactionResponseDto>(`${TRANSACTION_BASE_URL}/${seq}`);
+
+    const { data: row, error } = await supabase
+      .from("transaction")
+      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .eq("seq", seq)
+      .single();
+
+    if (error || !row) throw new Error(error?.message ?? "거래를 찾을 수 없습니다.");
+
+    return {
+      seq: row.seq as number,
+      accountBookSeq: row.account_book_seq as number,
+      userSeq: row.user_seq as number,
+      categorySeq: row.category_seq as number | undefined,
+      amount: Number(row.amount),
+      description: row.description as string,
+      transactionDate: row.transaction_date as string,
+      type: row.type as "INCOME" | "EXPENSE",
+      satisfactionRating: row.satisfaction_rating as number,
+    };
   },
 
   updateTransaction: async (
@@ -65,18 +147,41 @@ const transactionApi = {
     data: TransactionUpdateRequestDto,
   ): Promise<TransactionResponseDto> => {
     if (guestMode.isActive()) return guestStore.updateTransaction(seq, data);
-    return api.put<TransactionResponseDto, TransactionUpdateRequestDto>(
-      `${TRANSACTION_BASE_URL}/${seq}`,
-      data,
-    );
+
+    const updates: Record<string, unknown> = { updated_at: now() };
+    if (data.type)            updates.type = data.type;
+    if (data.amount != null)  updates.amount = data.amount;
+    if (data.categorySeq != null) updates.category_seq = data.categorySeq;
+    if (data.description != null) updates.description = data.description;
+    if (data.transactionDate) updates.transaction_date = toDbDate(data.transactionDate);
+
+    const { data: row, error } = await supabase
+      .from("transaction")
+      .update(updates)
+      .eq("seq", seq)
+      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .single();
+
+    if (error || !row) throw new Error(error?.message ?? "거래 수정 실패");
+
+    return {
+      seq: row.seq as number,
+      accountBookSeq: row.account_book_seq as number,
+      userSeq: row.user_seq as number,
+      categorySeq: row.category_seq as number | undefined,
+      amount: Number(row.amount),
+      description: row.description as string,
+      transactionDate: row.transaction_date as string,
+      type: row.type as "INCOME" | "EXPENSE",
+      satisfactionRating: row.satisfaction_rating as number,
+    };
   },
 
   deleteTransaction: async (seq: number): Promise<void> => {
-    if (guestMode.isActive()) {
-      guestStore.deleteTransaction(seq);
-      return;
-    }
-    await api.delete(`${TRANSACTION_BASE_URL}/${seq}`);
+    if (guestMode.isActive()) { guestStore.deleteTransaction(seq); return; }
+
+    const { error } = await supabase.from("transaction").delete().eq("seq", seq);
+    if (error) throw new Error(error.message);
   },
 };
 

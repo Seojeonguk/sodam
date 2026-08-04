@@ -15,6 +15,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import { restoreSession, setAccessToken } from "../../../shared/api/api";
 import { supabase } from "../../../shared/lib/supabase";
+import { syncUser } from "../../../shared/lib/userSync";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { sessionCache } from "../../../shared/lib/localCache";
 import { guestMode } from "../../../shared/lib/guestMode";
@@ -56,6 +57,11 @@ function LoginPage() {
       if (data.session) {
         setAccessToken(data.session.access_token);
         sessionCache.set(email);
+        // users 테이블 동기화 (없으면 생성 + 기본 가계부)
+        const name =
+          (data.session.user.user_metadata?.full_name as string | undefined) ??
+          email.split("@")[0];
+        await syncUser(email, name);
       }
 
       await moveToDashboard();
@@ -99,8 +105,12 @@ function LoginPage() {
         if (!isMounted) return;
         if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
           setAccessToken(session.access_token);
-          sessionCache.set(session.user.email ?? "");
-          void moveToDashboard();
+          const email = session.user.email ?? "";
+          const name =
+            (session.user.user_metadata?.full_name as string | undefined) ??
+            email.split("@")[0];
+          sessionCache.set(email);
+          void syncUser(email, name).then(() => moveToDashboard());
         }
       }
     );

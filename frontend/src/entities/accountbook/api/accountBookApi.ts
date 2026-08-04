@@ -1,9 +1,9 @@
-import api from "../../../shared/api/api";
+import dayjs from "dayjs";
+import { supabase } from "../../../shared/lib/supabase";
+import { getUserSeq } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
 import type { AccountBookListResponse } from "./accountbook.types";
-
-const ACCOUNT_BOOK_BASE_URL = "/account-books";
 
 export interface AccountBookCreateResponse {
   id: number;
@@ -14,11 +14,65 @@ export interface AccountBookCreateResponse {
 const accountBookApi = {
   getAccountBooks: async (): Promise<AccountBookListResponse[]> => {
     if (guestMode.isActive()) return guestStore.getAccountBooks();
-    return api.get<AccountBookListResponse[]>(ACCOUNT_BOOK_BASE_URL);
+
+    const userSeq = await getUserSeq();
+
+    const { data, error } = await supabase
+      .from("account_book_member")
+      .select(`
+        authority,
+        account_book:account_book_id (
+          id,
+          name
+        )
+      `)
+      .eq("user_id", userSeq);
+
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map((row: any) => ({
+      id: row.account_book.id as number,
+      name: row.account_book.name as string,
+      isOwner: row.authority === "OWNER",
+      canEdit: row.authority === "OWNER" || row.authority === "EDITOR",
+    }));
   },
 
-  createAccountBook: async (name: string): Promise<AccountBookCreateResponse> =>
-    api.post<AccountBookCreateResponse, { name: string }>(ACCOUNT_BOOK_BASE_URL, { name }),
+  createAccountBook: async (name: string): Promise<AccountBookCreateResponse> => {
+    const userSeq = await getUserSeq();
+    const now = dayjs().format("YYYYMMDDHHmmss");
+
+    const { data: book, error: bookErr } = await supabase
+      .from("account_book")
+      .insert({
+        name,
+        created_at: now,
+        created_by: userSeq,
+        updated_at: now,
+        updated_by: userSeq,
+      })
+      .select("id, name, updated_at")
+      .single();
+
+    if (bookErr || !book) throw new Error(bookErr?.message ?? "가계부 생성 실패");
+
+    await supabase.from("account_book_member").insert({
+      account_book_id: book.id,
+      user_id: userSeq,
+      authority: "OWNER",
+      is_available: "Y",
+      created_at: now,
+      created_by: userSeq,
+      updated_at: now,
+      updated_by: userSeq,
+    });
+
+    return {
+      id: book.id as number,
+      name: book.name as string,
+      updatedAt: book.updated_at as string,
+    };
+  },
 };
 
 export default accountBookApi;
