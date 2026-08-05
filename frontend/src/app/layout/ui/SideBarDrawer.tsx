@@ -17,6 +17,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -31,6 +32,7 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const MemberManageModal = lazy(() => import("../../../features/member/ui/MemberManageModal"));
+const AccountBookCreateModal = lazy(() => import("../../../features/accountbook/ui/AccountBookCreateModal"));
 import { useLocation, useNavigate } from "react-router-dom";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
@@ -76,6 +78,7 @@ function SideBarDrawerComponent({
     useAccountBookContext();
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
   const [initLoading, setInitLoading] = useState(false);
   const [initResult, setInitResult] = useState<"success" | "error" | null>(null);
 
@@ -276,6 +279,30 @@ function SideBarDrawerComponent({
                 </MenuItem>
               );
             })}
+            {/* 새 가계부 만들기 */}
+            {!guestMode.isActive() && (
+              <>
+                <Divider sx={{ my: 0.5 }} />
+                <MenuItem
+                  onClick={() => {
+                    closeRepoMenu();
+                    setCreateBookModalOpen(true);
+                  }}
+                  sx={{
+                    minHeight: 44,
+                    borderRadius: 1,
+                    px: 1.2,
+                    color: "primary.main",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                    },
+                  }}
+                >
+                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                  <Typography fontWeight={700} variant="body2">새 가계부 만들기</Typography>
+                </MenuItem>
+              </>
+            )}
           </Menu>
         </Box>
 
@@ -477,6 +504,15 @@ function SideBarDrawerComponent({
           />
         </Suspense>
       )}
+
+      {/* 가계부 생성 모달 */}
+      <Suspense fallback={null}>
+        <AccountBookCreateModal
+          open={createBookModalOpen}
+          onClose={() => setCreateBookModalOpen(false)}
+          onSuccess={fetchAccountBooks}
+        />
+      </Suspense>
     </Box>
   );
 }
