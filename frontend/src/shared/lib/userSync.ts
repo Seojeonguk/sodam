@@ -35,13 +35,6 @@ export async function ensureDefaultData(userId: number): Promise<void> {
   let accountBookId: number;
 
   if (!memberships || memberships.length === 0) {
-    // TODO : 콘솔로그 테스트로 제거 필요
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    console.log(session);
-
     // 가계부가 없으면 생성
     const { data: book, error: bookErr } = await supabase
       .from("account_book")
