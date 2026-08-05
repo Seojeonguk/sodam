@@ -12,7 +12,8 @@ const memberApi = {
   getMembers: async (accountBookId: number): Promise<MemberResponse[]> => {
     const { data, error } = await supabase
       .from("account_book_member")
-      .select(`
+      .select(
+        `
         user_id,
         authority,
         created_at,
@@ -21,7 +22,8 @@ const memberApi = {
           name,
           image_url
         )
-      `)
+      `,
+      )
       .eq("account_book_id", accountBookId);
 
     if (error) throw new Error(error.message);
@@ -53,6 +55,7 @@ const memberApi = {
     const now = dayjs().format("YYYYMMDDHHmmss");
 
     // ── 미가입 사용자: pending_invites에 보관 ──
+    console.log("targetUser", targetUser);
     if (!targetUser) {
       const expires = dayjs().add(7, "day").format("YYYYMMDDHHmmss");
 
@@ -95,7 +98,8 @@ const memberApi = {
       .select("authority, created_at")
       .single();
 
-    if (memberErr || !member) throw new Error(memberErr?.message ?? "초대 실패");
+    if (memberErr || !member)
+      throw new Error(memberErr?.message ?? "초대 실패");
 
     return {
       status: "added",
@@ -132,7 +136,10 @@ const memberApi = {
     return updated;
   },
 
-  removeMember: async (accountBookId: number, userId: number): Promise<void> => {
+  removeMember: async (
+    accountBookId: number,
+    userId: number,
+  ): Promise<void> => {
     const { error } = await supabase
       .from("account_book_member")
       .delete()
