@@ -5,6 +5,19 @@
 import dayjs from "dayjs";
 import { supabase } from "./supabase";
 
+/** 기본 카테고리 목록 */
+const DEFAULT_CATEGORIES = [
+  { name: "식비",        type: "EXPENSE", color: "#FF6B6B", description: "식사, 카페, 배달" },
+  { name: "교통",        type: "EXPENSE", color: "#4ECDC4", description: "대중교통, 주유, 주차" },
+  { name: "쇼핑",        type: "EXPENSE", color: "#45B7D1", description: "의류, 생활용품" },
+  { name: "의료/건강",   type: "EXPENSE", color: "#96CEB4", description: "병원, 약국, 운동" },
+  { name: "문화/여가",   type: "EXPENSE", color: "#FFEAA7", description: "영화, 여행, 취미" },
+  { name: "통신",        type: "EXPENSE", color: "#DDA0DD", description: "핸드폰, 인터넷" },
+  { name: "주거/공과금", type: "EXPENSE", color: "#F0A500", description: "월세, 전기, 가스" },
+  { name: "급여",        type: "INCOME",  color: "#55EFC4", description: "월급, 연봉" },
+  { name: "부수입",      type: "INCOME",  color: "#74B9FF", description: "프리랜서, 용돈" },
+];
+
 let cachedUserSeq: number | null = null;
 
 /** 캐시 초기화 (로그아웃 시 호출) */
@@ -18,9 +31,10 @@ export function getCachedUserSeq(): number | null {
 }
 
 /**
- * 기존 유저의 기본 데이터(가계부, 분류)가 빠진 경우 보완.
+ * 기존 유저의 기본 데이터(가계부, 분류, 카테고리)가 빠진 경우 보완.
  * - 가계부 없으면 생성
  * - classification(INCOME/EXPENSE) 없으면 생성
+ * - 기본 카테고리 없으면 생성
  * 외부에서 "기본 데이터 초기화" 버튼으로도 호출 가능.
  */
 export async function ensureDefaultData(userId: number): Promise<void> {
@@ -36,14 +50,6 @@ export async function ensureDefaultData(userId: number): Promise<void> {
 
   if (!memberships || memberships.length === 0) {
     // 가계부가 없으면 생성
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    console.log(session);
-    console.log(session?.user);
-    console.log(session?.user?.email);
-
     const { data: book, error: bookErr } = await supabase
       .from("account_book")
       .insert({
@@ -94,6 +100,23 @@ export async function ensureDefaultData(userId: number): Promise<void> {
 
   if (toInsert.length > 0) {
     await supabase.from("classification").insert(toInsert);
+  }
+
+  // 기본 카테고리 누락 보완
+  const { data: existingCats } = await supabase
+    .from("category")
+    .select("name")
+    .eq("user_seq", userId);
+
+  const existingCatNames = new Set(
+    (existingCats ?? []).map((r: { name: string }) => r.name),
+  );
+  const catsToInsert = DEFAULT_CATEGORIES
+    .filter((c) => !existingCatNames.has(c.name))
+    .map((c) => ({ ...c, user_seq: userId, created_at: now, updated_at: now }));
+
+  if (catsToInsert.length > 0) {
+    await supabase.from("category").insert(catsToInsert);
   }
 }
 
@@ -180,6 +203,18 @@ export async function syncUser(email: string, name: string): Promise<number> {
   ]);
 
   if (classErr) throw new Error("분류 생성 실패: " + classErr.message);
+
+  // 기본 카테고리 생성
+  const { error: catErr } = await supabase.from("category").insert(
+    DEFAULT_CATEGORIES.map((c) => ({
+      ...c,
+      user_seq: userId,
+      created_at: now,
+      updated_at: now,
+    })),
+  );
+
+  if (catErr) throw new Error("카테고리 생성 실패: " + catErr.message);
 
   cachedUserSeq = userId;
   return userId;
