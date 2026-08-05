@@ -1,4 +1,5 @@
 export interface StatRequest {
+  accountBookSeq: number;
   startDate: string;
   endDate: string;
   categorySeqs?: number[];
@@ -14,6 +15,7 @@ export interface StatResponse {
 }
 
 export interface StatPeriodRequest {
+  accountBookSeq: number;
   startDate: string;
   endDate: string;
   categorySeqs?: number[];

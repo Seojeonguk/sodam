@@ -11,7 +11,7 @@ import type {
 
 /** 거래 필터 조건을 공통으로 적용 */
 async function fetchFilteredTransactions(
-  userSeq: number,
+  accountBookSeq: number,
   startDate: string,
   endDate: string,
   categorySeqs?: number[],
@@ -22,7 +22,7 @@ async function fetchFilteredTransactions(
   let query = supabase
     .from("transaction")
     .select("amount, type, category_seq, description, transaction_date, category:category_seq(name)")
-    .eq("user_seq", userSeq)
+    .eq("account_book_seq", accountBookSeq)
     .gte("transaction_date", startDate)
     .lte("transaction_date", endDate + "235959");
 
@@ -45,9 +45,9 @@ const statApi = {
         req.keyword, req.minAmount, req.maxAmount,
       );
 
-    const userSeq = await getUserSeq();
+    await getUserSeq(); // 세션 확인
     const rows = await fetchFilteredTransactions(
-      userSeq, req.startDate, req.endDate,
+      req.accountBookSeq, req.startDate, req.endDate,
       req.categorySeqs, req.keyword, req.minAmount, req.maxAmount,
     );
 
@@ -75,9 +75,9 @@ const statApi = {
         req.keyword, req.minAmount, req.maxAmount,
       );
 
-    const userSeq = await getUserSeq();
+    await getUserSeq(); // 세션 확인
     const rows = await fetchFilteredTransactions(
-      userSeq, req.startDate, req.endDate,
+      req.accountBookSeq, req.startDate, req.endDate,
       req.categorySeqs, req.keyword, req.minAmount, req.maxAmount,
     );
 

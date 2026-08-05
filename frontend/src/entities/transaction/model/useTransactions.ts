@@ -126,6 +126,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     const endDate = dateRange.endDate.format("YYYYMMDD");
 
     const statRequest: StatRequest = {
+      accountBookSeq: currentAccountBookId,
       startDate,
       endDate,
       ...(categoryFilter.length > 0 && { categorySeqs: categoryFilter }),
@@ -134,6 +135,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
       ...(maxAmount != null && { maxAmount }),
     };
     const statPeriodRequest: StatPeriodRequest = {
+      accountBookSeq: currentAccountBookId,
       startDate,
       endDate,
       ...(categoryFilter.length > 0 && { categorySeqs: categoryFilter }),
