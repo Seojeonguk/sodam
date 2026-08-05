@@ -107,6 +107,7 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -358,5 +359,6 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
         </Button>
       </DialogActions>
     </Dialog>
+    </>
   );
 }
