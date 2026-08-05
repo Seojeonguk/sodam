@@ -26,10 +26,6 @@ import type {
   TransactionUpdateRequestDto,
 } from "../../../entities/transaction/api/transaction.types";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
-import {
-  CATEGORY_SELECTION_PAGE_SIZE,
-  DEFAULT_PAGE_INDEX,
-} from "../../../shared/config/app";
 
 const style = {
   position: "absolute" as const,
@@ -91,20 +87,16 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     setLoading(false);
   }, [transactionToEdit]);
 
-  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
+  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 (per-user, account book 불필요) */
   useEffect(() => {
     const fetchModalOptions = async () => {
-      if (!isOpen || !currentAccountBook?.id) {
+      if (!isOpen) {
         setCategories([]);
         return;
       }
 
       try {
-        const fetchedCategories = await categoryApi.getCategories(
-          DEFAULT_PAGE_INDEX,
-          CATEGORY_SELECTION_PAGE_SIZE,
-          type,
-        );
+        const fetchedCategories = await categoryApi.getCategories(undefined, undefined, type);
         setCategories(fetchedCategories ?? []);
       } catch (nextError) {
         if (axios.isAxiosError(nextError)) {
@@ -116,7 +108,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     };
 
     void fetchModalOptions();
-  }, [currentAccountBook?.id, isOpen, type]);
+  }, [isOpen, type]);
 
   const handleClose = () => {
     setError(null);

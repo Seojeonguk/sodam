@@ -26,10 +26,6 @@ import categoryApi from "../../../entities/category/api/categoryApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types";
-import {
-  CATEGORY_SELECTION_PAGE_SIZE,
-  DEFAULT_PAGE_INDEX,
-} from "../../../shared/config/app";
 
 dayjs.locale("ko");
 
@@ -76,19 +72,15 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 카테고리 목록: type 변경마다 재조회
+  // 카테고리 목록: 모달 열릴 때 / type 변경마다 재조회 (per-user, account book 불필요)
   useEffect(() => {
-    if (!isOpen || !currentAccountBook?.id) {
+    if (!isOpen) {
       setCategories([]);
       return;
     }
     const fetch = async () => {
       try {
-        const res = await categoryApi.getCategories(
-          DEFAULT_PAGE_INDEX,
-          CATEGORY_SELECTION_PAGE_SIZE,
-          type,
-        );
+        const res = await categoryApi.getCategories(undefined, undefined, type);
         setCategories(res ?? []);
         setCategory("");
       } catch (err) {
@@ -98,7 +90,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       }
     };
     void fetch();
-  }, [currentAccountBook?.id, isOpen, type]);
+  }, [isOpen, type]);
 
   const handleClose = () => {
     setType("EXPENSE");
