@@ -49,7 +49,11 @@ const memberApi = {
       .eq("email", data.email)
       .maybeSingle();
 
-    if (userErr) throw new Error(userErr.message);
+    console.log("targetUser", targetUser);
+    if (userErr) {
+      console.log("userErr", userErr);
+      throw new Error(userErr.message);
+    }
 
     const mySeq = await getUserSeq();
     const now = dayjs().format("YYYYMMDDHHmmss");
