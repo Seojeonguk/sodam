@@ -472,6 +472,7 @@ function SideBarDrawerComponent({
                       clearAccessToken();
                       clearUserSeq();
                       resetAccountBooks();
+                      localStorage.removeItem("sodam-selected-book-id");
                       void navigate("/");
                       if (!isDesktop) {
                         handleDrawerClose();

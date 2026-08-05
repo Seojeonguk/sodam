@@ -28,12 +28,14 @@ export const useAccountBooks = () => {
     }
   }, []);
 
-  // 게스트 모드로 페이지 새로고침 시 자동 fetch
+  // 게스트 모드: 컴포넌트 마운트 시 자동 fetch
+  // 인증 유저: ProtectedRoute에서 인증 확인 후 fetchAccountBooks() 호출
   useEffect(() => {
     if (guestMode.isActive()) {
       void fetchAccountBooks();
     }
   }, [fetchAccountBooks]);
+  // NOTE: 인증 유저의 fetch는 App.tsx ProtectedRoute가 담당
 
   const resetAccountBooks = useCallback(() => {
     setAccountBooks([]);

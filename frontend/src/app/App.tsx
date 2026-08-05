@@ -9,7 +9,7 @@ import BudgetPage from "../pages/budget/ui/BudgetPage";
 import RecurringPage from "../pages/recurring/ui/RecurringPage";
 import SignupPage from "../pages/signup/ui/SignupPage";
 import { getAccessToken, restoreSession } from "../shared/api/api";
-import { AccountBookProvider } from "../entities/accountbook/model/AccountBookContext";
+import { AccountBookProvider, useAccountBookContext } from "../entities/accountbook/model/AccountBookContext";
 import AuthLayout from "./layout/ui/AuthLayout";
 import AppShellLayout from "./layout/ui/AppShellLayout";
 import { useOfflineSync } from "../shared/lib/useOfflineSync";
@@ -17,7 +17,8 @@ import { OfflineBanner } from "../shared/ui/OfflineBanner";
 import { guestMode } from "../shared/lib/guestMode";
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
-  // 게스트 모드는 인증 없이 바로 통과
+  const { fetchAccountBooks } = useAccountBookContext();
+
   const [isChecking, setIsChecking] = useState<boolean>(
     () => !getAccessToken() && !guestMode.isActive(),
   );
@@ -26,19 +27,28 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
   );
 
   useEffect(() => {
-    if (getAccessToken() || guestMode.isActive()) {
-      setIsAuthenticated(true);
-      setIsChecking(false);
-      return;
-    }
-
     let isMounted = true;
 
     void (async () => {
-      const restored = await restoreSession();
-
-      if (!isMounted) {
+      // 이미 토큰이 있으면 바로 인증 처리 + 가계부 fetch
+      if (getAccessToken() || guestMode.isActive()) {
+        if (!guestMode.isActive()) {
+          // 인증 유저: 새로고침 시 가계부 목록 복원
+          await fetchAccountBooks().catch(() => {/* 실패해도 계속 */});
+        }
+        if (isMounted) {
+          setIsAuthenticated(true);
+          setIsChecking(false);
+        }
         return;
+      }
+
+      const restored = await restoreSession();
+      if (!isMounted) return;
+
+      if (restored) {
+        // 세션 복원 성공 시 가계부 목록 fetch
+        await fetchAccountBooks().catch(() => {/* 실패해도 계속 */});
       }
 
       setIsAuthenticated(restored);
@@ -48,7 +58,7 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [fetchAccountBooks]);
 
   if (isChecking) {
     return (
