@@ -35,6 +35,13 @@ export async function ensureDefaultData(userId: number): Promise<void> {
   let accountBookId: number;
 
   if (!memberships || memberships.length === 0) {
+    // TODO : 콘솔로그 테스트로 제거 필요
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    console.log(session);
+
     // 가계부가 없으면 생성
     const { data: book, error: bookErr } = await supabase
       .from("account_book")
@@ -72,10 +79,17 @@ export async function ensureDefaultData(userId: number): Promise<void> {
     .select("name")
     .eq("account_book_seq", accountBookId);
 
-  const existingNames = new Set((existing ?? []).map((r: { name: string }) => r.name));
+  const existingNames = new Set(
+    (existing ?? []).map((r: { name: string }) => r.name),
+  );
   const toInsert = (["INCOME", "EXPENSE"] as const)
     .filter((n) => !existingNames.has(n))
-    .map((name) => ({ name, account_book_seq: accountBookId, created_at: now, updated_at: now }));
+    .map((name) => ({
+      name,
+      account_book_seq: accountBookId,
+      created_at: now,
+      updated_at: now,
+    }));
 
   if (toInsert.length > 0) {
     await supabase.from("classification").insert(toInsert);
@@ -110,7 +124,8 @@ export async function syncUser(email: string, name: string): Promise<number> {
     .select("id")
     .single();
 
-  if (userErr || !newUser) throw new Error("사용자 생성 실패: " + userErr?.message);
+  if (userErr || !newUser)
+    throw new Error("사용자 생성 실패: " + userErr?.message);
 
   const userId = newUser.id as number;
   const now = dayjs().format("YYYYMMDDHHmmss");
@@ -128,19 +143,22 @@ export async function syncUser(email: string, name: string): Promise<number> {
     .select("id")
     .single();
 
-  if (bookErr || !book) throw new Error("가계부 생성 실패: " + bookErr?.message);
+  if (bookErr || !book)
+    throw new Error("가계부 생성 실패: " + bookErr?.message);
 
   // OWNER로 멤버 등록
-  const { error: memberErr } = await supabase.from("account_book_member").insert({
-    account_book_id: book.id,
-    user_id: userId,
-    authority: "OWNER",
-    is_available: "Y",
-    created_at: now,
-    created_by: userId,
-    updated_at: now,
-    updated_by: userId,
-  });
+  const { error: memberErr } = await supabase
+    .from("account_book_member")
+    .insert({
+      account_book_id: book.id,
+      user_id: userId,
+      authority: "OWNER",
+      is_available: "Y",
+      created_at: now,
+      created_by: userId,
+      updated_at: now,
+      updated_by: userId,
+    });
 
   if (memberErr) throw new Error("멤버 등록 실패: " + memberErr.message);
 
