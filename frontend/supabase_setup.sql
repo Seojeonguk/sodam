@@ -133,6 +133,23 @@ CREATE INDEX IF NOT EXISTS idx_recurring_account_book ON public.recurring_transa
 CREATE INDEX IF NOT EXISTS idx_recurring_user         ON public.recurring_transaction(user_seq);
 
 
+-- ── pending_invites ──────────────────────────────────────────
+-- 미가입 사용자 초대 보류 테이블
+-- 초대받은 이메일로 가입 후 로그인 시 자동으로 멤버 추가
+CREATE TABLE IF NOT EXISTS public.pending_invites (
+    id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_book_id BIGINT       NOT NULL REFERENCES public.account_book(id) ON DELETE CASCADE,
+    invited_email   VARCHAR(255) NOT NULL,
+    authority       VARCHAR(50)  NOT NULL DEFAULT 'EDITOR',
+    invited_by      BIGINT       NOT NULL,
+    created_at      VARCHAR(14)  NOT NULL,
+    expires_at      VARCHAR(14)  NOT NULL   -- 7일 후 만료
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_invites_email   ON public.pending_invites(invited_email);
+CREATE INDEX IF NOT EXISTS idx_pending_invites_book    ON public.pending_invites(account_book_id);
+
+
 -- ══════════════════════════════════════════════════════════════
 -- 완료! 다음 단계: supabase_rls.sql 실행
 -- ══════════════════════════════════════════════════════════════

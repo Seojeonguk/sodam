@@ -121,6 +121,44 @@ export async function ensureDefaultData(userId: number): Promise<void> {
 }
 
 /**
+ * 로그인/가입 시 pending_invites 처리.
+ * 해당 이메일로 초대된 가계부가 있으면 자동으로 멤버 추가 후 invite 삭제.
+ */
+async function processPendingInvites(userId: number, email: string): Promise<void> {
+  const { data: invites } = await supabase
+    .from("pending_invites")
+    .select("id, account_book_id, authority, invited_by, expires_at")
+    .eq("invited_email", email);
+
+  if (!invites || invites.length === 0) return;
+
+  const now = dayjs().format("YYYYMMDDHHmmss");
+
+  for (const invite of invites) {
+    // 만료된 초대는 삭제만
+    if ((invite.expires_at as string) < now) {
+      await supabase.from("pending_invites").delete().eq("id", invite.id);
+      continue;
+    }
+
+    // 멤버 추가 (이미 멤버인 경우 오류 무시)
+    await supabase.from("account_book_member").insert({
+      account_book_id: invite.account_book_id,
+      user_id: userId,
+      authority: invite.authority,
+      is_available: "Y",
+      created_at: now,
+      created_by: invite.invited_by,
+      updated_at: now,
+      updated_by: invite.invited_by,
+    });
+
+    // 처리된 초대 삭제
+    await supabase.from("pending_invites").delete().eq("id", invite.id);
+  }
+}
+
+/**
  * Supabase 세션에서 email/name을 읽어 users 테이블에 동기화.
  * 이미 존재하면 id만 반환, 없으면 user + 기본 가계부 생성.
  */
@@ -138,6 +176,8 @@ export async function syncUser(email: string, name: string): Promise<number> {
     cachedUserSeq = existing.id as number;
     // 기존 유저도 기본 데이터 보완 (백그라운드, 실패해도 무시)
     void ensureDefaultData(cachedUserSeq);
+    // 미가입 상태에서 받은 초대 처리 (백그라운드)
+    void processPendingInvites(cachedUserSeq, email);
     return cachedUserSeq;
   }
 
@@ -217,6 +257,10 @@ export async function syncUser(email: string, name: string): Promise<number> {
   if (catErr) throw new Error("카테고리 생성 실패: " + catErr.message);
 
   cachedUserSeq = userId;
+
+  // 신규 유저: 기존에 받아둔 초대 처리 (백그라운드)
+  void processPendingInvites(userId, email);
+
   return userId;
 }
 

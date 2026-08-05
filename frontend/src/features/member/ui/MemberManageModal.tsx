@@ -10,6 +10,7 @@ import {
   Chip,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -20,9 +21,10 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { DeleteOutline, GroupAdd, PersonOutline } from "@mui/icons-material";
+import { ContentCopy, DeleteOutline, GroupAdd, PersonOutline } from "@mui/icons-material";
 import { useMembers } from "../../../entities/accountbook/model/useMembers";
 import type { MemberAuthority } from "../../../entities/accountbook/api/member.types";
 
@@ -55,6 +57,18 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
   const [inviteAuthority, setInviteAuthority] = useState<"EDITOR" | "VIEWER">("EDITOR");
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [pendingInvite, setPendingInvite] = useState<{ token: string; email: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const getPendingInviteLink = (token: string, email: string) =>
+    `${window.location.origin}/signup?invite=${token}&email=${encodeURIComponent(email)}`;
+
+  const handleCopyLink = () => {
+    if (!pendingInvite) return;
+    void navigator.clipboard.writeText(getPendingInviteLink(pendingInvite.token, pendingInvite.email));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleInvite = async () => {
     const email = inviteEmail.trim();
@@ -62,8 +76,11 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
     setInviting(true);
     setInviteError(null);
     try {
-      await invite({ email, authority: inviteAuthority });
+      const result = await invite({ email, authority: inviteAuthority });
       setInviteEmail("");
+      if (result.status === "pending" && result.inviteToken) {
+        setPendingInvite({ token: result.inviteToken, email: result.inviteEmail! });
+      }
     } catch (e) {
       setInviteError(e instanceof Error ? e.message : "초대 중 오류가 발생했습니다.");
     } finally {
@@ -270,6 +287,76 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
           ))}
         </Stack>
       </DialogContent>
+    </Dialog>
+
+    {/* 미가입자 초대 링크 다이얼로그 */}
+    <Dialog
+      open={Boolean(pendingInvite)}
+      onClose={() => { setPendingInvite(null); setCopied(false); }}
+      maxWidth="xs"
+      fullWidth
+      sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}
+    >
+      <DialogTitle sx={{ pb: 0.5, fontWeight: 700 }}>초대 링크 공유</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          <b>{pendingInvite?.email}</b>는 아직 가입하지 않은 이메일입니다.
+          아래 링크를 공유하면 가입 후 자동으로 멤버로 추가됩니다.
+          (링크 유효기간: 7일)
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            p: 1.5,
+            borderRadius: 2,
+            bgcolor: "action.hover",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              flex: 1,
+              wordBreak: "break-all",
+              fontFamily: "monospace",
+              fontSize: "0.7rem",
+              color: "text.secondary",
+            }}
+          >
+            {pendingInvite
+              ? getPendingInviteLink(pendingInvite.token, pendingInvite.email)
+              : ""}
+          </Typography>
+          <Tooltip title={copied ? "복사됨!" : "링크 복사"} placement="top">
+            <IconButton size="small" onClick={handleCopyLink} color={copied ? "success" : "default"}>
+              <ContentCopy fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleCopyLink}
+          color={copied ? "success" : "primary"}
+          sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+        >
+          {copied ? "복사됨!" : "링크 복사"}
+        </Button>
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={() => { setPendingInvite(null); setCopied(false); }}
+          sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+        >
+          닫기
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

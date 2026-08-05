@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import memberApi from "../api/memberApi";
 import type {
+  InviteResult,
   MemberAuthorityUpdateRequest,
   MemberInviteRequest,
   MemberResponse,
@@ -27,10 +28,13 @@ export const useMembers = (accountBookId: number | null) => {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const invite = useCallback(async (data: MemberInviteRequest) => {
-    if (!accountBookId) return;
-    const created = await memberApi.invite(accountBookId, data);
-    setMembers((prev) => [...prev, created]);
+  const invite = useCallback(async (data: MemberInviteRequest): Promise<InviteResult> => {
+    if (!accountBookId) throw new Error("accountBookId가 없습니다.");
+    const result = await memberApi.invite(accountBookId, data);
+    if (result.status === "added" && result.member) {
+      setMembers((prev) => [...prev, result.member!]);
+    }
+    return result;
   }, [accountBookId]);
 
   const updateAuthority = useCallback(async (userId: number, data: MemberAuthorityUpdateRequest) => {

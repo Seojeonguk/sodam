@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { supabase } from "../../../shared/lib/supabase";
 import { getUserSeq } from "../../../shared/lib/userSync";
 import type {
+  InviteResult,
   MemberAuthorityUpdateRequest,
   MemberInviteRequest,
   MemberResponse,
@@ -38,7 +39,7 @@ const memberApi = {
   invite: async (
     accountBookId: number,
     data: MemberInviteRequest,
-  ): Promise<MemberResponse> => {
+  ): Promise<InviteResult> => {
     // 초대할 유저 조회
     const { data: targetUser, error: userErr } = await supabase
       .from("users")
@@ -47,11 +48,38 @@ const memberApi = {
       .maybeSingle();
 
     if (userErr) throw new Error(userErr.message);
-    if (!targetUser) throw new Error("해당 이메일의 사용자를 찾을 수 없습니다.");
 
     const mySeq = await getUserSeq();
     const now = dayjs().format("YYYYMMDDHHmmss");
 
+    // ── 미가입 사용자: pending_invites에 보관 ──
+    if (!targetUser) {
+      const expires = dayjs().add(7, "day").format("YYYYMMDDHHmmss");
+
+      const { data: invite, error: inviteErr } = await supabase
+        .from("pending_invites")
+        .insert({
+          account_book_id: accountBookId,
+          invited_email: data.email,
+          authority: data.authority,
+          invited_by: mySeq,
+          created_at: now,
+          expires_at: expires,
+        })
+        .select("id")
+        .single();
+
+      if (inviteErr || !invite)
+        throw new Error(inviteErr?.message ?? "초대 생성 실패");
+
+      return {
+        status: "pending",
+        inviteToken: invite.id as string,
+        inviteEmail: data.email,
+      };
+    }
+
+    // ── 기존 가입자: account_book_member에 즉시 추가 ──
     const { data: member, error: memberErr } = await supabase
       .from("account_book_member")
       .insert({
@@ -70,12 +98,15 @@ const memberApi = {
     if (memberErr || !member) throw new Error(memberErr?.message ?? "초대 실패");
 
     return {
-      userId: targetUser.id as number,
-      email: targetUser.email as string,
-      name: targetUser.name as string,
-      imageUrl: targetUser.image_url as string | undefined,
-      authority: member.authority as MemberResponse["authority"],
-      joinedAt: member.created_at as string,
+      status: "added",
+      member: {
+        userId: targetUser.id as number,
+        email: targetUser.email as string,
+        name: targetUser.name as string,
+        imageUrl: targetUser.image_url as string | undefined,
+        authority: member.authority as MemberResponse["authority"],
+        joinedAt: member.created_at as string,
+      },
     };
   },
 

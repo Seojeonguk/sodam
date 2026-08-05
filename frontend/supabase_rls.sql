@@ -177,6 +177,36 @@ CREATE POLICY "classification_abm" ON public.classification
   USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
 
 
+-- ── pending_invites ───────────────────────────────────────────
+-- 미가입 사용자 초대 보류: 초대받은 이메일로 가입 시 자동 멤버 추가
+ALTER TABLE public.pending_invites ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "pi_select" ON public.pending_invites;
+DROP POLICY IF EXISTS "pi_insert" ON public.pending_invites;
+DROP POLICY IF EXISTS "pi_delete" ON public.pending_invites;
+
+-- 초대받은 본인 또는 해당 가계부 OWNER가 조회 가능
+CREATE POLICY "pi_select" ON public.pending_invites
+  FOR SELECT
+  USING (
+    invited_email = auth.email()
+    OR account_book_id IN (SELECT public.get_my_owned_account_book_ids())
+  );
+
+-- OWNER만 초대 생성 가능
+CREATE POLICY "pi_insert" ON public.pending_invites
+  FOR INSERT
+  WITH CHECK (account_book_id IN (SELECT public.get_my_owned_account_book_ids()));
+
+-- 초대받은 본인(수락 후 정리) 또는 OWNER(초대 취소)가 삭제 가능
+CREATE POLICY "pi_delete" ON public.pending_invites
+  FOR DELETE
+  USING (
+    invited_email = auth.email()
+    OR account_book_id IN (SELECT public.get_my_owned_account_book_ids())
+  );
+
+
 -- ══════════════════════════════════════════════════════════════
 -- 완료!
 -- ══════════════════════════════════════════════════════════════

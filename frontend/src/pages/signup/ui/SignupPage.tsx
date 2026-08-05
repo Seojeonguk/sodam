@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -22,6 +22,16 @@ function SignupPage() {
   const [name, setName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // URL ?invite=TOKEN&email=EMAIL 파라미터 처리
+  const [isInvited, setIsInvited] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get("email");
+    const inviteParam = params.get("invite");
+    if (emailParam) setEmail(decodeURIComponent(emailParam));
+    if (inviteParam) setIsInvited(true);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -79,7 +89,9 @@ function SignupPage() {
             <Typography variant="overline" color="text.secondary">CREATE ACCOUNT</Typography>
             <Typography variant="h4">회원가입</Typography>
             <Typography color="text.secondary">
-              가계부를 시작하기 위한 기본 정보를 입력해 주세요.
+              {isInvited
+                ? "가계부 초대를 받으셨습니다. 가입 후 자동으로 멤버로 추가됩니다."
+                : "가계부를 시작하기 위한 기본 정보를 입력해 주세요."}
             </Typography>
           </Stack>
 
@@ -97,6 +109,8 @@ function SignupPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              InputProps={{ readOnly: isInvited }}
+              helperText={isInvited ? "초대받은 이메일로 가입해야 멤버로 자동 추가됩니다." : undefined}
             />
             <TextField
               label="비밀번호"
