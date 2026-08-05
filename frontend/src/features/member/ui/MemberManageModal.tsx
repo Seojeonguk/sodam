@@ -57,7 +57,7 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
   const [inviteAuthority, setInviteAuthority] = useState<"EDITOR" | "VIEWER">("EDITOR");
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
-  const [pendingInvite, setPendingInvite] = useState<{ token: string; email: string } | null>(null);
+  const [pendingInvite, setPendingInvite] = useState<{ token: string; email: string; type: "signup" | "auth" } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const getPendingInviteLink = (token: string, email: string) =>
@@ -78,8 +78,10 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
     try {
       const result = await invite({ email, authority: inviteAuthority });
       setInviteEmail("");
-      if (result.status === "pending" && result.inviteToken) {
-        setPendingInvite({ token: result.inviteToken, email: result.inviteEmail! });
+      if (result.status === "pending_signup" && result.inviteToken) {
+        setPendingInvite({ token: result.inviteToken, email: result.inviteEmail!, type: "signup" });
+      } else if (result.status === "pending_auth") {
+        setPendingInvite({ token: "", email: result.inviteEmail!, type: "auth" });
       }
     } catch (e) {
       setInviteError(e instanceof Error ? e.message : "초대 중 오류가 발생했습니다.");
@@ -298,64 +300,78 @@ export default function MemberManageModal({ open, onClose, accountBookId, accoun
       fullWidth
       sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}
     >
-      <DialogTitle sx={{ pb: 0.5, fontWeight: 700 }}>초대 링크 공유</DialogTitle>
+      <DialogTitle sx={{ pb: 0.5, fontWeight: 700 }}>
+        {pendingInvite?.type === "auth" ? "초대 완료" : "초대 링크 공유"}
+      </DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          <b>{pendingInvite?.email}</b>는 아직 가입하지 않은 이메일입니다.
-          아래 링크를 공유하면 가입 후 자동으로 멤버로 추가됩니다.
-          (링크 유효기간: 7일)
-        </Typography>
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: "action.hover",
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              flex: 1,
-              wordBreak: "break-all",
-              fontFamily: "monospace",
-              fontSize: "0.7rem",
-              color: "text.secondary",
-            }}
-          >
-            {pendingInvite
-              ? getPendingInviteLink(pendingInvite.token, pendingInvite.email)
-              : ""}
+        {pendingInvite?.type === "auth" ? (
+          // 소셜 로그인 가입자이지만 앱 미접속
+          <Typography variant="body2" color="text.secondary">
+            <b>{pendingInvite.email}</b>은 카카오 등 소셜 로그인으로 가입된 계정입니다.
+            해당 사용자가 앱에 로그인하면 자동으로 멤버로 추가됩니다.
           </Typography>
-          <Tooltip title={copied ? "복사됨!" : "링크 복사"} placement="top">
-            <IconButton size="small" onClick={handleCopyLink} color={copied ? "success" : "default"}>
-              <ContentCopy fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        ) : (
+          // 완전 미가입 → 링크 공유
+          <>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              <b>{pendingInvite?.email}</b>는 아직 가입하지 않은 이메일입니다.
+              아래 링크를 공유하면 가입 후 자동으로 멤버로 추가됩니다.
+              (유효기간: 7일)
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "action.hover",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  flex: 1,
+                  wordBreak: "break-all",
+                  fontFamily: "monospace",
+                  fontSize: "0.7rem",
+                  color: "text.secondary",
+                }}
+              >
+                {pendingInvite
+                  ? getPendingInviteLink(pendingInvite.token, pendingInvite.email)
+                  : ""}
+              </Typography>
+              <Tooltip title={copied ? "복사됨!" : "링크 복사"} placement="top">
+                <IconButton size="small" onClick={handleCopyLink} color={copied ? "success" : "default"}>
+                  <ContentCopy fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleCopyLink}
-          color={copied ? "success" : "primary"}
-          sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
-        >
-          {copied ? "복사됨!" : "링크 복사"}
-        </Button>
+        {pendingInvite?.type === "signup" && (
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleCopyLink}
+            color={copied ? "success" : "primary"}
+            sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+          >
+            {copied ? "복사됨!" : "링크 복사"}
+          </Button>
+        )}
         <Button
           fullWidth
           variant="outlined"
           onClick={() => { setPendingInvite(null); setCopied(false); }}
           sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
         >
-          닫기
+          확인
         </Button>
       </DialogActions>
     </Dialog>

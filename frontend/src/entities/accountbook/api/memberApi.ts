@@ -42,79 +42,88 @@ const memberApi = {
     accountBookId: number,
     data: MemberInviteRequest,
   ): Promise<InviteResult> => {
-    // 초대할 유저 조회
+    const mySeq = await getUserSeq();
+    const now = dayjs().format("YYYYMMDDHHmmss");
+
+    // ── 1단계: public.users 조회 ──
     const { data: targetUser, error: userErr } = await supabase
       .from("users")
       .select("id, email, name, image_url")
       .eq("email", data.email)
       .maybeSingle();
 
-    console.log("targetUser", targetUser);
-    if (userErr) {
-      console.log("userErr", userErr);
-      throw new Error(userErr.message);
-    }
+    if (userErr) throw new Error(userErr.message);
 
-    const mySeq = await getUserSeq();
-    const now = dayjs().format("YYYYMMDDHHmmss");
-
-    // ── 미가입 사용자: pending_invites에 보관 ──
-    console.log("targetUser", targetUser);
-    if (!targetUser) {
-      const expires = dayjs().add(7, "day").format("YYYYMMDDHHmmss");
-
-      const { data: invite, error: inviteErr } = await supabase
-        .from("pending_invites")
+    // ── 기존 가입자(앱 동기화 완료): 즉시 멤버 추가 ──
+    if (targetUser) {
+      const { data: member, error: memberErr } = await supabase
+        .from("account_book_member")
         .insert({
           account_book_id: accountBookId,
-          invited_email: data.email,
+          user_id: targetUser.id,
           authority: data.authority,
-          invited_by: mySeq,
+          is_available: "Y",
           created_at: now,
-          expires_at: expires,
+          created_by: mySeq,
+          updated_at: now,
+          updated_by: mySeq,
         })
-        .select("id")
+        .select("authority, created_at")
         .single();
 
-      if (inviteErr || !invite)
-        throw new Error(inviteErr?.message ?? "초대 생성 실패");
+      if (memberErr || !member)
+        throw new Error(memberErr?.message ?? "초대 실패");
 
       return {
-        status: "pending",
-        inviteToken: invite.id as string,
+        status: "added",
+        member: {
+          userId: targetUser.id as number,
+          email: targetUser.email as string,
+          name: targetUser.name as string,
+          imageUrl: targetUser.image_url as string | undefined,
+          authority: member.authority as MemberResponse["authority"],
+          joinedAt: member.created_at as string,
+        },
+      };
+    }
+
+    // ── 2단계: public.users에 없으면 auth.users 확인 ──
+    // (카카오 등 소셜 로그인은 했지만 아직 앱에 한 번도 접속 안 한 경우)
+    const { data: authExists } = await supabase.rpc("check_auth_user_exists", {
+      p_email: data.email,
+    });
+
+    // pending_invite 공통 생성
+    const expires = dayjs().add(7, "day").format("YYYYMMDDHHmmss");
+    const { data: invite, error: inviteErr } = await supabase
+      .from("pending_invites")
+      .insert({
+        account_book_id: accountBookId,
+        invited_email: data.email,
+        authority: data.authority,
+        invited_by: mySeq,
+        created_at: now,
+        expires_at: expires,
+      })
+      .select("id")
+      .single();
+
+    if (inviteErr || !invite)
+      throw new Error(inviteErr?.message ?? "초대 생성 실패");
+
+    if (authExists) {
+      // 소셜 로그인 가입자이지만 앱 미접속 → 다음 로그인 시 자동 처리
+      return {
+        status: "pending_auth",
         inviteEmail: data.email,
       };
     }
 
-    // ── 기존 가입자: account_book_member에 즉시 추가 ──
-    const { data: member, error: memberErr } = await supabase
-      .from("account_book_member")
-      .insert({
-        account_book_id: accountBookId,
-        user_id: targetUser.id,
-        authority: data.authority,
-        is_available: "Y",
-        created_at: now,
-        created_by: mySeq,
-        updated_at: now,
-        updated_by: mySeq,
-      })
-      .select("authority, created_at")
-      .single();
-
-    if (memberErr || !member)
-      throw new Error(memberErr?.message ?? "초대 실패");
-
+    // 완전 미가입 → 초대 링크 공유 필요
     return {
-      status: "added",
-      member: {
-        userId: targetUser.id as number,
-        email: targetUser.email as string,
-        name: targetUser.name as string,
-        imageUrl: targetUser.image_url as string | undefined,
-        authority: member.authority as MemberResponse["authority"],
-        joinedAt: member.created_at as string,
-      },
+      status: "pending_signup",
+      inviteToken: invite.id as string,
+      inviteEmail: data.email,
     };
   },
 

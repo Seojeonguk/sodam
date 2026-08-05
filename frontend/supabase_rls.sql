@@ -11,6 +11,18 @@
 --    infinite recursion이 발생하므로 SECURITY DEFINER 함수로 우회.
 -- ══════════════════════════════════════════════════════════════
 
+-- 이메일로 Supabase Auth 가입 여부 확인 (auth.users 직접 접근)
+-- 프론트엔드 anon key로는 auth.users 조회 불가 → SECURITY DEFINER로 우회
+CREATE OR REPLACE FUNCTION public.check_auth_user_exists(p_email TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = p_email)
+$$;
+
 -- 현재 Auth 유저의 users.id (BIGSERIAL) 반환
 CREATE OR REPLACE FUNCTION public.get_my_user_seq()
 RETURNS BIGINT
