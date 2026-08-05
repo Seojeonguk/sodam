@@ -36,6 +36,14 @@ export async function ensureDefaultData(userId: number): Promise<void> {
 
   if (!memberships || memberships.length === 0) {
     // 가계부가 없으면 생성
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    console.log(session);
+    console.log(session?.user);
+    console.log(session?.user?.email);
+
     const { data: book, error: bookErr } = await supabase
       .from("account_book")
       .insert({
