@@ -11,17 +11,11 @@ export const useClassifications = (accountBookId?: number | null) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchClassifications = useCallback(async () => {
-    if (!accountBookId) {
-      setClassifications([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
+      // accountBookId 없어도 RLS가 현재 유저 가계부 기준으로 필터링
       const response = await classificationApi.getClassifications(accountBookId);
       setClassifications(response);
     } catch (nextError) {

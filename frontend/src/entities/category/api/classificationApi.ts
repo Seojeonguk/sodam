@@ -1,4 +1,5 @@
 import { supabase } from "../../../shared/lib/supabase";
+import { getUserSeq } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 import type { ClassificationResponse } from "./classification.types";
 
@@ -8,21 +9,34 @@ const FALLBACK: ClassificationResponse[] = [
 ];
 
 const classificationApi = {
+  /**
+   * RLS가 현재 유저의 가계부에 속한 분류만 반환.
+   * accountBookSeq를 전달하면 해당 가계부로 추가 필터링.
+   */
   getClassifications: async (
-    accountBookSeq: number,
+    accountBookSeq?: number | null,
   ): Promise<ClassificationResponse[]> => {
     if (guestMode.isActive()) return FALLBACK;
 
-    const { data, error } = await supabase
+    await getUserSeq(); // 세션 유효성 확인
+
+    let query = supabase
       .from("classification")
-      .select("id, name")
-      .eq("account_book_seq", accountBookSeq);
+      .select("id, name, account_book_seq");
+
+    if (accountBookSeq) {
+      query = query.eq("account_book_seq", accountBookSeq);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw new Error(error.message);
 
-    // DB에 데이터가 없으면 기본값 반환
     return data && data.length > 0
-      ? data.map((r: any) => ({ id: r.id as number, name: r.name as string }))
+      ? data.map((r) => ({
+          id: r.id as number,
+          name: r.name as "INCOME" | "EXPENSE",
+        }))
       : FALLBACK;
   },
 };
