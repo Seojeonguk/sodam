@@ -52,11 +52,13 @@ export async function ensureDefaultData(userId: number): Promise<void> {
         created_by: userId,
         updated_at: now,
         updated_by: userId,
-      });
+      })
+      .select("id")
+      .single();
 
     if (bookErr || !book) return;
-    accountBookId = 0;
-    // accountBookId = book.id as number;
+
+    accountBookId = book.id as number;
 
     await supabase.from("account_book_member").insert({
       account_book_id: accountBookId,

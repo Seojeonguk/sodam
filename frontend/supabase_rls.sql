@@ -95,7 +95,10 @@ CREATE POLICY "account_book_insert" ON public.account_book
 
 CREATE POLICY "account_book_select" ON public.account_book
   FOR SELECT
-  USING (id IN (SELECT public.get_my_account_book_ids()));
+  USING (
+    id IN (SELECT public.get_my_account_book_ids())
+    OR created_by = public.get_my_user_seq()
+  );
 
 CREATE POLICY "account_book_update" ON public.account_book
   FOR UPDATE
