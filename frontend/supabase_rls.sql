@@ -23,6 +23,45 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = p_email)
 $$;
 
+-- 가계부 및 관련 데이터 전체 삭제
+-- RLS 상 transaction은 작성자 본인만 삭제 가능하므로 SECURITY DEFINER로 우회
+-- OWNER 권한 검증 후 모든 관련 테이블을 순서대로 삭제
+CREATE OR REPLACE FUNCTION public.delete_account_book(p_account_book_id BIGINT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_id BIGINT;
+  v_authority TEXT;
+BEGIN
+  -- 호출자 확인
+  SELECT id INTO v_caller_id FROM public.users WHERE email = auth.email();
+  IF v_caller_id IS NULL THEN
+    RAISE EXCEPTION '인증되지 않은 사용자입니다.';
+  END IF;
+
+  -- OWNER 권한 검증
+  SELECT authority INTO v_authority
+  FROM public.account_book_member
+  WHERE account_book_id = p_account_book_id AND user_id = v_caller_id;
+
+  IF v_authority IS DISTINCT FROM 'OWNER' THEN
+    RAISE EXCEPTION 'OWNER만 가계부를 삭제할 수 있습니다.';
+  END IF;
+
+  -- 관련 데이터 순서대로 삭제
+  DELETE FROM public.pending_invites       WHERE account_book_id  = p_account_book_id;
+  DELETE FROM public.recurring_transaction WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.budget                WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.transaction           WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.classification        WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.account_book_member   WHERE account_book_id  = p_account_book_id;
+  DELETE FROM public.account_book          WHERE id               = p_account_book_id;
+END;
+$$;
+
 -- 현재 Auth 유저의 users.id (BIGSERIAL) 반환
 CREATE OR REPLACE FUNCTION public.get_my_user_seq()
 RETURNS BIGINT

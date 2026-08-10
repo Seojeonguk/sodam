@@ -2,7 +2,12 @@ import { memo, useCallback, useState, lazy, Suspense } from "react";
 import { styled, useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Drawer,
   IconButton,
@@ -18,6 +23,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -38,6 +44,7 @@ import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import type { AccountBookListResponse } from "../../../entities/accountbook/api/accountbook.types";
+import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import { clearAccessToken } from "../../../shared/api/api";
 import { supabase } from "../../../shared/lib/supabase";
 import { clearUserSeq, ensureDefaultData, getUserSeq } from "../../../shared/lib/userSync";
@@ -79,8 +86,25 @@ function SideBarDrawerComponent({
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
+  const [deleteBookConfirmOpen, setDeleteBookConfirmOpen] = useState(false);
+  const [deleteBookLoading, setDeleteBookLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(false);
   const [initResult, setInitResult] = useState<"success" | "error" | null>(null);
+
+  const handleDeleteAccountBook = async () => {
+    if (!currentAccountBook) return;
+    setDeleteBookLoading(true);
+    try {
+      await accountBookApi.deleteAccountBook(currentAccountBook.id);
+      setDeleteBookConfirmOpen(false);
+      localStorage.removeItem("sodam-selected-book-id");
+      await fetchAccountBooks();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "가계부 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setDeleteBookLoading(false);
+    }
+  };
 
   const handleInitDefaultData = async () => {
     if (initLoading) return;
@@ -279,7 +303,7 @@ function SideBarDrawerComponent({
                 </MenuItem>
               );
             })}
-            {/* 새 가계부 만들기 */}
+            {/* 새 가계부 만들기 / 현재 가계부 삭제 */}
             {!guestMode.isActive() && (
               <>
                 <Divider sx={{ my: 0.5 }} />
@@ -301,6 +325,28 @@ function SideBarDrawerComponent({
                   <AddIcon fontSize="small" sx={{ mr: 1 }} />
                   <Typography fontWeight={700} variant="body2">새 가계부 만들기</Typography>
                 </MenuItem>
+
+                {/* 현재 가계부 삭제: OWNER이고 가계부가 2개 이상일 때만 표시 */}
+                {currentAccountBook?.isOwner && accountBooks.length > 1 && (
+                  <MenuItem
+                    onClick={() => {
+                      closeRepoMenu();
+                      setDeleteBookConfirmOpen(true);
+                    }}
+                    sx={{
+                      minHeight: 44,
+                      borderRadius: 1,
+                      px: 1.2,
+                      color: "error.main",
+                      "&:hover": {
+                        backgroundColor: alpha(theme.palette.error.main, 0.08),
+                      },
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+                    <Typography fontWeight={700} variant="body2">현재 가계부 삭제</Typography>
+                  </MenuItem>
+                )}
               </>
             )}
           </Menu>
@@ -514,6 +560,49 @@ function SideBarDrawerComponent({
           onSuccess={fetchAccountBooks}
         />
       </Suspense>
+
+      {/* 가계부 삭제 확인 다이얼로그 */}
+      <Dialog
+        open={deleteBookConfirmOpen}
+        onClose={() => !deleteBookLoading && setDeleteBookConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "error.main" }}>
+          가계부 삭제
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            <b>{currentAccountBook?.name}</b> 가계부를 삭제하면 포함된 모든
+            거래 내역, 예산, 반복 거래, 분류 데이터가 영구적으로 삭제됩니다.
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mt: 1, fontWeight: 700 }}>
+            이 작업은 되돌릴 수 없습니다.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setDeleteBookConfirmOpen(false)}
+            disabled={deleteBookLoading}
+            sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+          >
+            취소
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            color="error"
+            disabled={deleteBookLoading}
+            onClick={() => void handleDeleteAccountBook()}
+            sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+          >
+            {deleteBookLoading ? <CircularProgress size={18} color="inherit" /> : "삭제"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -73,6 +73,14 @@ const accountBookApi = {
       updatedAt: book.updated_at as string,
     };
   },
+
+  deleteAccountBook: async (id: number): Promise<void> => {
+    const { error } = await supabase.rpc("delete_account_book", {
+      p_account_book_id: id,
+    });
+
+    if (error) throw new Error(error.message);
+  },
 };
 
 export default accountBookApi;
