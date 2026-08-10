@@ -22,6 +22,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -39,6 +40,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const MemberManageModal = lazy(() => import("../../../features/member/ui/MemberManageModal"));
 const AccountBookCreateModal = lazy(() => import("../../../features/accountbook/ui/AccountBookCreateModal"));
+const ProfileModal = lazy(() => import("../../../features/profile/ui/ProfileModal"));
 import { useLocation, useNavigate } from "react-router-dom";
 import { DRAWER_WIDTH } from "../../../shared/config/layout";
 import { useIsDesktop } from "../../../shared/lib/useIsDesktop";
@@ -86,6 +88,7 @@ function SideBarDrawerComponent({
   const [repoAnchor, setRepoAnchor] = useState<HTMLElement | null>(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [deleteBookConfirmOpen, setDeleteBookConfirmOpen] = useState(false);
   const [deleteBookLoading, setDeleteBookLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(false);
@@ -497,6 +500,32 @@ function SideBarDrawerComponent({
             </ListItem>
           )}
 
+          {/* 내 정보 — 비게스트 전용 */}
+          {!guestMode.isActive() && (
+            <ListItem disablePadding>
+              <ListItemButton
+                sx={{
+                  minHeight: 48,
+                  borderRadius: 2,
+                  mb: 0.5,
+                  color: "text.secondary",
+                  "&:hover": {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+                onClick={() => setProfileModalOpen(true)}
+              >
+                <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>
+                  <AccountCircleOutlinedIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="내 정보"
+                  primaryTypographyProps={{ fontWeight: 700 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          )}
+
           <ListItem disablePadding>
             <ListItemButton
               sx={{
@@ -551,6 +580,14 @@ function SideBarDrawerComponent({
           />
         </Suspense>
       )}
+
+      {/* 내 정보 모달 */}
+      <Suspense fallback={null}>
+        <ProfileModal
+          open={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+        />
+      </Suspense>
 
       {/* 가계부 생성 모달 */}
       <Suspense fallback={null}>
