@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { AddCircle, CalendarMonth, Clear, FilterList, FormatListBulleted, Search, TuneOutlined } from "@mui/icons-material";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { AddCircle, CalendarMonth, Clear, FileUploadOutlined, FilterList, FormatListBulleted, Search, TuneOutlined } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -32,6 +32,7 @@ import TransactionCreateModal from "../../../features/transaction/ui/Transaction
 import TransactionDetailModal from "../../../features/transaction/ui/TransactionDetailModal";
 import type { TransactionResponseDto } from "../../../entities/transaction/api/transaction.types";
 import TransactionEditModal from "../../../features/transaction/ui/TransactionEditModal";
+const TransactionImportModal = lazy(() => import("../../../features/transaction/ui/TransactionImportModal"));
 import CalendarView from "./CalendarView";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
@@ -44,6 +45,7 @@ function TransactionPage() {
   const theme = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTransactionSeq, setSelectedTransactionSeq] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -266,6 +268,23 @@ function TransactionPage() {
               <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, ml: 0.5 }}>캘린더</Box>
             </ToggleButton>
           </ToggleButtonGroup>
+
+          <Button
+            variant="outlined"
+            startIcon={<FileUploadOutlined />}
+            onClick={() => setIsImportModalOpen(true)}
+            size="small"
+            sx={{
+              fontWeight: 700,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              px: { xs: 1.2, sm: 2 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>엑셀 가져오기</Box>
+            <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>가져오기</Box>
+          </Button>
 
           <Button
             variant="contained"
@@ -678,6 +697,14 @@ function TransactionPage() {
 
       </>)}
       {/* ── 목록 뷰 섹션 끝 ── */}
+
+      <Suspense fallback={null}>
+        <TransactionImportModal
+          open={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={() => { void refreshTransactionData(); }}
+        />
+      </Suspense>
 
       <TransactionCreateModal
         isOpen={isCreateModalOpen}
