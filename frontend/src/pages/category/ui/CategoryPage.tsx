@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AddCircle } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import { supabase } from "../../../shared/lib/supabase";
 import { useCategories } from "../../../entities/category/model/useCategories";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import CategoryList from "../../../entities/category/ui/CategoryList";
@@ -42,6 +43,24 @@ function CategoryPage() {
   const [deleteTargetCategoryId, setDeleteTargetCategoryId] = useState<number | null>(null);
 
   const { categories, loading, error, refetchCategories, deleteCategory } = useCategories();
+
+  // 카테고리별 거래 건수
+  const [catCountMap, setCatCountMap] = useState<Map<number, number>>(new Map());
+  useEffect(() => {
+    if (!currentAccountBook) return;
+    void (async () => {
+      const { data } = await supabase
+        .from("transaction")
+        .select("category_seq")
+        .eq("account_book_seq", currentAccountBook.id);
+      const map = new Map<number, number>();
+      (data ?? []).forEach((tx: any) => {
+        const seq = tx.category_seq as number | null;
+        if (seq != null) map.set(seq, (map.get(seq) ?? 0) + 1);
+      });
+      setCatCountMap(map);
+    })();
+  }, [currentAccountBook]);
   const {
     classifications,
     loading: classificationsLoading,
@@ -199,6 +218,7 @@ function CategoryPage() {
 
           <CategoryList
             categories={filteredCategories}
+            countMap={catCountMap}
             onDelete={handleDeleteCategory}
             onEdit={(category) => {
               setSelectedCategory(category);

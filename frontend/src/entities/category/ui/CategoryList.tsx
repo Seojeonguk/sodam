@@ -15,6 +15,7 @@ import { useTheme } from "@mui/material/styles";
 
 interface CategoryListProps {
   categories: CategoryListItemResponse[];
+  countMap?: Map<number, number>;
   onDelete: (id: number) => void;
   onEdit?: (category: CategoryListItemResponse) => void;
 }
@@ -60,6 +61,7 @@ const getContrastColor = (backgroundColor: string): string => {
 
 const CategoryList: React.FC<CategoryListProps> = ({
   categories,
+  countMap,
   onDelete,
   onEdit,
 }) => {
@@ -168,7 +170,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
                 alignItems="center"
               >
                 <Typography variant="caption" color="text.secondary">
-                  ID #{category.id}
+                  총 {(countMap?.get(category.id) ?? 0).toLocaleString()}건
                 </Typography>
                 <Box display="flex" gap={0.5}>
                   {onEdit && (
