@@ -298,12 +298,20 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
     e.target.value = "";
   };
 
+  // ── 랜덤 색상 ────────────────────────────────────────────────
+  const PALETTE = [
+    "#EF5350","#EC407A","#AB47BC","#7E57C2","#42A5F5",
+    "#26C6DA","#26A69A","#66BB6A","#D4E157","#FFA726",
+    "#FF7043","#8D6E63","#78909C","#5C6BC0","#29B6F6",
+  ];
+  const randomColor = () => PALETTE[Math.floor(Math.random() * PALETTE.length)];
+
   // ── 카테고리 생성 ────────────────────────────────────────────
   const handleCreateCategory = async (name: string) => {
     const type = newCatTypes[name] ?? "EXPENSE";
     setCreatingCats((prev) => new Set(prev).add(name));
     try {
-      const req: CategoryUpsertRequest = { name, type };
+      const req: CategoryUpsertRequest = { name, type, color: randomColor() };
       const created = await categoryApi.createCategory(req);
       // rows의 해당 카테고리 자동 매칭
       setRows((prev) =>
