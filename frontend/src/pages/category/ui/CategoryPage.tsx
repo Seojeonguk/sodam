@@ -23,6 +23,7 @@ import type { CategoryListItemResponse } from "../../../entities/transaction/api
 import CategoryCreateModal from "../../../features/category/ui/CategoryCreateModal";
 import CategoryEditModal from "../../../features/category/ui/CategoryEditModal";
 import CategoryReplaceModal from "../../../features/category/ui/CategoryReplaceModal";
+import CategoryTransactionsModal from "../../../features/category/ui/CategoryTransactionsModal";
 
 type ManagementTab = "categories" | "classifications";
 
@@ -41,26 +42,32 @@ function CategoryPage() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryListItemResponse | null>(null);
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
   const [deleteTargetCategoryId, setDeleteTargetCategoryId] = useState<number | null>(null);
+  const [txModalCategory, setTxModalCategory] = useState<CategoryListItemResponse | null>(null);
 
   const { categories, loading, error, refetchCategories, deleteCategory } = useCategories();
 
   // 카테고리별 거래 건수
+  // — head:true 로 데이터 전송 없이 COUNT만 받아옴 (행 수 제한 우회)
   const [catCountMap, setCatCountMap] = useState<Map<number, number>>(new Map());
   useEffect(() => {
-    if (!currentAccountBook) return;
+    if (!currentAccountBook || !categories || categories.length === 0) return;
     void (async () => {
-      const { data } = await supabase
-        .from("transaction")
-        .select("category_seq")
-        .eq("account_book_seq", currentAccountBook.id);
-      const map = new Map<number, number>();
-      (data ?? []).forEach((tx: any) => {
-        const seq = tx.category_seq as number | null;
-        if (seq != null) map.set(seq, (map.get(seq) ?? 0) + 1);
-      });
-      setCatCountMap(map);
+      const { getUserSeq } = await import("../../../shared/lib/userSync");
+      const userSeq = await getUserSeq();
+      const entries = await Promise.all(
+        categories.map(async (cat) => {
+          const { count } = await supabase
+            .from("transaction")
+            .select("*", { count: "exact", head: true })
+            .eq("account_book_seq", currentAccountBook.id)
+            .eq("user_seq", userSeq)
+            .eq("category_seq", cat.id);
+          return [cat.id, count ?? 0] as [number, number];
+        }),
+      );
+      setCatCountMap(new Map(entries));
     })();
-  }, [currentAccountBook]);
+  }, [currentAccountBook, categories]);
   const {
     classifications,
     loading: classificationsLoading,
@@ -80,6 +87,17 @@ function CategoryPage() {
   const isCategoryTab = activeTab === "categories";
 
   const handleDeleteCategory = (id: number) => {
+    // 거래가 없으면 바로 삭제, 있으면 이동 대상 카테고리 선택
+    if ((catCountMap.get(id) ?? 0) === 0) {
+      void (async () => {
+        try {
+          await deleteCategory(id, 0);
+        } catch (err) {
+          alert(`카테고리 삭제 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
+        }
+      })();
+      return;
+    }
     setDeleteTargetCategoryId(id);
     setIsReplaceModalOpen(true);
   };
@@ -224,6 +242,7 @@ function CategoryPage() {
               setSelectedCategory(category);
               setIsEditModalOpen(true);
             }}
+            onSelect={(category) => setTxModalCategory(category)}
           />
         </Paper>
       )}
@@ -340,6 +359,12 @@ function CategoryPage() {
       )}
 
       {/* ── 모달 ── */}
+      <CategoryTransactionsModal
+        open={txModalCategory !== null}
+        onClose={() => setTxModalCategory(null)}
+        category={txModalCategory}
+        accountBookId={currentAccountBook?.id}
+      />
       <CategoryCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

@@ -18,6 +18,7 @@ interface CategoryListProps {
   countMap?: Map<number, number>;
   onDelete: (id: number) => void;
   onEdit?: (category: CategoryListItemResponse) => void;
+  onSelect?: (category: CategoryListItemResponse) => void;
 }
 
 // 색상 밝기 계산 함수 (0-255 범위)
@@ -64,6 +65,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
   countMap,
   onDelete,
   onEdit,
+  onSelect,
 }) => {
   const theme = useTheme();
 
@@ -94,6 +96,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
           <Paper
             key={category.id}
             elevation={0}
+            onClick={() => onSelect?.(category)}
             sx={{
               position: "relative",
               p: 3,
@@ -101,6 +104,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
               border: `1px solid ${alpha(accent, 0.4)}`,
               backgroundColor: alpha(accent, category.color ? 0.08 : 0.04),
               transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: onSelect ? "pointer" : "default",
               "&:hover": {
                 transform: "translateY(-4px)",
                 boxShadow: "0 15px 30px rgba(15,23,42,0.12)",
@@ -177,7 +181,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
                     <IconButton
                       edge="end"
                       aria-label="edit"
-                      onClick={() => onEdit(category)}
+                      onClick={(e) => { e.stopPropagation(); onEdit(category); }}
                       size="small"
                       sx={{
                         color: "text.secondary",
@@ -197,7 +201,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
                   <IconButton
                     edge="end"
                     aria-label="delete"
-                    onClick={() => onDelete(category.id)}
+                    onClick={(e) => { e.stopPropagation(); onDelete(category.id); }}
                     size="small"
                     sx={{
                       color: "text.secondary",
