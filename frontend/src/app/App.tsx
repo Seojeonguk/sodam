@@ -7,6 +7,7 @@ import CategoryPage from "../pages/category/ui/CategoryPage";
 import DashboardPage from "../pages/dashboard/ui/DashboardPage";
 import BudgetPage from "../pages/budget/ui/BudgetPage";
 import RecurringPage from "../pages/recurring/ui/RecurringPage";
+import MemberStatsPage from "../pages/member-stats/ui/MemberStatsPage";
 import SignupPage from "../pages/signup/ui/SignupPage";
 import { getAccessToken, restoreSession } from "../shared/api/api";
 import { AccountBookProvider, useAccountBookContext } from "../entities/accountbook/model/AccountBookContext";
@@ -102,6 +103,7 @@ const AppRoutes = memo(function AppRoutes() {
         <Route path="/category" element={<CategoryPage />} />
         <Route path="/budget" element={<BudgetPage />} />
         <Route path="/recurring" element={<RecurringPage />} />
+        <Route path="/member-stats" element={<MemberStatsPage />} />
       </Route>
     </Routes>
   );

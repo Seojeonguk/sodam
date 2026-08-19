@@ -33,6 +33,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import RepeatOutlinedIcon from "@mui/icons-material/RepeatOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import LeaderboardOutlinedIcon from "@mui/icons-material/LeaderboardOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -64,6 +65,7 @@ const SIDE_MENU_ITEMS = [
   { label: "예산 관리", path: "/budget", icon: <SavingsOutlinedIcon /> },
   { label: "반복 거래", path: "/recurring", icon: <RepeatOutlinedIcon /> },
   { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
+  { label: "멤버 통계", path: "/member-stats", icon: <LeaderboardOutlinedIcon /> },
 ];
 
 const DrawerHeader = styled("div")(({ theme }) => ({
