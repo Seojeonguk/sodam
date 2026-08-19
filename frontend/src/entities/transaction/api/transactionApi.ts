@@ -3,6 +3,7 @@ import { supabase } from "../../../shared/lib/supabase";
 import { getUserSeq } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
+import assetApi from "../../asset/api/assetApi";
 import type {
   TransactionCreateRequestDto,
   TransactionListResponse,
@@ -92,14 +93,26 @@ const transactionApi = {
         description: data.description ?? "",
         transaction_date: toDbDate(data.transactionDate),
         type: data.type,
+        asset_seq: data.assetSeq ?? null,
         satisfaction_rating: 0,
         created_at: ts,
         updated_at: ts,
       })
-      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .select("seq, account_book_seq, user_seq, category_seq, asset_seq, amount, description, transaction_date, type, satisfaction_rating")
       .single();
 
     if (error || !row) throw new Error(error?.message ?? "거래 생성 실패");
+
+    // 자산 잔액 자동 반영 (best-effort)
+    if (data.assetSeq) {
+      try {
+        await assetApi.applyTransactionDelta(
+          data.assetSeq, row.seq as number, data.type, data.amount,
+        );
+      } catch (e) {
+        console.warn("자산 잔액 반영 실패:", e);
+      }
+    }
 
     return {
       seq: row.seq as number,
@@ -180,8 +193,30 @@ const transactionApi = {
   deleteTransaction: async (seq: number): Promise<void> => {
     if (guestMode.isActive()) { guestStore.deleteTransaction(seq); return; }
 
+    // 삭제 전 asset_seq, type, amount 조회 (잔액 복원용)
+    const { data: txRow } = await supabase
+      .from("transaction")
+      .select("asset_seq, type, amount")
+      .eq("seq", seq)
+      .maybeSingle();
+
     const { error } = await supabase.from("transaction").delete().eq("seq", seq);
     if (error) throw new Error(error.message);
+
+    // 자산 잔액 복원 (best-effort)
+    if (txRow?.asset_seq) {
+      try {
+        await assetApi.applyTransactionDelta(
+          txRow.asset_seq as number,
+          seq,
+          txRow.type as string,
+          Number(txRow.amount),
+          true, // reverse
+        );
+      } catch (e) {
+        console.warn("자산 잔액 복원 실패:", e);
+      }
+    }
   },
 };
 

@@ -34,6 +34,8 @@ export interface TransactionCreateRequestDto {
   categorySeq: number | null;
   description?: string;
   transactionDate: string;
+  /** 연동할 자산 seq (선택) */
+  assetSeq?: number;
 }
 
 export interface TransactionUpdateRequestDto {

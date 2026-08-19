@@ -34,6 +34,7 @@ import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import RepeatOutlinedIcon from "@mui/icons-material/RepeatOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import LeaderboardOutlinedIcon from "@mui/icons-material/LeaderboardOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
@@ -66,6 +67,7 @@ const SIDE_MENU_ITEMS = [
   { label: "반복 거래", path: "/recurring", icon: <RepeatOutlinedIcon /> },
   { label: "카테고리", path: "/category", icon: <CategoryIcon /> },
   { label: "멤버 통계", path: "/member-stats", icon: <LeaderboardOutlinedIcon /> },
+  { label: "자산 관리", path: "/assets", icon: <AccountBalanceWalletOutlinedIcon /> },
 ];
 
 const DrawerHeader = styled("div")(({ theme }) => ({

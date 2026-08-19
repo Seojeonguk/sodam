@@ -51,11 +51,12 @@ BEGIN
     RAISE EXCEPTION 'OWNER만 가계부를 삭제할 수 있습니다.';
   END IF;
 
-  -- 관련 데이터 순서대로 삭제
+  -- 관련 데이터 순서대로 삭제 (asset_history는 CASCADE로 자동 삭제)
   DELETE FROM public.pending_invites       WHERE account_book_id  = p_account_book_id;
   DELETE FROM public.recurring_transaction WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.budget                WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.transaction           WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.asset                 WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.classification        WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.account_book_member   WHERE account_book_id  = p_account_book_id;
   DELETE FROM public.account_book          WHERE id               = p_account_book_id;
@@ -256,6 +257,46 @@ CREATE POLICY "pi_delete" ON public.pending_invites
     invited_email = auth.email()
     OR account_book_id IN (SELECT public.get_my_owned_account_book_ids())
   );
+
+
+-- ── asset ─────────────────────────────────────────────────────
+-- SELECT: 내가 속한 가계부의 자산 전체 조회 가능
+-- INSERT/UPDATE/DELETE: 내가 등록한 자산만
+ALTER TABLE public.asset ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "asset_select" ON public.asset;
+DROP POLICY IF EXISTS "asset_write"  ON public.asset;
+
+CREATE POLICY "asset_select" ON public.asset
+  FOR SELECT
+  USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
+
+CREATE POLICY "asset_write" ON public.asset
+  FOR ALL
+  USING     (user_seq = public.get_my_user_seq())
+  WITH CHECK (user_seq = public.get_my_user_seq());
+
+
+-- ── asset_history ─────────────────────────────────────────────
+-- SELECT: asset을 볼 수 있으면 히스토리도 조회 가능
+-- INSERT: 본인이 생성한 기록만
+ALTER TABLE public.asset_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "asset_history_select" ON public.asset_history;
+DROP POLICY IF EXISTS "asset_history_insert" ON public.asset_history;
+
+CREATE POLICY "asset_history_select" ON public.asset_history
+  FOR SELECT
+  USING (
+    asset_seq IN (
+      SELECT seq FROM public.asset
+      WHERE account_book_seq IN (SELECT public.get_my_account_book_ids())
+    )
+  );
+
+CREATE POLICY "asset_history_insert" ON public.asset_history
+  FOR INSERT
+  WITH CHECK (created_by = public.get_my_user_seq());
 
 
 -- ══════════════════════════════════════════════════════════════

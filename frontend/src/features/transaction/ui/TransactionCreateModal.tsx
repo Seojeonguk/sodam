@@ -7,7 +7,11 @@ import {
   CircularProgress,
   Dialog,
   DialogContent,
+  FormControl,
   InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -22,6 +26,7 @@ import "dayjs/locale/ko";
 import { alpha, useTheme } from "@mui/material/styles";
 
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import { useAssets } from "../../../entities/asset/model/useAssets";
 import classificationApi from "../../../entities/category/api/classificationApi";
 import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
 import categoryApi from "../../../entities/category/api/categoryApi";
@@ -84,10 +89,13 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [category, setCategory] = useState<number | "">("");
   const [description, setDescription] = useState<string>("");
   const [transactionDate, setTransactionDate] = useState<Dayjs>(dayjs());
+  const [assetSeq, setAssetSeq] = useState<number | "">("");
   const [classifications, setClassifications] = useState<ClassificationResponse[]>([]);
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { assets } = useAssets(currentAccountBook?.id ?? null);
 
   // 모달 열릴 때 분류 목록 로드
   useEffect(() => {
@@ -124,6 +132,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     setCategory("");
     setDescription("");
     setTransactionDate(dayjs());
+    setAssetSeq("");
     setClassifications([]);
     setCategories([]);
     setLoading(false);
@@ -162,6 +171,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
         categorySeq: category,
         description,
         transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
+        assetSeq: assetSeq !== "" ? assetSeq : undefined,
       };
       await transactionApi.createTransaction(req);
       await onSuccess();
@@ -384,7 +394,26 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             sx={{ mb: 2 }}
           />
 
-          {/* ── 5. 날짜 ── */}
+          {/* ── 5. 자산 연동 (선택) ── */}
+          {assets.length > 0 && (
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+              <InputLabel>자산 연동 (선택)</InputLabel>
+              <Select
+                value={assetSeq}
+                label="자산 연동 (선택)"
+                onChange={(e) => setAssetSeq(e.target.value as number | "")}
+              >
+                <MenuItem value="">연동 안 함</MenuItem>
+                {assets.map((a) => (
+                  <MenuItem key={a.seq} value={a.seq}>
+                    {a.name} ({a.balance.toLocaleString("ko-KR")}원)
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* ── 6. 날짜 ── */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               label="날짜"
