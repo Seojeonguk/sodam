@@ -35,7 +35,7 @@ const classificationApi = {
     return data && data.length > 0
       ? data.map((r) => ({
           id: r.id as number,
-          name: r.name as "INCOME" | "EXPENSE",
+          name: r.name as "INCOME" | "EXPENSE" | "TRANSFER",
         }))
       : FALLBACK;
   },

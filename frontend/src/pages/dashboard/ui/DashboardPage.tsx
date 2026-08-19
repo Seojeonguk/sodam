@@ -10,6 +10,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   Category as CategoryIcon,
   Insights,
@@ -19,6 +20,8 @@ import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { useTransactions } from "../../../entities/transaction/model/useTransactions";
 import { useCategories } from "../../../entities/category/model/useCategories";
+import { useClassifications } from "../../../entities/category/model/useClassifications";
+import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
 import { DashboardHero } from "./DashboardHero";
 import { SummaryCards } from "./SummaryCards";
 import { MonthlyTrendSection } from "./MonthlyTrendSection";
@@ -32,6 +35,7 @@ type PeriodMode = "month" | "year";
 
 function DashboardPage() {
   const now = dayjs();
+  const theme = useTheme();
   const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
   const [selectedYear, setSelectedYear] = useState<number>(now.year());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.month() + 1);
@@ -40,14 +44,14 @@ function DashboardPage() {
     transactions,
     loading: txLoading,
     error: txError,
-    incomeStats,
-    expenseStats,
+    typeStats,
     statPeriodDataset,
     dateRange,
     setDateRange,
     refreshTransactionData,
     totalElements,
   } = useTransactions({ pageSize: 5 });
+  const { classifications } = useClassifications();
   const {
     categories,
     loading: categoryLoading,
@@ -85,23 +89,41 @@ function DashboardPage() {
 
   const totalIncome = useMemo(
     () =>
-      incomeStats.reduce(
+      (typeStats["INCOME"] ?? []).reduce(
         (sum, stat) => sum + (typeof stat.value === "number" ? stat.value : 0),
         0,
       ),
-    [incomeStats],
+    [typeStats],
   );
 
   const totalExpense = useMemo(
     () =>
-      expenseStats.reduce(
+      (typeStats["EXPENSE"] ?? []).reduce(
         (sum, stat) => sum + (typeof stat.value === "number" ? stat.value : 0),
         0,
       ),
-    [expenseStats],
+    [typeStats],
   );
 
   const netBalance = totalIncome - totalExpense;
+
+  /** 분류별 월별 추이 차트 시리즈 */
+  const trendSeries = useMemo(() => {
+    const source = classifications.length > 0
+      ? classifications
+      : [{ name: "INCOME" }, { name: "EXPENSE" }];
+    return source.map((cls) => {
+      const muiColor = TYPE_MUI_COLOR[cls.name] ?? "default";
+      const color = muiColor !== "default"
+        ? theme.palette[muiColor as "success" | "error" | "info"].main
+        : undefined;
+      return {
+        dataKey: cls.name.toLowerCase(),
+        label: TYPE_LABEL[cls.name] ?? cls.name,
+        ...(color ? { color } : {}),
+      };
+    });
+  }, [classifications, theme]);
 
   const recentTransactions = useMemo(
     () => allTransactions.slice(0, 5),
@@ -293,7 +315,7 @@ function DashboardPage() {
             gridTemplateColumns={{ xs: "1fr", md: "1.1fr 0.9fr" }}
             gap={3}
           >
-            <MonthlyTrendSection dataset={statPeriodDataset} />
+            <MonthlyTrendSection dataset={statPeriodDataset} series={trendSeries} />
             <TypeBreakdownSection
               totalIncome={totalIncome}
               totalExpense={totalExpense}

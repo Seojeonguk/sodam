@@ -19,6 +19,8 @@ import { ChromePicker } from "react-color";
 import axios, { type AxiosError } from "axios";
 
 import categoryApi from "../../../entities/category/api/categoryApi";
+import { useClassifications } from "../../../entities/category/model/useClassifications";
+import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL, TYPE_SOLID_STYLE } from "../../../entities/category/lib/classificationUtils";
 
 const getRandomColor = () =>
   `#${Math.floor(Math.random() * 16777215)
@@ -55,7 +57,8 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   onSuccess,
 }) => {
   const [mode, setMode] = useState<CreateMode>("single");
-  const [categoryType, setCategoryType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [categoryType, setCategoryType] = useState<string>("EXPENSE");
+  const { classifications } = useClassifications();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(getRandomColor());
@@ -192,30 +195,15 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
           <ToggleButtonGroup
             exclusive
             value={categoryType}
-            onChange={(_, value: "INCOME" | "EXPENSE" | null) => {
-              if (value) setCategoryType(value);
-            }}
+            onChange={(_, value: string | null) => { if (value) setCategoryType(value); }}
             size="small"
             fullWidth
           >
-            <ToggleButton
-              value="EXPENSE"
-              sx={{
-                fontWeight: 700,
-                "&.Mui-selected": { bgcolor: "error.main", color: "white", "&:hover": { bgcolor: "error.dark" } },
-              }}
-            >
-              지출
-            </ToggleButton>
-            <ToggleButton
-              value="INCOME"
-              sx={{
-                fontWeight: 700,
-                "&.Mui-selected": { bgcolor: "success.main", color: "white", "&:hover": { bgcolor: "success.dark" } },
-              }}
-            >
-              수입
-            </ToggleButton>
+            {(classifications.length > 0 ? classifications : FALLBACK_CLASSIFICATIONS).map((cls) => (
+              <ToggleButton key={cls.name} value={cls.name} sx={{ fontWeight: 700, ...TYPE_SOLID_STYLE(cls.name) }}>
+                {TYPE_LABEL[cls.name] ?? cls.name}
+              </ToggleButton>
+            ))}
           </ToggleButtonGroup>
         </Box>
 

@@ -19,7 +19,7 @@ const categoryApi = {
   getCategories: async (
     _page?: number,
     _size?: number,
-    type?: "INCOME" | "EXPENSE",
+    type?: "INCOME" | "EXPENSE" | "TRANSFER",
   ): Promise<CategoryListItemResponse[]> => {
     if (guestMode.isActive()) {
       const res = guestStore.getCategories(0, 1000, type);

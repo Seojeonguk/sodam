@@ -1,4 +1,4 @@
 export interface ClassificationResponse {
   id: number;
-  name: "INCOME" | "EXPENSE";
+  name: "INCOME" | "EXPENSE" | "TRANSFER";
 }

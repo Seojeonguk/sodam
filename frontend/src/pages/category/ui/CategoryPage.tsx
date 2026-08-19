@@ -27,16 +27,13 @@ import CategoryTransactionsModal from "../../../features/category/ui/CategoryTra
 
 type ManagementTab = "categories" | "classifications";
 
-const classificationLabelMap: Record<"INCOME" | "EXPENSE", string> = {
-  INCOME: "수입",
-  EXPENSE: "지출",
-};
+import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
 
 function CategoryPage() {
   const theme = useTheme();
   const { currentAccountBook } = useAccountBookContext();
   const [activeTab, setActiveTab] = useState<ManagementTab>("categories");
-  const [categoryTypeFilter, setCategoryTypeFilter] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<string>("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryListItemResponse | null>(null);
@@ -214,23 +211,21 @@ function CategoryPage() {
             </Typography>
             <Tabs
               value={categoryTypeFilter}
-              onChange={(_, v: "ALL" | "INCOME" | "EXPENSE") => setCategoryTypeFilter(v)}
+              onChange={(_, v: string) => setCategoryTypeFilter(v)}
               sx={{
                 minHeight: 36,
                 "& .MuiTab-root": { minHeight: 36, py: 0.5, fontSize: "0.8rem" },
               }}
             >
               <Tab value="ALL" label={`전체 (${allCategoryList.length})`} />
-              <Tab
-                value="EXPENSE"
-                label={`지출 (${allCategoryList.filter((c) => c.type === "EXPENSE").length})`}
-                sx={{ color: "error.main" }}
-              />
-              <Tab
-                value="INCOME"
-                label={`수입 (${allCategoryList.filter((c) => c.type === "INCOME").length})`}
-                sx={{ color: "success.main" }}
-              />
+              {classifications.map((cls) => (
+                <Tab
+                  key={cls.name}
+                  value={cls.name}
+                  label={`${TYPE_LABEL[cls.name] ?? cls.name} (${allCategoryList.filter((c) => c.type === cls.name).length})`}
+                  sx={{ color: `${TYPE_MUI_COLOR[cls.name] ?? "default"}.main` }}
+                />
+              ))}
             </Tabs>
           </Stack>
 
@@ -329,19 +324,15 @@ function CategoryPage() {
                     p: 2.5,
                     borderRadius: 2,
                     border: "1px solid",
-                    borderColor: classification.name === "INCOME"
-                      ? alpha(theme.palette.success.main, 0.3)
-                      : alpha(theme.palette.error.main, 0.3),
-                    bgcolor: classification.name === "INCOME"
-                      ? alpha(theme.palette.success.main, 0.04)
-                      : alpha(theme.palette.error.main, 0.04),
+                    borderColor: alpha(theme.palette[TYPE_MUI_COLOR[classification.name] ?? "primary"].main, 0.3),
+                    bgcolor:     alpha(theme.palette[TYPE_MUI_COLOR[classification.name] ?? "primary"].main, 0.04),
                   }}
                 >
                   <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                     <Chip
-                      label={classificationLabelMap[classification.name]}
+                      label={TYPE_LABEL[classification.name] ?? classification.name}
                       size="small"
-                      color={classification.name === "INCOME" ? "success" : "error"}
+                      color={TYPE_MUI_COLOR[classification.name] ?? "default"}
                       sx={{ fontWeight: 700 }}
                     />
                     <Typography variant="caption" color="text.secondary">

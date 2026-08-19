@@ -18,6 +18,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import axios from "axios";
+import classificationApi from "../../../entities/category/api/classificationApi";
+import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
@@ -26,6 +28,8 @@ import type {
   TransactionUpdateRequestDto,
 } from "../../../entities/transaction/api/transaction.types";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+
+const TYPE_LABEL: Record<string, string> = { INCOME: "수입", EXPENSE: "지출", TRANSFER: "이체" };
 
 const style = {
   position: "absolute" as const,
@@ -56,14 +60,21 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
   onSuccess,
 }) => {
   const { currentAccountBook } = useAccountBookContext();
-  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [type, setType] = useState<string>("EXPENSE");
   const [amount, setAmount] = useState("");
   const [categorySeq, setCategorySeq] = useState<number | "">("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs());
+  const [classifications, setClassifications] = useState<ClassificationResponse[]>([]);
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 분류 목록 로드
+  useEffect(() => {
+    if (!isOpen) { setClassifications([]); return; }
+    void classificationApi.getClassifications(currentAccountBook?.id).then(setClassifications).catch(() => {});
+  }, [isOpen, currentAccountBook?.id]);
 
   useEffect(() => {
     if (!transactionToEdit) {
@@ -72,6 +83,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       setCategorySeq("");
       setDescription("");
       setTransactionDate(dayjs());
+      setClassifications([]);
       setCategories([]);
       setError(null);
       setLoading(false);
@@ -87,16 +99,15 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     setLoading(false);
   }, [transactionToEdit]);
 
-  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 (per-user, account book 불필요) */
+  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
   useEffect(() => {
     const fetchModalOptions = async () => {
       if (!isOpen) {
         setCategories([]);
         return;
       }
-
       try {
-        const fetchedCategories = await categoryApi.getCategories(undefined, undefined, type);
+        const fetchedCategories = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
         setCategories(fetchedCategories ?? []);
       } catch (nextError) {
         if (axios.isAxiosError(nextError)) {
@@ -199,13 +210,19 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
             id="type-select"
             value={type}
             label="유형"
-            onChange={(event: SelectChangeEvent<"INCOME" | "EXPENSE">) => {
+            onChange={(event: SelectChangeEvent<string>) => {
               setType(event.target.value);
               setCategorySeq("");
             }}
           >
-            <MenuItem value="EXPENSE">지출</MenuItem>
-            <MenuItem value="INCOME">수입</MenuItem>
+            {(classifications.length > 0
+              ? classifications
+              : [{ id: -1, name: "EXPENSE" }, { id: -2, name: "INCOME" }] as ClassificationResponse[]
+            ).map((cls) => (
+              <MenuItem key={cls.name} value={cls.name}>
+                {TYPE_LABEL[cls.name] ?? cls.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
 

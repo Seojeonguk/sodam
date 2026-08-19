@@ -22,10 +22,26 @@ import "dayjs/locale/ko";
 import { alpha, useTheme } from "@mui/material/styles";
 
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
+import classificationApi from "../../../entities/category/api/classificationApi";
+import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import type { TransactionCreateRequestDto } from "../../../entities/transaction/api/transaction.types";
+
+/** 분류명 → 한글 라벨 */
+const TYPE_LABEL: Record<string, string> = {
+  INCOME: "수입",
+  EXPENSE: "지출",
+  TRANSFER: "이체",
+};
+
+/** 분류명 → MUI 색상 팔레트 키 */
+const TYPE_PALETTE = (name: string, theme: ReturnType<typeof import("@mui/material/styles").useTheme>) => {
+  if (name === "INCOME")   return theme.palette.success;
+  if (name === "TRANSFER") return theme.palette.info;
+  return theme.palette.error; // EXPENSE + fallback
+};
 
 dayjs.locale("ko");
 
@@ -63,24 +79,34 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const theme = useTheme();
   const { currentAccountBook } = useAccountBookContext();
 
-  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [type, setType] = useState<string>("EXPENSE");
   const [amount, setAmount] = useState<string>("");
   const [category, setCategory] = useState<number | "">("");
   const [description, setDescription] = useState<string>("");
   const [transactionDate, setTransactionDate] = useState<Dayjs>(dayjs());
+  const [classifications, setClassifications] = useState<ClassificationResponse[]>([]);
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 카테고리 목록: 모달 열릴 때 / type 변경마다 재조회 (per-user, account book 불필요)
+  // 모달 열릴 때 분류 목록 로드
   useEffect(() => {
-    if (!isOpen) {
-      setCategories([]);
-      return;
-    }
+    if (!isOpen) { setClassifications([]); return; }
+    void classificationApi.getClassifications(currentAccountBook?.id).then((list) => {
+      setClassifications(list);
+      // 첫 번째 분류로 초기 타입 설정
+      if (list.length > 0) setType(list[0].name);
+    }).catch(() => {
+      // 실패 시 기본값 유지
+    });
+  }, [isOpen, currentAccountBook?.id]);
+
+  // 카테고리 목록: type 변경마다 재조회
+  useEffect(() => {
+    if (!isOpen) { setCategories([]); return; }
     const fetch = async () => {
       try {
-        const res = await categoryApi.getCategories(undefined, undefined, type);
+        const res = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
         setCategories(res ?? []);
         setCategory("");
       } catch (err) {
@@ -98,6 +124,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     setCategory("");
     setDescription("");
     setTransactionDate(dayjs());
+    setClassifications([]);
     setCategories([]);
     setLoading(false);
     setError(null);
@@ -150,8 +177,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     }
   };
 
-  const isExpense = type === "EXPENSE";
-  const typeColor = isExpense ? theme.palette.error : theme.palette.success;
+  const typeColor = TYPE_PALETTE(type, theme);
   const canSubmit = !!amount && parseInt(amount, 10) > 0 && category !== "";
 
   return (
@@ -200,16 +226,17 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             거래 추가
           </Typography>
 
-          {/* ── 1. 유형 토글 ── */}
+          {/* ── 1. 유형 토글 (분류 DB 기반 동적 렌더링) ── */}
           <ToggleButtonGroup
             value={type}
             exclusive
-            onChange={(_, v: "INCOME" | "EXPENSE" | null) => {
+            onChange={(_, v: string | null) => {
               if (v) { setType(v); setCategory(""); }
             }}
             fullWidth
             sx={{
               mb: 2.5,
+              flexWrap: "wrap",
               "& .MuiToggleButton-root": {
                 flex: 1,
                 py: 1.25,
@@ -219,37 +246,32 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
                 borderColor: "divider",
                 borderRadius: "10px !important",
                 transition: "all 0.15s ease",
-                "&.Mui-selected": {
-                  borderWidth: "1.5px",
-                },
+                "&.Mui-selected": { borderWidth: "1.5px" },
               },
               gap: 1.5,
             }}
           >
-            <ToggleButton
-              value="EXPENSE"
-              sx={{
-                "&.Mui-selected": {
-                  bgcolor: alpha(theme.palette.error.main, 0.1),
-                  color: "error.main",
-                  borderColor: `${theme.palette.error.main} !important`,
-                },
-              }}
-            >
-              지출
-            </ToggleButton>
-            <ToggleButton
-              value="INCOME"
-              sx={{
-                "&.Mui-selected": {
-                  bgcolor: alpha(theme.palette.success.main, 0.1),
-                  color: "success.main",
-                  borderColor: `${theme.palette.success.main} !important`,
-                },
-              }}
-            >
-              수입
-            </ToggleButton>
+            {(classifications.length > 0
+              ? classifications
+              : [{ id: -1, name: "EXPENSE" }, { id: -2, name: "INCOME" }] as ClassificationResponse[]
+            ).map((cls) => {
+              const pal = TYPE_PALETTE(cls.name, theme);
+              return (
+                <ToggleButton
+                  key={cls.name}
+                  value={cls.name}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: alpha(pal.main, 0.1),
+                      color: pal.main,
+                      borderColor: `${pal.main} !important`,
+                    },
+                  }}
+                >
+                  {TYPE_LABEL[cls.name] ?? cls.name}
+                </ToggleButton>
+              );
+            })}
           </ToggleButtonGroup>
 
           {/* ── 2. 금액 입력 ── */}
@@ -282,7 +304,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
                     cursor: "pointer",
                     fontWeight: 600,
                     bgcolor: alpha(typeColor.main, 0.08),
-                    color: isExpense ? "error.dark" : "success.dark",
+                    color: typeColor.dark,
                     border: "1px solid",
                     borderColor: alpha(typeColor.main, 0.25),
                     "&:hover": { bgcolor: alpha(typeColor.main, 0.15) },
@@ -335,9 +357,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
                         bgcolor: isSelected
                           ? alpha(typeColor.main, 0.15)
                           : "action.hover",
-                        color: isSelected
-                          ? isExpense ? "error.dark" : "success.dark"
-                          : "text.primary",
+                        color: isSelected ? typeColor.dark : "text.primary",
                         border: "1.5px solid",
                         borderColor: isSelected
                           ? alpha(typeColor.main, 0.5)
@@ -408,7 +428,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
             {loading ? (
               <CircularProgress size={22} sx={{ color: "inherit" }} />
             ) : (
-              `${isExpense ? "지출" : "수입"} ${amount && parseInt(amount, 10) > 0 ? parseInt(amount, 10).toLocaleString("ko-KR") + "원 추가" : "추가"}`
+              `${TYPE_LABEL[type] ?? type} ${amount && parseInt(amount, 10) > 0 ? parseInt(amount, 10).toLocaleString("ko-KR") + "원 추가" : "추가"}`
             )}
           </Button>
         </Box>

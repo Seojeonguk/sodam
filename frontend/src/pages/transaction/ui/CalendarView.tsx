@@ -5,6 +5,7 @@ import {
   AttachMoney,
   ChevronLeft,
   ChevronRight,
+  CompareArrows,
   MoneyOff,
 } from "@mui/icons-material";
 import {
@@ -25,6 +26,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import { formatCompactCurrency } from "../../../shared/lib/format";
 import { useCalendarTransactions } from "../../../entities/transaction/model/useCalendarTransactions";
+import { TYPE_MUI_COLOR, TYPE_SIGN } from "../../../entities/category/lib/classificationUtils";
 
 dayjs.locale("ko");
 
@@ -67,12 +69,12 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
     setSelectedDate((prev) => (prev === dateStr ? null : dateStr));
   };
 
-  // 월 전체 수입/지출 합계
-  let monthIncome = 0;
-  let monthExpense = 0;
+  // 월 전체 분류별 합계
+  const monthAmounts: Record<string, number> = {};
   for (const d of dayMap.values()) {
-    monthIncome += d.income;
-    monthExpense += d.expense;
+    for (const [type, v] of Object.entries(d.amounts)) {
+      monthAmounts[type] = (monthAmounts[type] ?? 0) + v;
+    }
   }
 
   return (
@@ -94,20 +96,23 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
               <Skeleton variant="text" width={140} height={16} />
             ) : (
               <Typography variant="caption" color="text.secondary">
-                {monthIncome > 0 && (
-                  <Box component="span" color="success.dark" fontWeight={600}>
-                    +{formatCompactCurrency(monthIncome)}
-                  </Box>
-                )}
-                {monthIncome > 0 && monthExpense > 0 && (
-                  <Box component="span" color="text.disabled" mx={0.5}>·</Box>
-                )}
-                {monthExpense > 0 && (
-                  <Box component="span" color="error.dark" fontWeight={600}>
-                    -{formatCompactCurrency(monthExpense)}
-                  </Box>
-                )}
-                {monthIncome === 0 && monthExpense === 0 && "거래 없음"}
+                {Object.entries(monthAmounts).filter(([, v]) => v > 0).length === 0 && "거래 없음"}
+                {Object.entries(monthAmounts)
+                  .filter(([, v]) => v > 0)
+                  .map(([type, v], i) => {
+                    const muiColor = TYPE_MUI_COLOR[type] ?? "default";
+                    const palKey = muiColor !== "default" ? muiColor : "primary";
+                    const sign = TYPE_SIGN(type);
+                    return (
+                      <span key={type}>
+                        {i > 0 && <Box component="span" color="text.disabled" mx={0.5}>·</Box>}
+                        <Box component="span" color={`${palKey}.dark`} fontWeight={600}>
+                          {sign}{formatCompactCurrency(v)}
+                        </Box>
+                      </span>
+                    );
+                  })
+                }
               </Typography>
             )}
           </Stack>
@@ -229,41 +234,31 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
 
                   {data && (
                     <>
-                      {/* 모바일: 컬러 점 */}
-                      <Box
-                        sx={{
-                          display: { xs: "flex", sm: "none" },
-                          gap: 0.5,
-                          mt: "auto",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {data.income > 0 && (
-                          <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "success.main" }} />
-                        )}
-                        {data.expense > 0 && (
-                          <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "error.main" }} />
-                        )}
+                      {/* 모바일: 분류별 컬러 점 */}
+                      <Box sx={{ display: { xs: "flex", sm: "none" }, gap: 0.5, mt: "auto", justifyContent: "center" }}>
+                        {Object.entries(data.amounts)
+                          .filter(([, v]) => v > 0)
+                          .map(([type]) => {
+                            const mc = TYPE_MUI_COLOR[type] ?? "default";
+                            return (
+                              <Box key={type} sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: `${mc !== "default" ? mc : "primary"}.main` }} />
+                            );
+                          })}
                       </Box>
 
-                      {/* 데스크톱: 금액 텍스트 */}
+                      {/* 데스크톱: 분류별 금액 텍스트 */}
                       <Box sx={{ display: { xs: "none", sm: "flex" }, flexDirection: "column", gap: 0.25, mt: "auto" }}>
-                        {data.income > 0 && (
-                          <Typography
-                            sx={{ fontSize: "0.6rem", fontWeight: 700, color: "success.dark", lineHeight: 1.2 }}
-                            noWrap
-                          >
-                            +{formatCompactCurrency(data.income)}
-                          </Typography>
-                        )}
-                        {data.expense > 0 && (
-                          <Typography
-                            sx={{ fontSize: "0.6rem", fontWeight: 700, color: "error.dark", lineHeight: 1.2 }}
-                            noWrap
-                          >
-                            -{formatCompactCurrency(data.expense)}
-                          </Typography>
-                        )}
+                        {Object.entries(data.amounts)
+                          .filter(([, v]) => v > 0)
+                          .map(([type, v]) => {
+                            const mc = TYPE_MUI_COLOR[type] ?? "default";
+                            const pk = mc !== "default" ? mc : "primary";
+                            return (
+                              <Typography key={type} sx={{ fontSize: "0.6rem", fontWeight: 700, color: `${pk}.dark`, lineHeight: 1.2 }} noWrap>
+                                {TYPE_SIGN(type)}{formatCompactCurrency(v)}
+                              </Typography>
+                            );
+                          })}
                       </Box>
                     </>
                   )}
@@ -287,16 +282,17 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
             </Typography>
             {selectedData && (
               <Stack direction="row" spacing={1.5}>
-                {selectedData.income > 0 && (
-                  <Typography variant="caption" fontWeight={700} color="success.dark">
-                    +{formatCompactCurrency(selectedData.income)}
-                  </Typography>
-                )}
-                {selectedData.expense > 0 && (
-                  <Typography variant="caption" fontWeight={700} color="error.dark">
-                    -{formatCompactCurrency(selectedData.expense)}
-                  </Typography>
-                )}
+                {Object.entries(selectedData.amounts)
+                  .filter(([, v]) => v > 0)
+                  .map(([type, v]) => {
+                    const mc = TYPE_MUI_COLOR[type] ?? "default";
+                    const pk = mc !== "default" ? mc : "primary";
+                    return (
+                      <Typography key={type} variant="caption" fontWeight={700} color={`${pk}.dark`}>
+                        {TYPE_SIGN(type)}{formatCompactCurrency(v)}
+                      </Typography>
+                    );
+                  })}
               </Stack>
             )}
           </Stack>
@@ -312,7 +308,9 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
               <Divider sx={{ mb: 1 }} />
               <List disablePadding>
                 {selectedData.transactions.map((tx, idx) => {
-                  const isIncome = tx.type === "INCOME";
+                  const mc = TYPE_MUI_COLOR[tx.type] ?? "default";
+                  const pk = mc !== "default" ? mc : "primary";
+                  const sign = TYPE_SIGN(tx.type);
                   return (
                     <ListItem
                       key={tx.seq}
@@ -333,15 +331,15 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
                           sx={{
                             width: 34,
                             height: 34,
-                            bgcolor: isIncome
-                              ? alpha(theme.palette.success.main, 0.12)
-                              : alpha(theme.palette.error.main, 0.12),
-                            color: isIncome ? theme.palette.success.dark : theme.palette.error.dark,
+                            bgcolor: alpha(theme.palette[pk as "success" | "error" | "info" | "primary"].main, 0.12),
+                            color: theme.palette[pk as "success" | "error" | "info" | "primary"].dark,
                           }}
                         >
-                          {isIncome
+                          {tx.type === "INCOME"
                             ? <AttachMoney sx={{ fontSize: "1rem" }} />
-                            : <MoneyOff sx={{ fontSize: "1rem" }} />}
+                            : tx.type === "EXPENSE"
+                            ? <MoneyOff sx={{ fontSize: "1rem" }} />
+                            : <CompareArrows sx={{ fontSize: "1rem" }} />}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
@@ -350,9 +348,9 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
                             <Typography
                               variant="body2"
                               fontWeight={600}
-                              color={isIncome ? "success.dark" : "error.dark"}
+                              color={`${pk}.dark`}
                             >
-                              {isIncome ? "+" : "-"}{tx.amount.toLocaleString("ko-KR")}원
+                              {sign}{tx.amount.toLocaleString("ko-KR")}원
                             </Typography>
                             <Typography variant="caption" color="text.disabled">
                               {dayjs(tx.transactionDate).format("HH:mm")}

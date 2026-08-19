@@ -1,9 +1,10 @@
 import { Avatar, Box, Divider, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
+import { ArrowDownward, ArrowUpward, CompareArrows } from "@mui/icons-material";
 import dayjs from "dayjs";
 import type { TransactionListItemResponse } from "../../../entities/transaction/api/transaction.types";
 import { formatCurrency } from "../../../shared/lib/format";
+import { TYPE_MUI_COLOR, TYPE_SIGN } from "../../../entities/category/lib/classificationUtils";
 
 interface RecentTransactionsSectionProps {
   transactions: TransactionListItemResponse[];
@@ -37,25 +38,23 @@ export const RecentTransactionsSection = ({
         </Typography>
       ) : (
         <Stack divider={<Divider flexItem />} spacing={2}>
-          {transactions.map((tx) => (
+          {transactions.map((tx) => {
+            const muiColor = TYPE_MUI_COLOR[tx.type] ?? "default";
+            const palKey = muiColor !== "default" ? muiColor : "primary";
+            const sign = TYPE_SIGN(tx.type);
+            return (
             <Stack key={tx.seq} direction="row" alignItems="center" spacing={2}>
               <Avatar
                 sx={{
-                  bgcolor:
-                    tx.type === "INCOME"
-                      ? alpha(theme.palette.success.main, 0.15)
-                      : alpha(theme.palette.error.main, 0.15),
-                  color:
-                    tx.type === "INCOME"
-                      ? theme.palette.success.dark
-                      : theme.palette.error.dark,
+                  bgcolor: alpha(theme.palette[palKey as "success" | "error" | "info" | "primary"].main, 0.15),
+                  color: theme.palette[palKey as "success" | "error" | "info" | "primary"].dark,
                 }}
               >
-                {tx.type === "INCOME" ? <ArrowUpward /> : <ArrowDownward />}
+                {tx.type === "INCOME" ? <ArrowUpward /> : tx.type === "EXPENSE" ? <ArrowDownward /> : <CompareArrows />}
               </Avatar>
               <Box flex={1}>
-                <Typography fontWeight={600}>
-                  {formatCurrency(tx.amount)}
+                <Typography fontWeight={600} color={`${palKey}.dark`}>
+                  {sign}{formatCurrency(tx.amount)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {tx.categoryName ?? "분류 없음"} ·{" "}
@@ -68,7 +67,8 @@ export const RecentTransactionsSection = ({
                 )}
               </Box>
             </Stack>
-          ))}
+            );
+          })}
         </Stack>
       )}
     </Paper>

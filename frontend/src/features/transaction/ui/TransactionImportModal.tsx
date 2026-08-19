@@ -42,6 +42,8 @@ import { useAccountBookContext } from "../../../entities/accountbook/model/Accou
 import categoryApi, {
   type CategoryUpsertRequest,
 } from "../../../entities/category/api/categoryApi";
+import { useClassifications } from "../../../entities/category/model/useClassifications";
+import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL } from "../../../entities/category/lib/classificationUtils";
 import { getUserSeq } from "../../../shared/lib/userSync";
 import { supabase } from "../../../shared/lib/supabase";
 
@@ -151,6 +153,7 @@ function parseExcelRows(sheet: XLSX.WorkSheet): ParsedRow[] {
 export default function TransactionImportModal({ open, onClose, onSuccess }: Props) {
   const theme = useTheme();
   const { currentAccountBook } = useAccountBookContext();
+  const { classifications } = useClassifications(currentAccountBook?.id);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [rows, setRows] = useState<ParsedRow[]>([]);
@@ -324,6 +327,22 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
       alert(err instanceof Error ? err.message : "카테고리 생성 실패");
     } finally {
       setCreatingCats((prev) => { const s = new Set(prev); s.delete(name); return s; });
+    }
+  };
+
+  // ── 미매칭 카테고리 전체 생성 ─────────────────────────────────
+  const [creatingAll, setCreatingAll] = useState(false);
+
+  const handleCreateAllCategories = async () => {
+    const targets = unmatchedCats.filter((n) => !creatingCats.has(n));
+    if (targets.length === 0) return;
+    setCreatingAll(true);
+    try {
+      for (const name of targets) {
+        await handleCreateCategory(name);
+      }
+    } finally {
+      setCreatingAll(false);
     }
   };
 
@@ -541,12 +560,15 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
                         size="small"
                         value={current}
                         onChange={(_, v) => {
-                          if (v) setTypeMap((prev) => ({ ...prev, [rawType]: v as "INCOME" | "EXPENSE" | "skip" }));
+                          if (v) setTypeMap((prev) => ({ ...prev, [rawType]: v as "INCOME" | "EXPENSE" | "TRANSFER" | "skip" }));
                         }}
                         sx={{ "& .MuiToggleButton-root": { px: 1.5, py: 0.4, textTransform: "none", fontSize: "0.75rem", fontWeight: 600 } }}
                       >
-                        <ToggleButton value="INCOME">수입</ToggleButton>
-                        <ToggleButton value="EXPENSE">지출</ToggleButton>
+                        {(classifications.length > 0 ? classifications : FALLBACK_CLASSIFICATIONS).map((cls) => (
+                          <ToggleButton key={cls.name} value={cls.name}>
+                            {TYPE_LABEL[cls.name] ?? cls.name}
+                          </ToggleButton>
+                        ))}
                         <ToggleButton value="skip">건너뜀</ToggleButton>
                       </ToggleButtonGroup>
                     </Stack>
@@ -567,11 +589,23 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
                 bgcolor: alpha(theme.palette.info.main, 0.04),
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
-                <AddCircleOutline sx={{ fontSize: "1rem", color: "info.main" }} />
-                <Typography variant="body2" fontWeight={700} color="info.dark">
-                  매칭되지 않은 카테고리 — 새로 생성하거나 무시합니다
-                </Typography>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <AddCircleOutline sx={{ fontSize: "1rem", color: "info.main" }} />
+                  <Typography variant="body2" fontWeight={700} color="info.dark">
+                    매칭되지 않은 카테고리 — 새로 생성하거나 무시합니다
+                  </Typography>
+                </Stack>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="info"
+                  disabled={creatingAll || unmatchedCats.length === 0}
+                  onClick={() => void handleCreateAllCategories()}
+                  sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                >
+                  {creatingAll ? <CircularProgress size={14} sx={{ color: "inherit" }} /> : `전체 생성 (${unmatchedCats.length})`}
+                </Button>
               </Stack>
               <Stack spacing={1}>
                 {unmatchedCats.map((name) => {
@@ -599,8 +633,11 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
                           }
                           sx={{ fontSize: "0.75rem", "& fieldset": { borderRadius: 1.5 } }}
                         >
-                          <MenuItem value="EXPENSE" sx={{ fontSize: "0.8rem" }}>지출</MenuItem>
-                          <MenuItem value="INCOME"  sx={{ fontSize: "0.8rem" }}>수입</MenuItem>
+                          {(classifications.length > 0 ? classifications : FALLBACK_CLASSIFICATIONS).map((cls) => (
+                            <MenuItem key={cls.name} value={cls.name} sx={{ fontSize: "0.8rem" }}>
+                              {TYPE_LABEL[cls.name] ?? cls.name}
+                            </MenuItem>
+                          ))}
                         </Select>
                       </FormControl>
                       <Button

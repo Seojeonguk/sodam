@@ -20,6 +20,7 @@ import axios from "axios";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import dayjs from "dayjs";
 import { formatCurrency } from "../../../shared/lib/format";
+import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -166,8 +167,8 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   분류
                 </Typography>
                 <Chip
-                  label={transaction.type === "INCOME" ? "수입" : "지출"}
-                  color={transaction.type === "INCOME" ? "success" : "error"}
+                  label={TYPE_LABEL[transaction.type] ?? transaction.type}
+                  color={TYPE_MUI_COLOR[transaction.type] ?? "default"}
                   size="small"
                   sx={{ fontWeight: 700 }}
                 />

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { AddCircle, CalendarMonth, Clear, FileUploadOutlined, FilterList, FormatListBulleted, Search, TuneOutlined } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
@@ -36,6 +36,8 @@ const TransactionImportModal = lazy(() => import("../../../features/transaction/
 import CalendarView from "./CalendarView";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
+import { useClassifications } from "../../../entities/category/model/useClassifications";
+import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
 
 dayjs.locale("ko");
 
@@ -57,8 +59,7 @@ function TransactionPage() {
     error,
     refreshTransactionData,
     deleteTransaction,
-    incomeStats,
-    expenseStats,
+    typeStats,
     statPeriodDataset,
     dateRange,
     setDateRange,
@@ -75,6 +76,26 @@ function TransactionPage() {
     totalPages,
     totalElements,
   } = useTransactions({ pageSize: 10 });
+
+  const { classifications } = useClassifications();
+
+  /** 분류별 월별 추이 차트 시리즈 */
+  const trendSeries = useMemo(() => {
+    const source = classifications.length > 0
+      ? classifications
+      : [{ name: "INCOME" }, { name: "EXPENSE" }];
+    return source.map((cls) => {
+      const muiColor = TYPE_MUI_COLOR[cls.name] ?? "default";
+      const color = muiColor !== "default"
+        ? theme.palette[muiColor as "success" | "error" | "info"].main
+        : undefined;
+      return {
+        dataKey: cls.name.toLowerCase(),
+        label: TYPE_LABEL[cls.name] ?? cls.name,
+        ...(color ? { color } : {}),
+      };
+    });
+  }, [classifications, theme]);
 
   // 검색창 로컬 상태 (debounce용)
   const [keywordInput, setKeywordInput] = useState("");
@@ -333,7 +354,9 @@ function TransactionPage() {
             />
             {filterCategories.map((cat) => {
               const isSelected = categoryFilter.includes(cat.id);
-              const isIncome = cat.type === "INCOME";
+              const muiColor = TYPE_MUI_COLOR[cat.type] ?? "default";
+              const pk = muiColor !== "default" ? muiColor : "primary";
+              const catPal = theme.palette[pk as "success" | "error" | "info" | "primary"];
               return (
                 <Chip
                   key={cat.id}
@@ -348,16 +371,10 @@ function TransactionPage() {
                   }
                   sx={{
                     fontWeight: isSelected ? 700 : 500,
-                    bgcolor: isSelected
-                      ? isIncome ? alpha(theme.palette.success.main, 0.15) : alpha(theme.palette.error.main, 0.15)
-                      : "action.hover",
-                    color: isSelected
-                      ? isIncome ? "success.dark" : "error.dark"
-                      : "text.secondary",
+                    bgcolor: isSelected ? alpha(catPal.main, 0.15) : "action.hover",
+                    color: isSelected ? `${pk}.dark` : "text.secondary",
                     border: "1.5px solid",
-                    borderColor: isSelected
-                      ? isIncome ? alpha(theme.palette.success.main, 0.5) : alpha(theme.palette.error.main, 0.5)
-                      : "transparent",
+                    borderColor: isSelected ? alpha(catPal.main, 0.5) : "transparent",
                     transition: "all 0.15s ease",
                     "&:hover": { opacity: 0.85 },
                   }}
@@ -544,99 +561,66 @@ function TransactionPage() {
         elevation={0}
         sx={{ p: { xs: 2, sm: 3 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
       >
-        {/* 카테고리 분석: 수입 / 지출 */}
+        {/* 카테고리 분석: 분류별 동적 렌더링 */}
         <Box
           display="grid"
-          gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }}
+          gridTemplateColumns={{ xs: "1fr", sm: `repeat(${Math.min(trendSeries.length, 2)}, 1fr)` }}
           gap={{ xs: 2.5, sm: 3 }}
           mb={3}
         >
-          {/* 수입 */}
-          <Box>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color="success.dark"
-              sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
-              수입 카테고리
-            </Typography>
-            {incomeStats.length === 0 ? (
-              <Typography variant="body2" color="text.disabled">해당 기간 수입 없음</Typography>
-            ) : (() => {
-              const total = incomeStats.reduce((s, i) => s + i.value, 0);
-              return (
-                <Stack spacing={1.5}>
-                  {incomeStats.map((item) => {
-                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
-                    return (
-                      <Box key={item.id}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
-                          <Stack direction="row" alignItems="center" spacing={0.75}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: item.color ?? "success.main", flexShrink: 0 }} />
-                            <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: 100 }}>
-                              {item.label ?? "기타"}
-                            </Typography>
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                            {item.value.toLocaleString("ko-KR")}원 · {pct}%
-                          </Typography>
-                        </Stack>
-                        <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
-                          <Box sx={{ height: "100%", width: `${pct}%`, bgcolor: item.color ?? "success.main", borderRadius: 99, transition: "width 0.4s ease" }} />
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              );
-            })()}
-          </Box>
-
-          {/* 모바일 구분선 */}
-          <Divider sx={{ display: { xs: "block", sm: "none" } }} />
-
-          {/* 지출 */}
-          <Box>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color="error.dark"
-              sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
-              지출 카테고리
-            </Typography>
-            {expenseStats.length === 0 ? (
-              <Typography variant="body2" color="text.disabled">해당 기간 지출 없음</Typography>
-            ) : (() => {
-              const total = expenseStats.reduce((s, i) => s + i.value, 0);
-              return (
-                <Stack spacing={1.5}>
-                  {expenseStats.map((item) => {
-                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
-                    return (
-                      <Box key={item.id}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
-                          <Stack direction="row" alignItems="center" spacing={0.75}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: item.color ?? "error.main", flexShrink: 0 }} />
-                            <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: 100 }}>
-                              {item.label ?? "기타"}
-                            </Typography>
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                            {item.value.toLocaleString("ko-KR")}원 · {pct}%
-                          </Typography>
-                        </Stack>
-                        <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
-                          <Box sx={{ height: "100%", width: `${pct}%`, bgcolor: item.color ?? "error.main", borderRadius: 99, transition: "width 0.4s ease" }} />
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              );
-            })()}
-          </Box>
+          {trendSeries.map((ser, idx) => {
+            const typeName = ser.dataKey.toUpperCase();
+            const stats = typeStats[typeName] ?? [];
+            const muiColor = TYPE_MUI_COLOR[typeName] ?? "default";
+            const pk = muiColor !== "default" ? muiColor : "primary";
+            const fallbackColor = muiColor !== "default"
+              ? theme.palette[pk as "success" | "error" | "info"].main
+              : theme.palette.primary.main;
+            return (
+              <Box key={typeName}>
+                {idx > 0 && <Divider sx={{ display: { xs: "block", sm: "none" }, mb: 2.5 }} />}
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  color={`${pk}.dark`}
+                  sx={{ display: "block", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}
+                >
+                  {ser.label} 카테고리
+                </Typography>
+                {stats.length === 0 ? (
+                  <Typography variant="body2" color="text.disabled">해당 기간 {ser.label} 없음</Typography>
+                ) : (() => {
+                  const total = stats.reduce((s, i) => s + (typeof i.value === "number" ? i.value : 0), 0);
+                  return (
+                    <Stack spacing={1.5}>
+                      {stats.map((item) => {
+                        const pct = total > 0 ? Math.round(((typeof item.value === "number" ? item.value : 0) / total) * 100) : 0;
+                        const barColor = item.color ?? fallbackColor;
+                        return (
+                          <Box key={item.id}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                              <Stack direction="row" alignItems="center" spacing={0.75}>
+                                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: barColor, flexShrink: 0 }} />
+                                <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: 100 }}>
+                                  {item.label ?? "기타"}
+                                </Typography>
+                              </Stack>
+                              <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                                {(typeof item.value === "number" ? item.value : 0).toLocaleString("ko-KR")}원 · {pct}%
+                              </Typography>
+                            </Stack>
+                            <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
+                              <Box sx={{ height: "100%", width: `${pct}%`, bgcolor: barColor, borderRadius: 99, transition: "width 0.4s ease" }} />
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  );
+                })()}
+              </Box>
+            );
+          })}
         </Box>
 
         <Divider sx={{ mb: 2.5 }} />
@@ -659,7 +643,7 @@ function TransactionPage() {
             <BarChart
               dataset={statPeriodDataset}
               xAxis={[{ dataKey: "period", scaleType: "band", height: 36 }]}
-              series={[{ dataKey: "income", label: "수입" }, { dataKey: "expense", label: "지출" }]}
+              series={trendSeries}
               height={200}
               grid={{ horizontal: true }}
             />

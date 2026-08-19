@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PieValueType } from "@mui/x-charts/models/seriesType";
 import dayjs, { type Dayjs } from "dayjs";
 import transactionApi from "../api/transactionApi";
@@ -29,18 +29,22 @@ const getRandomColor = () =>
     .toString(16)
     .padStart(6, "0")}`;
 
-const buildPieStats = (
-  type: "INCOME" | "EXPENSE",
+/** 분류 타입별 파이 통계 맵 반환 */
+const buildTypeStats = (
   items: Awaited<ReturnType<typeof statApi.getStats>>,
-): PieValueType[] =>
-  items
-    .filter((item) => item.type === type)
-    .map((item, index) => ({
+): Record<string, PieValueType[]> => {
+  const result: Record<string, PieValueType[]> = {};
+  items.forEach((item, index) => {
+    if (!result[item.type]) result[item.type] = [];
+    result[item.type].push({
       id: index,
       value: item.total,
       label: item.name,
       color: getRandomColor(),
-    }));
+    });
+  });
+  return result;
+};
 
 const buildPeriodDataset = (
   response: StatPeriodResponse[],
@@ -71,8 +75,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     useState<TransactionListResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [incomeStats, setIncomeStats] = useState<PieValueType[]>([]);
-  const [expenseStats, setExpenseStats] = useState<PieValueType[]>([]);
+  const [typeStats, setTypeStats] = useState<Record<string, PieValueType[]>>({});
   const [statPeriodDataset, setStatPeriodDataset] = useState<
     StatPeriodDatasetEntry[]
   >([]);
@@ -99,15 +102,29 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
   const [minAmount, setMinAmount] = useState<number | undefined>(undefined);
   const [maxAmount, setMaxAmount] = useState<number | undefined>(undefined);
 
+  /**
+   * Dayjs 객체는 매 setDateRange 호출 시 새 참조가 생성되어 useCallback 의존성이
+   * 불필요하게 재생성됨. 날짜 문자열로 메모화하여 같은 날짜면 re-fetch 방지.
+   */
+  const startDateStr = useMemo(
+    () => dateRange.startDate.format("YYYYMMDD"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dateRange.startDate.valueOf()],
+  );
+  const endDateStr = useMemo(
+    () => dateRange.endDate.format("YYYYMMDD"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dateRange.endDate.valueOf()],
+  );
+
   /** 검색 조건 변경 시 첫 페이지로 리셋 */
   useEffect(() => {
     setPage(0);
-  }, [dateRange.startDate, dateRange.endDate, categoryFilter, keyword, minAmount, maxAmount]);
+  }, [startDateStr, endDateStr, categoryFilter, keyword, minAmount, maxAmount]);
 
   const resetTransactionState = useCallback(() => {
     setTransactions(null);
-    setIncomeStats([]);
-    setExpenseStats([]);
+    setTypeStats({});
     setStatPeriodDataset([]);
     setError(null);
     setLoading(false);
@@ -122,8 +139,8 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     setLoading(true);
     setError(null);
 
-    const startDate = dateRange.startDate.format("YYYYMMDD");
-    const endDate = dateRange.endDate.format("YYYYMMDD");
+    const startDate = startDateStr;
+    const endDate = endDateStr;
 
     const statRequest: StatRequest = {
       accountBookSeq: currentAccountBookId,
@@ -162,8 +179,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
       ]);
 
       setTransactions(nextTransactions);
-      setIncomeStats(buildPieStats("INCOME", nextStats));
-      setExpenseStats(buildPieStats("EXPENSE", nextStats));
+      setTypeStats(buildTypeStats(nextStats));
       setStatPeriodDataset(buildPeriodDataset(nextPeriodStats));
     } catch (nextError) {
       setError(
@@ -177,8 +193,8 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     }
   }, [
     currentAccountBookId,
-    dateRange.endDate,
-    dateRange.startDate,
+    startDateStr,
+    endDateStr,
     page,
     pageSize,
     categoryFilter,
@@ -219,8 +235,12 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     error,
     refreshTransactionData,
     deleteTransaction,
-    incomeStats,
-    expenseStats,
+    /** 분류 타입별 파이 통계 맵 (동적 분류 지원) */
+    typeStats,
+    /** 수입 통계 (typeStats["INCOME"] 별칭, 하위 호환) */
+    incomeStats: typeStats["INCOME"] ?? [],
+    /** 지출 통계 (typeStats["EXPENSE"] 별칭, 하위 호환) */
+    expenseStats: typeStats["EXPENSE"] ?? [],
     statPeriodDataset,
     dateRange,
     setDateRange,

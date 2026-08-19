@@ -89,7 +89,7 @@ export async function ensureDefaultData(userId: number): Promise<void> {
   const existingNames = new Set(
     (existing ?? []).map((r: { name: string }) => r.name),
   );
-  const toInsert = (["INCOME", "EXPENSE"] as const)
+  const toInsert = (["INCOME", "EXPENSE", "TRANSFER"] as const)
     .filter((n) => !existingNames.has(n))
     .map((name) => ({
       name,
@@ -102,21 +102,16 @@ export async function ensureDefaultData(userId: number): Promise<void> {
     await supabase.from("classification").insert(toInsert);
   }
 
-  // 기본 카테고리 누락 보완
-  const { data: existingCats } = await supabase
+  // 기본 카테고리 보완 — 카테고리가 하나라도 있으면 스킵 (사용자 커스텀 보호)
+  const { count: catCount } = await supabase
     .from("category")
-    .select("name")
+    .select("*", { count: "exact", head: true })
     .eq("user_seq", userId);
 
-  const existingCatNames = new Set(
-    (existingCats ?? []).map((r: { name: string }) => r.name),
-  );
-  const catsToInsert = DEFAULT_CATEGORIES
-    .filter((c) => !existingCatNames.has(c.name))
-    .map((c) => ({ ...c, user_seq: userId, created_at: now, updated_at: now }));
-
-  if (catsToInsert.length > 0) {
-    await supabase.from("category").insert(catsToInsert);
+  if ((catCount ?? 0) === 0) {
+    await supabase.from("category").insert(
+      DEFAULT_CATEGORIES.map((c) => ({ ...c, user_seq: userId, created_at: now, updated_at: now })),
+    );
   }
 }
 
@@ -226,7 +221,7 @@ export async function syncUser(email: string, name: string): Promise<number> {
 
   if (memberErr) throw new Error("멤버 등록 실패: " + memberErr.message);
 
-  // 기본 분류 생성 (INCOME / EXPENSE)
+  // 기본 분류 생성 (INCOME / EXPENSE / TRANSFER)
   const { error: classErr } = await supabase.from("classification").insert([
     {
       name: "INCOME",
@@ -236,6 +231,12 @@ export async function syncUser(email: string, name: string): Promise<number> {
     },
     {
       name: "EXPENSE",
+      account_book_seq: book.id,
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      name: "TRANSFER",
       account_book_seq: book.id,
       created_at: now,
       updated_at: now,

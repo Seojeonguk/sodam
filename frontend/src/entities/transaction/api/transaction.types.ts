@@ -23,21 +23,21 @@ export interface TransactionResponseDto {
   amount: number;
   description: string;
   transactionDate: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "TRANSFER";
   satisfactionRating: number;
 }
 
 export interface TransactionCreateRequestDto {
   accountBookSeq: number;
-  type: "INCOME" | "EXPENSE"; // 소득 또는 지출
-  amount: number; // 금액
-  categorySeq: number | null; // 카테고리 (예: '식비', '월급')
-  description?: string; // 상세 내용 (선택 사항)
-  transactionDate: string; // 거래 날짜 및 시간 (예: "2025-06-08T10:30:00")
+  type: "INCOME" | "EXPENSE" | "TRANSFER";
+  amount: number;
+  categorySeq: number | null;
+  description?: string;
+  transactionDate: string;
 }
 
 export interface TransactionUpdateRequestDto {
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "TRANSFER";
   amount?: number;
   categorySeq?: number;
   description?: string;

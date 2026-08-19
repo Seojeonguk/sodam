@@ -11,9 +11,11 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import dayjs from "dayjs";
 
 import type { TransactionListResponse } from "../api/transaction.types";
+import { TYPE_MUI_COLOR, TYPE_SIGN } from "../../category/lib/classificationUtils";
 
 interface TransactionListProps {
   transactions: TransactionListResponse | null;
@@ -39,7 +41,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
   return (
     <List sx={{ p: 0 }}>
       {transactions.transactions.map((transaction) => {
-        const isIncome = transaction.type === "INCOME";
+        const muiColor = TYPE_MUI_COLOR[transaction.type] ?? "default";
+        const palKey = muiColor !== "default" ? muiColor : "primary";
+        const sign = TYPE_SIGN(transaction.type);
         return (
           <React.Fragment key={transaction.seq}>
             <ListItem
@@ -55,27 +59,21 @@ const TransactionList: React.FC<TransactionListProps> = ({
                 "&:hover": {
                   transform: "translateY(-2px)",
                   boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.06)}`,
-                  borderColor: isIncome
-                    ? alpha(theme.palette.success.main, 0.4)
-                    : alpha(theme.palette.error.main, 0.4),
+                  borderColor: alpha(theme.palette[palKey as "success" | "error" | "info" | "primary"].main, 0.4),
                 },
               }}
             >
               <ListItemAvatar>
                 <Avatar
                   sx={{
-                    bgcolor: isIncome
-                      ? alpha(theme.palette.success.main, 0.12)
-                      : alpha(theme.palette.error.main, 0.12),
-                    color: isIncome
-                      ? theme.palette.success.dark
-                      : theme.palette.error.dark,
+                    bgcolor: alpha(theme.palette[palKey as "success" | "error" | "info" | "primary"].main, 0.12),
+                    color: theme.palette[palKey as "success" | "error" | "info" | "primary"].dark,
                     width: { xs: 38, sm: 48 },
                     height: { xs: 38, sm: 48 },
                     mr: 1,
                   }}
                 >
-                  {isIncome ? <AttachMoneyIcon /> : <MoneyOffIcon />}
+                  {transaction.type === "INCOME" ? <AttachMoneyIcon /> : transaction.type === "EXPENSE" ? <MoneyOffIcon /> : <CompareArrowsIcon />}
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
@@ -85,14 +83,12 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     fontWeight={800}
                     sx={{
                       fontSize: { xs: "0.95rem", sm: "1.05rem" },
-                      color: isIncome
-                        ? theme.palette.success.dark
-                        : theme.palette.error.dark,
+                      color: theme.palette[palKey as "success" | "error" | "info" | "primary"].dark,
                       mb: 0.5,
                       wordBreak: "break-word",
                     }}
                   >
-                    {isIncome ? "+" : "-"}{transaction.amount.toLocaleString("ko-KR")}원
+                    {sign}{transaction.amount.toLocaleString("ko-KR")}원
                   </Typography>
                 }
                 secondary={

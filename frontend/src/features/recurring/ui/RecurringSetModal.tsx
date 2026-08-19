@@ -21,6 +21,8 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import type { RecurringTransactionRequest, RecurringTransactionResponse } from "../../../entities/recurringTransaction/api/recurring.types";
+import { useClassifications } from "../../../entities/category/model/useClassifications";
+import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL } from "../../../entities/category/lib/classificationUtils";
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 300000, 500000];
 
@@ -36,7 +38,8 @@ interface Props {
 export default function RecurringSetModal({ open, onClose, onSubmit, categories, accountBookSeq, initial }: Props) {
   const theme = useTheme();
 
-  const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [type, setType] = useState<string>("EXPENSE");
+  const { classifications } = useClassifications(accountBookSeq);
   const [categorySeq, setCategorySeq] = useState<number | "">("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -112,32 +115,30 @@ export default function RecurringSetModal({ open, onClose, onSubmit, categories,
       <DialogContent>
         <Stack spacing={2} pt={0.5}>
 
-          {/* 수입/지출 토글 */}
+          {/* 분류 토글 (DB 기반 동적 렌더링) */}
           <ToggleButtonGroup
             value={type}
             exclusive
-            onChange={(_, v) => { if (v) { setType(v as "INCOME" | "EXPENSE"); setCategorySeq(""); } }}
+            onChange={(_, v) => { if (v) { setType(v); setCategorySeq(""); } }}
             fullWidth
             size="small"
           >
-            <ToggleButton
-              value="EXPENSE"
-              sx={{
-                fontWeight: 700, textTransform: "none",
-                "&.Mui-selected": { bgcolor: alpha(theme.palette.error.main, 0.12), color: "error.main", borderColor: alpha(theme.palette.error.main, 0.4) },
-              }}
-            >
-              지출
-            </ToggleButton>
-            <ToggleButton
-              value="INCOME"
-              sx={{
-                fontWeight: 700, textTransform: "none",
-                "&.Mui-selected": { bgcolor: alpha(theme.palette.success.main, 0.12), color: "success.main", borderColor: alpha(theme.palette.success.main, 0.4) },
-              }}
-            >
-              수입
-            </ToggleButton>
+            {(classifications.length > 0 ? classifications : FALLBACK_CLASSIFICATIONS).map((cls) => {
+              const palKey = cls.name === "INCOME" ? "success" : cls.name === "TRANSFER" ? "info" : "error";
+              const pal = theme.palette[palKey as "success" | "error" | "info"];
+              return (
+                <ToggleButton
+                  key={cls.name}
+                  value={cls.name}
+                  sx={{
+                    fontWeight: 700, textTransform: "none",
+                    "&.Mui-selected": { bgcolor: alpha(pal.main, 0.12), color: `${palKey}.main`, borderColor: alpha(pal.main, 0.4) },
+                  }}
+                >
+                  {TYPE_LABEL[cls.name] ?? cls.name}
+                </ToggleButton>
+              );
+            })}
           </ToggleButtonGroup>
 
           {/* 카테고리 */}

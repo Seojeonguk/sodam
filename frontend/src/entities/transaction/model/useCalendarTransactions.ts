@@ -6,7 +6,11 @@ import { useAccountBookContext } from "../../accountbook/model/AccountBookContex
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 export interface CalendarDayData {
+  /** 분류 타입별 합계 금액 (동적 분류 지원) */
+  amounts: Record<string, number>;
+  /** 수입 합계 (amounts["INCOME"] 별칭, 하위 호환) */
   income: number;
+  /** 지출 합계 (amounts["EXPENSE"] 별칭, 하위 호환) */
   expense: number;
   transactions: TransactionListItemResponse[];
 }
@@ -57,11 +61,13 @@ export const useCalendarTransactions = (options?: UseCalendarTransactionsOptions
       for (const tx of result.transactions) {
         const key = dayjs(tx.transactionDate).format("YYYY-MM-DD");
         if (!map.has(key)) {
-          map.set(key, { income: 0, expense: 0, transactions: [] });
+          map.set(key, { amounts: {}, income: 0, expense: 0, transactions: [] });
         }
         const entry = map.get(key)!;
+        entry.amounts[tx.type] = (entry.amounts[tx.type] ?? 0) + tx.amount;
+        // 하위 호환 필드
         if (tx.type === "INCOME") entry.income += tx.amount;
-        else entry.expense += tx.amount;
+        else if (tx.type === "EXPENSE") entry.expense += tx.amount;
         entry.transactions.push(tx);
       }
       // 각 날짜의 거래를 시간순 정렬
