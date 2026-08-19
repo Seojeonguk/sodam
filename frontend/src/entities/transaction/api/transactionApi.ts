@@ -94,7 +94,7 @@ const transactionApi = {
         transaction_date: toDbDate(data.transactionDate),
         type: data.type,
         asset_seq: data.assetSeq ?? null,
-        satisfaction_rating: 0,
+        satisfaction_rating: data.satisfactionRating ?? 0,
         created_at: ts,
         updated_at: ts,
       })
@@ -136,7 +136,7 @@ const transactionApi = {
 
     const { data: row, error } = await supabase
       .from("transaction")
-      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .select("seq, account_book_seq, user_seq, category_seq, category:category_seq(name), amount, description, transaction_date, type, satisfaction_rating")
       .eq("seq", seq)
       .single();
 
@@ -147,6 +147,7 @@ const transactionApi = {
       accountBookSeq: row.account_book_seq as number,
       userSeq: row.user_seq as number,
       categorySeq: row.category_seq as number | undefined,
+      categoryName: (row.category as any)?.name ?? undefined,
       amount: Number(row.amount),
       description: row.description as string,
       transactionDate: row.transaction_date as string,
@@ -161,21 +162,47 @@ const transactionApi = {
   ): Promise<TransactionResponseDto> => {
     if (guestMode.isActive()) return guestStore.updateTransaction(seq, data);
 
+    // 수정 전 자산 정보 조회 (잔액 보정용)
+    const { data: oldRow } = await supabase
+      .from("transaction")
+      .select("asset_seq, type, amount")
+      .eq("seq", seq)
+      .maybeSingle();
+
     const updates: Record<string, unknown> = { updated_at: now() };
-    if (data.type)            updates.type = data.type;
-    if (data.amount != null)  updates.amount = data.amount;
-    if (data.categorySeq != null) updates.category_seq = data.categorySeq;
-    if (data.description != null) updates.description = data.description;
-    if (data.transactionDate) updates.transaction_date = toDbDate(data.transactionDate);
+    if (data.type)                      updates.type = data.type;
+    if (data.amount != null)            updates.amount = data.amount;
+    if (data.categorySeq != null)       updates.category_seq = data.categorySeq;
+    if (data.description != null)       updates.description = data.description;
+    if (data.transactionDate)           updates.transaction_date = toDbDate(data.transactionDate);
+    if (data.satisfactionRating != null) updates.satisfaction_rating = data.satisfactionRating;
 
     const { data: row, error } = await supabase
       .from("transaction")
       .update(updates)
       .eq("seq", seq)
-      .select("seq, account_book_seq, user_seq, category_seq, amount, description, transaction_date, type, satisfaction_rating")
+      .select("seq, account_book_seq, user_seq, category_seq, asset_seq, amount, description, transaction_date, type, satisfaction_rating")
       .single();
 
     if (error || !row) throw new Error(error?.message ?? "거래 수정 실패");
+
+    // 자산 잔액 보정: 타입 또는 금액이 바뀌었을 때만 적용 (best-effort)
+    if (oldRow?.asset_seq) {
+      try {
+        const oldType = oldRow.type as string;
+        const oldAmt  = Number(oldRow.amount);
+        const newType = data.type ?? oldType;
+        const newAmt  = data.amount ?? oldAmt;
+        if (oldType !== newType || oldAmt !== newAmt) {
+          // 기존 효과 역산
+          await assetApi.applyTransactionDelta(oldRow.asset_seq as number, seq, oldType, oldAmt, true);
+          // 새 효과 적용
+          await assetApi.applyTransactionDelta(oldRow.asset_seq as number, seq, newType, newAmt, false);
+        }
+      } catch (e) {
+        console.warn("자산 잔액 보정 실패:", e);
+      }
+    }
 
     return {
       seq: row.seq as number,

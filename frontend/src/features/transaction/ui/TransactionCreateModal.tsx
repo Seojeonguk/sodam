@@ -11,6 +11,7 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
+  Rating,
   Select,
   TextField,
   ToggleButton,
@@ -90,6 +91,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   const [description, setDescription] = useState<string>("");
   const [transactionDate, setTransactionDate] = useState<Dayjs>(dayjs());
   const [assetSeq, setAssetSeq] = useState<number | "">("");
+  const [satisfactionRating, setSatisfactionRating] = useState<number | null>(null);
   const [classifications, setClassifications] = useState<ClassificationResponse[]>([]);
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -133,6 +135,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
     setDescription("");
     setTransactionDate(dayjs());
     setAssetSeq("");
+    setSatisfactionRating(null);
     setClassifications([]);
     setCategories([]);
     setLoading(false);
@@ -172,6 +175,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
         description,
         transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
         assetSeq: assetSeq !== "" ? assetSeq : undefined,
+        satisfactionRating: satisfactionRating ?? undefined,
       };
       await transactionApi.createTransaction(req);
       await onSuccess();
@@ -412,6 +416,28 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
               </Select>
             </FormControl>
           )}
+
+          {/* ── 5-2. 소비 만족도 (선택) ── */}
+          <Box mb={2}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{ display: "block", mb: 0.75, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
+              소비 만족도 (선택)
+            </Typography>
+            <Rating
+              value={satisfactionRating}
+              onChange={(_, v) => setSatisfactionRating(v)}
+              size="large"
+            />
+            {satisfactionRating && (
+              <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                {["", "후회됨", "아쉬움", "보통", "만족", "매우 만족"][satisfactionRating]}
+              </Typography>
+            )}
+          </Box>
 
           {/* ── 6. 날짜 ── */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>

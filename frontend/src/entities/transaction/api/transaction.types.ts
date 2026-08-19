@@ -20,6 +20,7 @@ export interface TransactionResponseDto {
   accountBookSeq?: number;
   userSeq?: number;
   categorySeq?: number;
+  categoryName?: string;
   amount: number;
   description: string;
   transactionDate: string;
@@ -36,6 +37,8 @@ export interface TransactionCreateRequestDto {
   transactionDate: string;
   /** 연동할 자산 seq (선택) */
   assetSeq?: number;
+  /** 소비 만족도 1-5 (선택) */
+  satisfactionRating?: number;
 }
 
 export interface TransactionUpdateRequestDto {
@@ -44,4 +47,6 @@ export interface TransactionUpdateRequestDto {
   categorySeq?: number;
   description?: string;
   transactionDate?: string;
+  /** 소비 만족도 1-5 (선택) */
+  satisfactionRating?: number;
 }

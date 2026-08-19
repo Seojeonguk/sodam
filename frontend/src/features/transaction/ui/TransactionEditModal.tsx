@@ -4,11 +4,15 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
-  Modal,
+  Rating,
   Select,
+  Stack,
   TextField,
   Typography,
   type SelectChangeEvent,
@@ -30,21 +34,7 @@ import type {
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 const TYPE_LABEL: Record<string, string> = { INCOME: "수입", EXPENSE: "지출", TRANSFER: "이체" };
-
-const style = {
-  position: "absolute" as const,
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "min(400px, calc(100vw - 32px))",
-  maxHeight: "calc(100vh - 64px)",
-  overflowY: "auto" as const,
-  bgcolor: "background.paper",
-  border: "none",
-  boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
-  p: { xs: 3, sm: 4 },
-  borderRadius: "24px",
-};
+const RATING_LABEL = ["", "후회됨", "아쉬움", "보통", "만족", "매우 만족"];
 
 interface TransactionEditModalProps {
   isOpen: boolean;
@@ -65,6 +55,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
   const [categorySeq, setCategorySeq] = useState<number | "">("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState<Dayjs | null>(dayjs());
+  const [satisfactionRating, setSatisfactionRating] = useState<number | null>(null);
   const [classifications, setClassifications] = useState<ClassificationResponse[]>([]);
   const [categories, setCategories] = useState<CategoryListItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,83 +67,47 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     void classificationApi.getClassifications(currentAccountBook?.id).then(setClassifications).catch(() => {});
   }, [isOpen, currentAccountBook?.id]);
 
+  // 수정 대상 거래 초기값 세팅
   useEffect(() => {
     if (!transactionToEdit) {
-      setType("EXPENSE");
-      setAmount("");
-      setCategorySeq("");
-      setDescription("");
-      setTransactionDate(dayjs());
-      setClassifications([]);
-      setCategories([]);
-      setError(null);
-      setLoading(false);
+      setType("EXPENSE"); setAmount(""); setCategorySeq(""); setDescription("");
+      setTransactionDate(dayjs()); setSatisfactionRating(null);
+      setClassifications([]); setCategories([]); setError(null); setLoading(false);
       return;
     }
-
     setType(transactionToEdit.type);
     setAmount(transactionToEdit.amount.toString());
     setCategorySeq(transactionToEdit.categorySeq ?? "");
     setDescription(transactionToEdit.description ?? "");
     setTransactionDate(dayjs(transactionToEdit.transactionDate));
-    setError(null);
-    setLoading(false);
+    setSatisfactionRating(transactionToEdit.satisfactionRating > 0 ? transactionToEdit.satisfactionRating : null);
+    setError(null); setLoading(false);
   }, [transactionToEdit]);
 
-  /* type이 바뀔 때마다 해당 type의 카테고리만 조회 */
+  // type 바뀔 때 카테고리 재조회
   useEffect(() => {
-    const fetchModalOptions = async () => {
-      if (!isOpen) {
-        setCategories([]);
-        return;
-      }
+    if (!isOpen) { setCategories([]); return; }
+    void (async () => {
       try {
-        const fetchedCategories = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
-        setCategories(fetchedCategories ?? []);
-      } catch (nextError) {
-        if (axios.isAxiosError(nextError)) {
-          setError(nextError.message);
-        } else {
-          setError("카테고리 목록을 불러오는 중 오류가 발생했습니다.");
-        }
+        const res = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
+        setCategories(res ?? []);
+      } catch (e) {
+        if (axios.isAxiosError(e)) setError(e.message);
       }
-    };
-
-    void fetchModalOptions();
+    })();
   }, [isOpen, type]);
 
-  const handleClose = () => {
+  const handleClose = () => { setError(null); setLoading(false); onClose(); };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
-    setLoading(false);
-    onClose();
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
-
-    if (!transactionToEdit?.seq) {
-      setError("수정할 거래를 찾을 수 없습니다.");
-      return;
-    }
-
-    if (!amount || Number.parseFloat(amount) <= 0) {
-      setError("금액을 올바르게 입력해 주세요.");
-      return;
-    }
-
-    if (!transactionDate) {
-      setError("거래 날짜를 선택해 주세요.");
-      return;
-    }
-
-    if (categorySeq === "") {
-      setError("카테고리를 선택해 주세요.");
-      return;
-    }
+    if (!transactionToEdit?.seq) { setError("수정할 거래를 찾을 수 없습니다."); return; }
+    if (!amount || Number.parseFloat(amount) <= 0) { setError("금액을 올바르게 입력해 주세요."); return; }
+    if (!transactionDate) { setError("거래 날짜를 선택해 주세요."); return; }
+    if (categorySeq === "") { setError("카테고리를 선택해 주세요."); return; }
 
     setLoading(true);
-
     try {
       const payload: TransactionUpdateRequestDto = {
         type,
@@ -160,143 +115,147 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         categorySeq,
         description,
         transactionDate: transactionDate.second(0).format("YYYYMMDDHHmmss"),
+        satisfactionRating: satisfactionRating ?? undefined,
       };
-
       await transactionApi.updateTransaction(transactionToEdit.seq, payload);
       await onSuccess();
       handleClose();
-    } catch (nextError) {
-      if (axios.isAxiosError(nextError)) {
-        setError(nextError.message);
-      } else {
-        setError("거래 수정 중 오류가 발생했습니다.");
-      }
+    } catch (e) {
+      setError(axios.isAxiosError(e) ? e.message : "거래 수정 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!transactionToEdit) {
-    return null;
-  }
+  if (!transactionToEdit) return null;
 
   return (
-    <Modal
+    <Dialog
       open={isOpen}
       onClose={handleClose}
-      aria-labelledby="transaction-edit-modal-title"
-      aria-describedby="transaction-edit-modal-description"
+      maxWidth="xs"
+      fullWidth
+      sx={{ "& .MuiDialog-container": { alignItems: { xs: "flex-end", sm: "center" } } }}
+      PaperProps={{
+        component: "form",
+        onSubmit: (e: React.FormEvent) => void handleSubmit(e),
+        sx: {
+          m: { xs: 0, sm: 2 },
+          width: { xs: "100%", sm: undefined },
+          maxWidth: { xs: "100%", sm: 444 },
+          borderRadius: { xs: "20px 20px 0 0", sm: 3 },
+          maxHeight: { xs: "92vh", sm: "88vh" },
+          overflowY: "auto",
+        },
+      }}
     >
-      <Box sx={style} component="form" onSubmit={(event) => void handleSubmit(event)}>
-        <Typography
-          id="transaction-edit-modal-title"
-          variant="h5"
-          component="h2"
-          mb={3}
-        >
-          거래 수정
-        </Typography>
+      {/* 모바일 드래그 핸들 */}
+      <Box sx={{ display: { xs: "flex", sm: "none" }, justifyContent: "center", pt: 1.5, pb: 0.5 }}>
+        <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "action.disabled" }} />
+      </Box>
 
-        {error ? (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        ) : null}
+      <DialogTitle sx={{ fontWeight: 700, pb: 0 }}>거래 수정</DialogTitle>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="type-select-label">유형</InputLabel>
+      <DialogContent sx={{ pt: 2 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        {/* 유형 */}
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>유형</InputLabel>
           <Select
-            labelId="type-select-label"
-            id="type-select"
             value={type}
             label="유형"
-            onChange={(event: SelectChangeEvent<string>) => {
-              setType(event.target.value);
-              setCategorySeq("");
-            }}
+            onChange={(e: SelectChangeEvent<string>) => { setType(e.target.value); setCategorySeq(""); }}
           >
             {(classifications.length > 0
               ? classifications
               : [{ id: -1, name: "EXPENSE" }, { id: -2, name: "INCOME" }] as ClassificationResponse[]
             ).map((cls) => (
-              <MenuItem key={cls.name} value={cls.name}>
-                {TYPE_LABEL[cls.name] ?? cls.name}
-              </MenuItem>
+              <MenuItem key={cls.name} value={cls.name}>{TYPE_LABEL[cls.name] ?? cls.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        {/* 금액 */}
         <TextField
           fullWidth
           label="금액"
           type="number"
+          size="small"
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          margin="normal"
+          onChange={(e) => setAmount(e.target.value)}
           required
           sx={{ mb: 2 }}
         />
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="category-select-label">카테고리</InputLabel>
+        {/* 카테고리 */}
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>카테고리</InputLabel>
           <Select
-            labelId="category-select-label"
-            id="category-select"
             value={categorySeq}
             label="카테고리"
-            onChange={(event) => setCategorySeq(Number(event.target.value))}
+            onChange={(e) => setCategorySeq(Number(e.target.value))}
             required
           >
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
-              </MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        {/* 설명 */}
         <TextField
           fullWidth
           label="설명 (선택)"
+          size="small"
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          margin="normal"
-          multiline
-          rows={2}
+          onChange={(e) => setDescription(e.target.value)}
           sx={{ mb: 2 }}
         />
 
+        {/* 날짜 */}
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateTimePicker
             label="거래 날짜 및 시간"
             value={transactionDate}
-            onChange={(newValue) => setTransactionDate(newValue)}
-            sx={{ width: "100%", mb: 3 }}
+            onChange={(v) => setTransactionDate(v)}
+            slotProps={{ textField: { size: "small", fullWidth: true, sx: { mb: 2 } } }}
           />
         </LocalizationProvider>
 
-        <Box display="flex" justifyContent="space-between" gap={2}>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleClose}
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-          >
+        {/* 만족도 */}
+        <Box mb={2.5}>
+          <Typography variant="caption" fontWeight={700} color="text.secondary"
+            sx={{ display: "block", mb: 0.75, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            소비 만족도 (선택)
+          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Rating
+              value={satisfactionRating}
+              onChange={(_, v) => setSatisfactionRating(v)}
+              size="large"
+            />
+            {satisfactionRating && (
+              <Typography variant="caption" color="text.secondary">
+                {RATING_LABEL[satisfactionRating]}
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+
+        {/* 버튼 */}
+        <Stack direction="row" spacing={1.5}>
+          <Button fullWidth variant="outlined" onClick={handleClose} disabled={loading}
+            sx={{ fontWeight: 700, borderRadius: 2 }}>
             취소
           </Button>
-          <Button
-            variant="contained"
-            type="submit"
-            sx={{ flexGrow: 1 }}
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
-          >
-            {loading ? "수정 중..." : "거래 수정"}
+          <Button fullWidth variant="contained" type="submit" disabled={loading}
+            sx={{ fontWeight: 700, borderRadius: 2 }}>
+            {loading ? <CircularProgress size={20} color="inherit" /> : "수정 완료"}
           </Button>
-        </Box>
-      </Box>
-    </Modal>
+        </Stack>
+      </DialogContent>
+    </Dialog>
   );
 };
 
