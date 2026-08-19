@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -21,6 +21,7 @@ import {
   Warning,
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { BarChart } from "@mui/x-charts";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import { useBudget } from "../../../entities/budget/model/useBudget";
@@ -71,14 +72,12 @@ export default function BudgetPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BudgetSummaryResponse | null>(null);
 
-  // 전체 카테고리 로드 (예산 추가 시 선택용)
   useEffect(() => {
     categoryApi.getCategories(0, 100)
       .then((res) => setAllCategories(res ?? []))
-      .catch(() => { /* 조용히 실패 */ });
+      .catch(() => {});
   }, []);
 
-  // 예산 미설정 카테고리 (지출 카테고리만)
   const budgetedCatIds = new Set(
     summary.filter((s) => s.hasBudget).map((s) => s.categorySeq).filter(Boolean),
   );
@@ -100,9 +99,26 @@ export default function BudgetPage() {
     await upsertBudget(categorySeq, amount);
   };
 
-  // 지출 예산 항목 / 수입 포함 기타 항목 분리
   const expenseItems = summary.filter((s) => s.categoryType === "EXPENSE");
   const incomeItems = summary.filter((s) => s.categoryType === "INCOME");
+
+  // 차트용 데이터: 예산 설정된 지출 카테고리만
+  const chartItems = useMemo(
+    () => expenseItems.filter((s) => s.hasBudget && s.budgetAmount > 0),
+    [expenseItems],
+  );
+
+  const barDataset = useMemo(
+    () => chartItems.map((s) => ({
+      category: s.categoryName.length > 6 ? s.categoryName.slice(0, 5) + "…" : s.categoryName,
+      예산: s.budgetAmount,
+      실제: s.actualAmount,
+    })),
+    [chartItems],
+  );
+
+  const usedRatio = totalBudget > 0 ? Math.min((totalActual / totalBudget) * 100, 100) : 0;
+  const isOver = totalActual > totalBudget;
 
   return (
     <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 6, px: { xs: 2, sm: 3 } }}>
@@ -123,17 +139,13 @@ export default function BudgetPage() {
             onClick={() => void handleCopyFromPrev()}
             disabled={copying || loading}
             sx={{
-              fontWeight: 600,
-              textTransform: "none",
-              whiteSpace: "nowrap",
-              px: { xs: 1, sm: 1.5 },
-              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+              fontWeight: 600, textTransform: "none", whiteSpace: "nowrap",
+              px: { xs: 1, sm: 1.5 }, fontSize: { xs: "0.75rem", sm: "0.8rem" },
               display: { xs: "none", sm: "inline-flex" },
             }}
           >
             {copying ? "복사 중..." : "이전 달 복사"}
           </Button>
-          {/* 모바일: 아이콘만 */}
           <IconButton
             size="small"
             onClick={() => void handleCopyFromPrev()}
@@ -170,10 +182,10 @@ export default function BudgetPage() {
         </Stack>
       </Paper>
 
-      {/* ── 총 예산 요약 카드 ── */}
+      {/* ── 총 예산 요약 카드 (도넛 + 수치) ── */}
       {!loading && totalBudget > 0 && (
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-          <Stack direction="row" alignItems="center" gap={1} mb={1.5}>
+          <Stack direction="row" alignItems="center" gap={1} mb={2}>
             <TrendingUp sx={{ color: "primary.main", fontSize: "1.1rem" }} />
             <Typography variant="caption" fontWeight={700} color="text.secondary"
               sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -181,50 +193,122 @@ export default function BudgetPage() {
             </Typography>
           </Stack>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 0.5, sm: 3 }} mb={1.5}>
-            <Box>
-              <Typography variant="caption" color="text.disabled">총 예산</Typography>
-              <Typography variant="h6" fontWeight={700}>{totalBudget.toLocaleString("ko-KR")}원</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.disabled">사용</Typography>
-              <Typography variant="h6" fontWeight={700}
-                color={totalActual > totalBudget ? "error.main" : "text.primary"}>
-                {totalActual.toLocaleString("ko-KR")}원
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.disabled">잔여</Typography>
-              <Typography variant="h6" fontWeight={700}
-                color={totalBudget - totalActual < 0 ? "error.main" : "success.dark"}>
-                {(totalBudget - totalActual).toLocaleString("ko-KR")}원
-              </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 2, sm: 3 }} alignItems="center">
+            {/* SVG 원형 게이지 */}
+            <BudgetGauge usedRatio={usedRatio} isOver={isOver} theme={theme} />
+
+            {/* 수치 카드 */}
+            <Stack direction={{ xs: "row", sm: "column" }} spacing={{ xs: 3, sm: 1.5 }} flex={1} flexWrap="wrap">
+              <Box>
+                <Typography variant="caption" color="text.disabled">총 예산</Typography>
+                <Typography variant="h6" fontWeight={700} lineHeight={1.3}>
+                  {totalBudget.toLocaleString("ko-KR")}원
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.disabled">사용</Typography>
+                <Typography variant="h6" fontWeight={700} lineHeight={1.3}
+                  color={isOver ? "error.main" : "text.primary"}>
+                  {totalActual.toLocaleString("ko-KR")}원
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.disabled">{isOver ? "초과" : "잔여"}</Typography>
+                <Typography variant="h6" fontWeight={700} lineHeight={1.3}
+                  color={isOver ? "error.main" : "success.dark"}>
+                  {Math.abs(totalBudget - totalActual).toLocaleString("ko-KR")}원
+                </Typography>
+              </Box>
+            </Stack>
+
+            {/* 전체 진행 바 (세로 배치 보조) */}
+            <Box flex={1} sx={{ display: { xs: "none", sm: "block" } }}>
+              <Stack direction="row" justifyContent="space-between" mb={0.5}>
+                <Typography variant="caption" color="text.secondary">
+                  {Math.min(totalRatio, 999).toFixed(1)}% 사용
+                </Typography>
+                {isOver && (
+                  <Stack direction="row" alignItems="center" gap={0.5}>
+                    <Warning sx={{ fontSize: "0.85rem", color: "error.main" }} />
+                    <Typography variant="caption" color="error.main" fontWeight={700}>예산 초과</Typography>
+                  </Stack>
+                )}
+              </Stack>
+              <Box sx={{ height: 8, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
+                <Box sx={{
+                  height: "100%",
+                  width: `${Math.min(usedRatio, 100)}%`,
+                  bgcolor: isOver ? "error.main" : usedRatio >= 80 ? "warning.main" : "success.main",
+                  borderRadius: 99,
+                  transition: "width 0.4s ease",
+                }} />
+              </Box>
+              {isOver && (
+                <Box sx={{ mt: 0.5, height: 4, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
+                  <Box sx={{
+                    height: "100%",
+                    width: `${Math.min(((totalActual - totalBudget) / totalBudget) * 100, 100)}%`,
+                    bgcolor: alpha(theme.palette.error.main, 0.4),
+                    borderRadius: 99,
+                  }} />
+                </Box>
+              )}
             </Box>
           </Stack>
+        </Paper>
+      )}
 
-          {/* 전체 진행 바 */}
-          <Box>
-            <Stack direction="row" justifyContent="space-between" mb={0.5}>
-              <Typography variant="caption" color="text.secondary">
-                {Math.min(totalRatio, 999).toFixed(1)}% 사용
-              </Typography>
-              {totalActual > totalBudget && (
-                <Stack direction="row" alignItems="center" gap={0.5}>
-                  <Warning sx={{ fontSize: "0.85rem", color: "error.main" }} />
-                  <Typography variant="caption" color="error.main" fontWeight={700}>예산 초과</Typography>
+      {/* ── 카테고리별 예산 vs 실제 바차트 ── */}
+      {!loading && chartItems.length > 0 && (
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+          <Typography variant="caption" fontWeight={700} color="text.secondary"
+            sx={{ display: "block", mb: 2, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            카테고리별 예산 vs 실제
+          </Typography>
+
+          <BarChart
+            dataset={barDataset}
+            yAxis={[{ scaleType: "band", dataKey: "category" }]}
+            series={[
+              {
+                dataKey: "예산",
+                label: "예산",
+                color: alpha(theme.palette.primary.main, 0.35),
+                valueFormatter: (v) => `${(v ?? 0).toLocaleString("ko-KR")}원`,
+              },
+              {
+                dataKey: "실제",
+                label: "실제",
+                color: theme.palette.error.main,
+                valueFormatter: (v) => `${(v ?? 0).toLocaleString("ko-KR")}원`,
+              },
+            ]}
+            layout="horizontal"
+            height={Math.max(chartItems.length * 52 + 48, 140)}
+            grid={{ vertical: true }}
+            margin={{ left: 72, right: 16, top: 8, bottom: 32 }}
+            slotProps={{ legend: { position: { vertical: "bottom", horizontal: "middle" }, padding: 0 } }}
+          />
+
+          {/* 초과 항목 경고 배지 */}
+          {chartItems.filter((s) => s.over).length > 0 && (
+            <Stack direction="row" flexWrap="wrap" gap={0.75} mt={1.5} pt={1.5}
+              sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+              {chartItems.filter((s) => s.over).map((s) => (
+                <Stack key={s.categorySeq} direction="row" alignItems="center" gap={0.5}
+                  sx={{
+                    px: 1, py: 0.4, borderRadius: 99,
+                    bgcolor: alpha(theme.palette.error.main, 0.08),
+                    border: "1px solid", borderColor: alpha(theme.palette.error.main, 0.25),
+                  }}>
+                  <Warning sx={{ fontSize: "0.78rem", color: "error.main" }} />
+                  <Typography variant="caption" color="error.main" fontWeight={700}>
+                    {s.categoryName} +{(s.actualAmount - s.budgetAmount).toLocaleString("ko-KR")}원
+                  </Typography>
                 </Stack>
-              )}
+              ))}
             </Stack>
-            <Box sx={{ height: 8, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
-              <Box sx={{
-                height: "100%",
-                width: `${Math.min(totalRatio, 100)}%`,
-                bgcolor: totalActual > totalBudget ? "error.main" : totalRatio >= 80 ? "warning.main" : "success.main",
-                borderRadius: 99,
-                transition: "width 0.4s ease",
-              }} />
-            </Box>
-          </Box>
+          )}
         </Paper>
       )}
 
@@ -296,7 +380,7 @@ export default function BudgetPage() {
         </Paper>
       )}
 
-      {/* ── 수입 항목 (예산 미설정 거래 참고용) ── */}
+      {/* ── 수입 항목 ── */}
       {!loading && incomeItems.length > 0 && (
         <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Box sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: "action.hover" }}>
@@ -319,7 +403,6 @@ export default function BudgetPage() {
         </Paper>
       )}
 
-      {/* ── 모달 ── */}
       <BudgetSetModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -328,6 +411,77 @@ export default function BudgetPage() {
         onSave={handleSave}
       />
     </Container>
+  );
+}
+
+/* ── SVG 원형 게이지 ── */
+function BudgetGauge({
+  usedRatio,
+  isOver,
+  theme,
+}: {
+  usedRatio: number;
+  isOver: boolean;
+  theme: ReturnType<typeof useTheme>;
+}) {
+  const SIZE = 150;
+  const CX = SIZE / 2;
+  const CY = SIZE / 2;
+  const R = 54;
+  const SW = 16; // strokeWidth
+  const circumference = 2 * Math.PI * R;
+  const dashOffset = circumference * (1 - usedRatio / 100);
+
+  const color = isOver
+    ? theme.palette.error.main
+    : usedRatio >= 80
+    ? theme.palette.warning.main
+    : theme.palette.success.main;
+
+  const labelColor = isOver
+    ? theme.palette.error.main
+    : usedRatio >= 80
+    ? theme.palette.warning.dark
+    : theme.palette.success.dark;
+
+  return (
+    <Box sx={{ position: "relative", width: SIZE, height: SIZE, flexShrink: 0 }}>
+      <svg width={SIZE} height={SIZE}>
+        {/* 배경 트랙 */}
+        <circle
+          cx={CX} cy={CY} r={R}
+          fill="none"
+          stroke={theme.palette.action.hover}
+          strokeWidth={SW}
+        />
+        {/* 진행 호 */}
+        {usedRatio > 0 && (
+          <circle
+            cx={CX} cy={CY} r={R}
+            fill="none"
+            stroke={color}
+            strokeWidth={SW}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${CX} ${CY})`}
+            style={{ transition: "stroke-dashoffset 0.5s ease" }}
+          />
+        )}
+      </svg>
+      {/* 중앙 텍스트 — SVG와 동일한 inset:0으로 완벽 중앙 */}
+      <Box sx={{
+        position: "absolute", inset: 0,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        pointerEvents: "none",
+      }}>
+        <Typography fontWeight={800} lineHeight={1} sx={{ fontSize: "1.25rem", color: labelColor }}>
+          {isOver ? "초과" : `${Math.round(usedRatio)}%`}
+        </Typography>
+        <Typography variant="caption" color="text.disabled" lineHeight={1.4}>사용률</Typography>
+      </Box>
+    </Box>
   );
 }
 
@@ -350,7 +504,6 @@ function BudgetItem({
   return (
     <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.75, sm: 2 } }}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
-        {/* 왼쪽: 카테고리 + 금액 */}
         <Stack direction="row" alignItems="center" gap={1} minWidth={0} flex={1}>
           {item.categoryColor && (
             <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: item.categoryColor, flexShrink: 0 }} />
@@ -373,31 +526,24 @@ function BudgetItem({
           </Box>
         </Stack>
 
-        {/* 오른쪽: 비율 + 버튼 */}
         <Stack direction="row" alignItems="center" gap={0.5} flexShrink={0} ml={1}>
           {item.hasBudget && (
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color={item.over ? "error.main" : item.ratio >= 80 ? "warning.main" : "success.dark"}
-            >
+            <Typography variant="caption" fontWeight={700}
+              color={item.over ? "error.main" : item.ratio >= 80 ? "warning.main" : "success.dark"}>
               {item.ratio.toFixed(0)}%
             </Typography>
           )}
           {item.over && <Warning sx={{ fontSize: "0.9rem", color: "error.main" }} />}
-          {/* 수정 버튼 (예산 설정 항목만) */}
           {item.hasBudget && (
             <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "text.secondary" }}>
               <Edit sx={{ fontSize: "0.95rem" }} />
             </IconButton>
           )}
-          {/* 삭제 버튼 (예산 설정 항목만) */}
           {item.hasBudget && (
             <IconButton size="small" onClick={() => void onDelete(item)} sx={{ color: "text.secondary" }}>
               <Delete sx={{ fontSize: "0.95rem" }} />
             </IconButton>
           )}
-          {/* 예산 미설정 항목 → 추가 버튼 */}
           {!item.hasBudget && isExpense && (
             <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "primary.main" }}>
               <Add sx={{ fontSize: "0.95rem" }} />
@@ -406,7 +552,6 @@ function BudgetItem({
         </Stack>
       </Stack>
 
-      {/* 진행 바 (지출 + 예산 설정 항목만) */}
       {item.hasBudget && isExpense && (
         <Box sx={{ height: 5, bgcolor: "action.hover", borderRadius: 99, overflow: "hidden" }}>
           <Box sx={{
