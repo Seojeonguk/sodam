@@ -101,6 +101,8 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
   /** 금액 범위 */
   const [minAmount, setMinAmount] = useState<number | undefined>(undefined);
   const [maxAmount, setMaxAmount] = useState<number | undefined>(undefined);
+  /** 분류 타입 필터 (빈 문자열 = 전체) */
+  const [typeFilter, setTypeFilter] = useState<string>("");
 
   /**
    * Dayjs 객체는 매 setDateRange 호출 시 새 참조가 생성되어 useCallback 의존성이
@@ -120,7 +122,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
   /** 검색 조건 변경 시 첫 페이지로 리셋 */
   useEffect(() => {
     setPage(0);
-  }, [startDateStr, endDateStr, categoryFilter, keyword, minAmount, maxAmount]);
+  }, [startDateStr, endDateStr, categoryFilter, keyword, minAmount, maxAmount, typeFilter]);
 
   const resetTransactionState = useCallback(() => {
     setTransactions(null);
@@ -173,6 +175,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
           keyword.trim() || undefined,
           minAmount,
           maxAmount,
+          typeFilter || undefined,
         ),
         statApi.getStats(statRequest),
         statApi.getPeriodStats(statPeriodRequest),
@@ -201,6 +204,7 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     keyword,
     minAmount,
     maxAmount,
+    typeFilter,
     resetTransactionState,
   ]);
 
@@ -261,5 +265,8 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
     totalPages: transactions?.totalPages ?? 1,
     /** 전체 거래 건수 */
     totalElements: transactions?.totalElements ?? 0,
+    /** 분류 타입 필터 (빈 문자열 = 전체) */
+    typeFilter,
+    setTypeFilter,
   };
 };

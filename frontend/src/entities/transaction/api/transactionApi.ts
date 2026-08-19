@@ -27,6 +27,7 @@ const transactionApi = {
     keyword?: string,
     minAmount?: number,
     maxAmount?: number,
+    typeFilter?: string,
   ): Promise<TransactionListResponse> => {
     if (guestMode.isActive())
       return guestStore.getTransactions(
@@ -56,6 +57,7 @@ const transactionApi = {
       query = query.ilike("description", `%${keyword}%`);
     if (minAmount != null) query = query.gte("amount", minAmount);
     if (maxAmount != null) query = query.lte("amount", maxAmount);
+    if (typeFilter) query = query.eq("type", typeFilter);
 
     const { data, error, count } = await query;
     if (error) throw new Error(error.message);

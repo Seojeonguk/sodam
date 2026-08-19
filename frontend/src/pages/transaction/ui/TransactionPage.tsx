@@ -71,6 +71,8 @@ function TransactionPage() {
     setMinAmount,
     maxAmount,
     setMaxAmount,
+    typeFilter,
+    setTypeFilter,
     page,
     setPage,
     totalPages,
@@ -119,8 +121,6 @@ function TransactionPage() {
   };
 
   const handleAmountReset = () => {
-    setKeywordInput("");
-    setKeyword("");
     setMinAmountInput("");
     setMaxAmountInput("");
     setMinAmount(undefined);
@@ -135,9 +135,10 @@ function TransactionPage() {
     setMinAmount(undefined);
     setMaxAmount(undefined);
     setCategoryFilter([]);
+    setTypeFilter("");
   };
 
-  const hasActiveSearch = keyword.trim() || minAmount != null || maxAmount != null || categoryFilter.length > 0;
+  const hasActiveFilter = !!keyword.trim() || minAmount != null || maxAmount != null || categoryFilter.length > 0 || !!typeFilter;
 
   // 카테고리 목록 (필터 칩 렌더링용)
   const [filterCategories, setFilterCategories] = useState<CategoryListItemResponse[]>([]);
@@ -325,65 +326,222 @@ function TransactionPage() {
         </Stack>
       </Stack>
 
-      {/* ── 카테고리 필터 (목록·캘린더 공통) ── */}
-      {filterCategories.length > 0 && (
-        <Paper
-          elevation={0}
-          sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
-        >
-          <Stack direction="row" alignItems="center" gap={1} mb={1}>
-            <FilterList sx={{ fontSize: "0.95rem", color: "text.secondary" }} />
-            <Typography variant="caption" fontWeight={700} color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              카테고리
-            </Typography>
-          </Stack>
+      {/* ── 검색 + 분류 + 카테고리 필터 패널 ── */}
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+      >
+        {/* 검색바 - 항상 노출 */}
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="설명으로 검색..."
+          value={keywordInput}
+          onChange={(e) => handleKeywordChange(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ fontSize: "1.1rem", color: "text.disabled" }} />
+                </InputAdornment>
+              ),
+              endAdornment: keywordInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => handleKeywordChange("")} edge="end">
+                    <Clear sx={{ fontSize: "1rem" }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+          sx={{ mb: 1.5, "& fieldset": { borderRadius: 1.5 } }}
+        />
+
+        {/* 분류 탭 */}
+        <Stack direction="row" alignItems="center" gap={1} mb={1}>
+          <FilterList sx={{ fontSize: "0.9rem", color: "text.secondary", flexShrink: 0 }} />
           <Box display="flex" gap={0.75} flexWrap="wrap">
-            <Chip
-              label="전체"
-              size="small"
-              onClick={() => setCategoryFilter([])}
-              sx={{
-                fontWeight: categoryFilter.length === 0 ? 700 : 500,
-                bgcolor: categoryFilter.length === 0 ? "primary.main" : "action.hover",
-                color: categoryFilter.length === 0 ? "primary.contrastText" : "text.primary",
-                border: "1px solid",
-                borderColor: categoryFilter.length === 0 ? "primary.main" : "transparent",
-                "&:hover": { opacity: 0.85 },
-              }}
-            />
-            {filterCategories.map((cat) => {
-              const isSelected = categoryFilter.includes(cat.id);
-              const muiColor = TYPE_MUI_COLOR[cat.type] ?? "default";
+            {[
+              { label: "전체", value: "" },
+              ...(classifications.length > 0
+                ? classifications.map((c) => ({ label: TYPE_LABEL[c.name] ?? c.name, value: c.name }))
+                : [{ label: "수입", value: "INCOME" }, { label: "지출", value: "EXPENSE" }]
+              ),
+            ].map(({ label, value }) => {
+              const isActive = typeFilter === value;
+              const muiColor = value ? (TYPE_MUI_COLOR[value] ?? "default") : "default";
               const pk = muiColor !== "default" ? muiColor : "primary";
-              const catPal = theme.palette[pk as "success" | "error" | "info" | "primary"];
+              const pal = theme.palette[pk as "success" | "error" | "info" | "primary"];
               return (
                 <Chip
-                  key={cat.id}
-                  label={cat.name}
+                  key={value || "all"}
+                  label={label}
                   size="small"
-                  onClick={() =>
-                    setCategoryFilter(
-                      isSelected
-                        ? categoryFilter.filter((id) => id !== cat.id)
-                        : [...categoryFilter, cat.id],
-                    )
-                  }
+                  onClick={() => { setTypeFilter(value); setCategoryFilter([]); }}
                   sx={{
-                    fontWeight: isSelected ? 700 : 500,
-                    bgcolor: isSelected ? alpha(catPal.main, 0.15) : "action.hover",
-                    color: isSelected ? `${pk}.dark` : "text.secondary",
+                    fontWeight: isActive ? 700 : 500,
+                    bgcolor: isActive ? alpha(pal.main, 0.15) : "action.hover",
+                    color: isActive ? pal.dark : "text.secondary",
                     border: "1.5px solid",
-                    borderColor: isSelected ? alpha(catPal.main, 0.5) : "transparent",
+                    borderColor: isActive ? alpha(pal.main, 0.5) : "transparent",
                     transition: "all 0.15s ease",
-                    "&:hover": { opacity: 0.85 },
                   }}
                 />
               );
             })}
           </Box>
-        </Paper>
-      )}
+        </Stack>
+
+        {/* 카테고리 칩 (typeFilter 기준으로 그룹핑) */}
+        {filterCategories.length > 0 && (() => {
+          const visible = typeFilter
+            ? filterCategories.filter((c) => c.type === typeFilter)
+            : filterCategories;
+          if (visible.length === 0) return null;
+          const muiColor = typeFilter ? (TYPE_MUI_COLOR[typeFilter] ?? "default") : "default";
+          const pk = muiColor !== "default" ? muiColor : "primary";
+          const pal = theme.palette[pk as "success" | "error" | "info" | "primary"];
+          return (
+            <Box
+              display="flex"
+              gap={0.75}
+              flexWrap="wrap"
+              sx={{ pt: 0.5, pl: 3 }}
+            >
+              {visible.map((cat) => {
+                const isSelected = categoryFilter.includes(cat.id);
+                return (
+                  <Chip
+                    key={cat.id}
+                    label={cat.name}
+                    size="small"
+                    onClick={() =>
+                      setCategoryFilter(
+                        isSelected
+                          ? categoryFilter.filter((id) => id !== cat.id)
+                          : [...categoryFilter, cat.id],
+                      )
+                    }
+                    sx={{
+                      fontWeight: isSelected ? 700 : 400,
+                      fontSize: "0.72rem",
+                      bgcolor: isSelected ? alpha(pal.main, 0.12) : "transparent",
+                      color: isSelected ? pal.dark : "text.disabled",
+                      border: "1px solid",
+                      borderColor: isSelected ? alpha(pal.main, 0.4) : "divider",
+                      transition: "all 0.15s ease",
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          );
+        })()}
+
+        {/* 금액 범위 필터 토글 */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mt={1.5}>
+          <Button
+            size="small"
+            startIcon={<TuneOutlined sx={{ fontSize: "0.95rem" }} />}
+            onClick={() => setShowAmountFilter((v) => !v)}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.78rem",
+              color: (minAmount != null || maxAmount != null) ? "primary.main" : "text.secondary",
+              px: 0.5,
+            }}
+          >
+            금액 범위
+            {(minAmount != null || maxAmount != null) && (
+              <Box component="span" sx={{
+                ml: 0.75, px: 0.75, py: 0.1, borderRadius: 99,
+                bgcolor: "primary.main", color: "primary.contrastText",
+                fontSize: "0.7rem", fontWeight: 700, lineHeight: 1.6,
+              }}>
+                1
+              </Box>
+            )}
+          </Button>
+          {hasActiveFilter && (
+            <Button
+              size="small"
+              onClick={handleClearAll}
+              sx={{ textTransform: "none", fontSize: "0.78rem", color: "text.secondary", px: 0.5 }}
+            >
+              필터 초기화
+            </Button>
+          )}
+        </Stack>
+
+        {/* 금액 범위 입력 */}
+        <Collapse in={showAmountFilter}>
+          <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center">
+              <TextField
+                label="최소 금액"
+                size="small"
+                value={minAmountInput}
+                onChange={(e) => setMinAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="0"
+                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
+                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
+              />
+              <Typography color="text.disabled" fontWeight={700} sx={{ display: { xs: "none", sm: "block" } }}>~</Typography>
+              <TextField
+                label="최대 금액"
+                size="small"
+                value={maxAmountInput}
+                onChange={(e) => setMaxAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="제한 없음"
+                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
+                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
+              />
+            </Stack>
+            <Stack direction="row" spacing={1} mt={1} justifyContent="flex-end">
+              <Button size="small" variant="outlined" onClick={handleAmountReset}
+                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}>
+                초기화
+              </Button>
+              <Button size="small" variant="contained" onClick={handleAmountApply}
+                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}>
+                적용
+              </Button>
+            </Stack>
+          </Box>
+        </Collapse>
+
+        {/* 활성 필터 요약 칩 */}
+        {hasActiveFilter && (
+          <Box display="flex" gap={0.75} flexWrap="wrap" mt={1.5} pt={1.5}
+            sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+            {keyword.trim() && (
+              <Chip size="small" label={`"${keyword.trim()}"`}
+                onDelete={() => { setKeywordInput(""); setKeyword(""); }}
+                sx={{ fontWeight: 600, fontSize: "0.72rem" }} />
+            )}
+            {typeFilter && (
+              <Chip size="small" label={TYPE_LABEL[typeFilter] ?? typeFilter}
+                onDelete={() => { setTypeFilter(""); setCategoryFilter([]); }}
+                sx={{ fontWeight: 600, fontSize: "0.72rem" }} />
+            )}
+            {categoryFilter.map((id) => {
+              const cat = filterCategories.find((c) => c.id === id);
+              return cat ? (
+                <Chip key={id} size="small" label={cat.name}
+                  onDelete={() => setCategoryFilter(categoryFilter.filter((x) => x !== id))}
+                  sx={{ fontWeight: 600, fontSize: "0.72rem" }} />
+              ) : null;
+            })}
+            {(minAmount != null || maxAmount != null) && (
+              <Chip size="small"
+                label={`${minAmount != null ? minAmount.toLocaleString() + "원" : "0원"} ~ ${maxAmount != null ? maxAmount.toLocaleString() + "원" : "∞"}`}
+                onDelete={handleAmountReset}
+                sx={{ fontWeight: 600, fontSize: "0.72rem" }} />
+            )}
+          </Box>
+        )}
+      </Paper>
 
       {/* ── 캘린더 뷰 ── */}
       {viewMode === "calendar" && (
@@ -439,121 +597,6 @@ function TransactionPage() {
           </Stack>
         </LocalizationProvider>
 
-        {/* 추가 필터 토글 */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mt={1.5}>
-          <Button
-            size="small"
-            startIcon={<TuneOutlined sx={{ fontSize: "0.95rem" }} />}
-            onClick={() => setShowAmountFilter((v) => !v)}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.78rem",
-              color: (keyword.trim() || minAmount != null || maxAmount != null) ? "primary.main" : "text.secondary",
-              px: 0.5,
-            }}
-          >
-            추가 필터
-            {(keyword.trim() || minAmount != null || maxAmount != null) && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 0.75,
-                  px: 0.75,
-                  py: 0.1,
-                  borderRadius: 99,
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  lineHeight: 1.6,
-                }}
-              >
-                {[keyword.trim() ? 1 : 0, minAmount != null || maxAmount != null ? 1 : 0].reduce((a, b) => a + b, 0)}
-              </Box>
-            )}
-          </Button>
-          {hasActiveSearch && (
-            <Button
-              size="small"
-              onClick={handleClearAll}
-              sx={{ textTransform: "none", fontSize: "0.78rem", color: "text.secondary", px: 0.5 }}
-            >
-              필터 초기화
-            </Button>
-          )}
-        </Stack>
-
-        {/* 추가 필터 입력 (Collapse) */}
-        <Collapse in={showAmountFilter}>
-          <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
-            {/* 설명 검색 */}
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="설명으로 검색..."
-              value={keywordInput}
-              onChange={(e) => handleKeywordChange(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ fontSize: "1.1rem", color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: keywordInput ? (
-                    <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => handleKeywordChange("")} edge="end">
-                        <Clear sx={{ fontSize: "1rem" }} />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : undefined,
-                },
-              }}
-              sx={{ mb: 1.5, "& fieldset": { borderRadius: 1.5 } }}
-            />
-            {/* 금액 범위 */}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center">
-              <TextField
-                label="최소 금액"
-                size="small"
-                value={minAmountInput}
-                onChange={(e) => setMinAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="0"
-                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
-                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
-              />
-              <Typography color="text.disabled" fontWeight={700} sx={{ display: { xs: "none", sm: "block" } }}>~</Typography>
-              <TextField
-                label="최대 금액"
-                size="small"
-                value={maxAmountInput}
-                onChange={(e) => setMaxAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="제한 없음"
-                sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
-                slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
-              />
-            </Stack>
-            <Stack direction="row" spacing={1} mt={1} justifyContent="flex-end">
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={handleAmountReset}
-                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}
-              >
-                초기화
-              </Button>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleAmountApply}
-                sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}
-              >
-                적용
-              </Button>
-            </Stack>
-          </Box>
-        </Collapse>
       </Paper>
 
       {/* ── 통계 ── */}
