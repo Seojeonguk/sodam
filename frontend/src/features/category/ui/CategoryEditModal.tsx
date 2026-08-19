@@ -19,18 +19,21 @@ import axios, { type AxiosError } from "axios";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
 const style = {
-  position: "absolute" as const,
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "min(400px, calc(100vw - 32px))",
-  maxHeight: "calc(100vh - 64px)",
+  position: "fixed" as const,
+  // 모바일: 하단 고정, 데스크톱: 중앙
+  bottom: { xs: 0, sm: "50%" },
+  left: { xs: 0, sm: "50%" },
+  right: { xs: 0, sm: "auto" },
+  transform: { xs: "none", sm: "translate(-50%, 50%)" },
+  width: { xs: "100%", sm: 400 },
+  maxWidth: { xs: "100%", sm: "calc(100vw - 32px)" },
+  maxHeight: { xs: "92vh", sm: "calc(100vh - 64px)" },
   overflowY: "auto" as const,
   bgcolor: "background.paper",
   border: "none",
   boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
   p: { xs: 3, sm: 4 },
-  borderRadius: "24px",
+  borderRadius: { xs: "20px 20px 0 0", sm: "24px" },
 };
 
 interface CategoryEditModalProps {

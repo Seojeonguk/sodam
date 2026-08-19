@@ -41,8 +41,26 @@ const AssetHistoryModal: React.FC<Props> = ({ open, asset, onClose }) => {
   const hasChart = chartData.length >= 2;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { borderRadius: 3 } }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      sx={{ "& .MuiDialog-container": { alignItems: { xs: "flex-end", sm: "center" } } }}
+      PaperProps={{
+        sx: {
+          m: { xs: 0, sm: 2 },
+          width: { xs: "100%", sm: undefined },
+          maxWidth: { xs: "100%", sm: 600 },
+          borderRadius: { xs: "20px 20px 0 0", sm: 3 },
+          maxHeight: { xs: "92vh", sm: "85vh" },
+        },
+      }}
+    >
+      {/* 모바일 드래그 핸들 */}
+      <Box sx={{ display: { xs: "flex", sm: "none" }, justifyContent: "center", pt: 1.5, pb: 0.5 }}>
+        <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "action.disabled" }} />
+      </Box>
       <DialogTitle sx={{ fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
           <Typography variant="h6" fontWeight={800}>{asset.name}</Typography>

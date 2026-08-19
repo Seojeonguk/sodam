@@ -63,8 +63,26 @@ const AssetCreateModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   const cfg = ASSET_TYPE_CONFIG[type];
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth
-      PaperProps={{ sx: { borderRadius: 3 } }}>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      sx={{ "& .MuiDialog-container": { alignItems: { xs: "flex-end", sm: "center" } } }}
+      PaperProps={{
+        sx: {
+          m: { xs: 0, sm: 2 },
+          width: { xs: "100%", sm: undefined },
+          maxWidth: { xs: "100%", sm: 444 },
+          borderRadius: { xs: "20px 20px 0 0", sm: 3 },
+          maxHeight: { xs: "92vh", sm: "85vh" },
+        },
+      }}
+    >
+      {/* 모바일 드래그 핸들 */}
+      <Box sx={{ display: { xs: "flex", sm: "none" }, justifyContent: "center", pt: 1.5, pb: 0.5 }}>
+        <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: "action.disabled" }} />
+      </Box>
       <DialogTitle sx={{ fontWeight: 800, pb: 0 }}>새 자산 추가</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         <Box component="form" onSubmit={(e) => void handleSubmit(e)}>

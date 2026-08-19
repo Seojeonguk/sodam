@@ -1,4 +1,4 @@
-import { Add, Dashboard, Menu, Receipt, RepeatOutlined, SavingsOutlined } from "@mui/icons-material";
+import { Add, Dashboard, Menu, Receipt, SavingsOutlined } from "@mui/icons-material";
 import { Box, Fab, Paper, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -13,8 +13,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "홈", Icon: Dashboard, path: "/dashboard" },
   { label: "거래", Icon: Receipt, path: "/transactions" },
   null, // ← FAB (정중앙 3/5)
-  { label: "반복", Icon: RepeatOutlined, path: "/recurring" },
-  { label: "설정", Icon: Menu, action: "menu" },
+  { label: "예산", Icon: SavingsOutlined, path: "/budget" },
+  { label: "메뉴", Icon: Menu, action: "menu" },
 ];
 
 interface MobileBottomNavProps {

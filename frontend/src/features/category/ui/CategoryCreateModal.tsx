@@ -28,20 +28,22 @@ const getRandomColor = () =>
     .padStart(6, "0")}`;
 
 const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 440,
-  maxWidth: "calc(100vw - 32px)",
-  maxHeight: "calc(100vh - 32px)",
+  position: "fixed",
+  // 모바일: 하단 고정, 데스크톱: 중앙
+  bottom: { xs: 0, sm: "50%" },
+  left: { xs: 0, sm: "50%" },
+  right: { xs: 0, sm: "auto" },
+  transform: { xs: "none", sm: "translate(-50%, 50%)" },
+  width: { xs: "100%", sm: 440 },
+  maxWidth: { xs: "100%", sm: "calc(100vw - 32px)" },
+  maxHeight: { xs: "92vh", sm: "calc(100vh - 32px)" },
   overflowY: "auto",
   bgcolor: "background.paper",
   border: "none",
   boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
   p: { xs: 3, sm: 4 },
-  borderRadius: "24px",
-} as const;
+  borderRadius: { xs: "20px 20px 0 0", sm: "24px" },
+};
 
 interface CategoryCreateModalProps {
   isOpen: boolean;

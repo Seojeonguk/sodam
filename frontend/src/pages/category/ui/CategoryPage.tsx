@@ -212,6 +212,8 @@ function CategoryPage() {
             <Tabs
               value={categoryTypeFilter}
               onChange={(_, v: string) => setCategoryTypeFilter(v)}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
                 minHeight: 36,
                 "& .MuiTab-root": { minHeight: 36, py: 0.5, fontSize: "0.8rem" },
