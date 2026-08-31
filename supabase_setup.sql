@@ -71,18 +71,21 @@ CREATE INDEX IF NOT EXISTS idx_transaction_date             ON public.transactio
 
 
 -- ── category ─────────────────────────────────────────────────
+-- user_seq: 생성자(작성자) 정보. account_book_seq: 소속 가계부(공유 범위).
 CREATE TABLE IF NOT EXISTS public.category (
-    id          BIGSERIAL PRIMARY KEY,
-    name        VARCHAR(255),
-    description VARCHAR(255),
-    user_seq    BIGINT,
-    color       VARCHAR(255),
-    type        VARCHAR(10) NOT NULL DEFAULT 'EXPENSE',  -- INCOME | EXPENSE
-    created_at  VARCHAR(14) NOT NULL,
-    updated_at  VARCHAR(14) NOT NULL
+    id               BIGSERIAL PRIMARY KEY,
+    name             VARCHAR(255),
+    description      VARCHAR(255),
+    user_seq         BIGINT,
+    account_book_seq BIGINT,
+    color            VARCHAR(255),
+    type             VARCHAR(10) NOT NULL DEFAULT 'EXPENSE',  -- INCOME | EXPENSE
+    created_at       VARCHAR(14) NOT NULL,
+    updated_at       VARCHAR(14) NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_category_user_seq ON public.category(user_seq);
+CREATE INDEX IF NOT EXISTS idx_category_user_seq         ON public.category(user_seq);
+CREATE INDEX IF NOT EXISTS idx_category_account_book_seq ON public.category(account_book_seq);
 
 
 -- ── classification ────────────────────────────────────────────
