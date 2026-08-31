@@ -101,6 +101,20 @@ AS $$
     AND authority = 'OWNER'
 $$;
 
+-- 현재 유저가 OWNER 또는 EDITOR 권한으로 속한 가계부 ID 목록 (RLS 우회)
+CREATE OR REPLACE FUNCTION public.get_my_editable_account_book_ids()
+RETURNS SETOF BIGINT
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT account_book_id
+  FROM public.account_book_member
+  WHERE user_id = (SELECT id FROM public.users WHERE email = auth.email())
+    AND authority IN ('OWNER', 'EDITOR')
+$$;
+
 
 -- ══════════════════════════════════════════════════════════════
 -- 2. RLS 활성화
@@ -242,13 +256,21 @@ CREATE POLICY "recurring_write" ON public.recurring_transaction
 
 
 -- ── category ─────────────────────────────────────────────────
--- 주의: category 테이블에는 account_book_seq 컬럼이 없어 가계부 단위 공유가 불가능함(사용자 단위 소유).
--- 가계부 멤버 간 카테고리 공유가 필요하면 스키마 변경(account_book_seq 추가 + 데이터 마이그레이션)이 별도로 필요함.
+-- SELECT: 내가 속한 가계부의 카테고리 전체 조회 가능
+-- INSERT/UPDATE/DELETE: 내가 OWNER 또는 EDITOR 권한으로 속한 가계부의 카테고리만
+--                        (VIEWER는 조회만 가능)
 DROP POLICY IF EXISTS "category_own" ON public.category;
-CREATE POLICY "category_own" ON public.category
+DROP POLICY IF EXISTS "category_select" ON public.category;
+DROP POLICY IF EXISTS "category_write" ON public.category;
+
+CREATE POLICY "category_select" ON public.category
+  FOR SELECT
+  USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
+
+CREATE POLICY "category_write" ON public.category
   FOR ALL
-  USING     (user_seq = public.get_my_user_seq())
-  WITH CHECK (user_seq = public.get_my_user_seq());
+  USING     (account_book_seq IN (SELECT public.get_my_editable_account_book_ids()))
+  WITH CHECK (account_book_seq IN (SELECT public.get_my_editable_account_book_ids()));
 
 
 -- ── classification ────────────────────────────────────────────
