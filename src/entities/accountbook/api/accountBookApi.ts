@@ -30,12 +30,22 @@ const accountBookApi = {
 
     if (error) throw new Error(error.message);
 
-    return (data ?? []).map((row: any) => ({
-      id: row.account_book.id as number,
-      name: row.account_book.name as string,
-      isOwner: row.authority === "OWNER",
-      canEdit: row.authority === "OWNER" || row.authority === "EDITOR",
-    }));
+    // account_book_member에 동일 (account_book_id, user_id) 중복 행이 있어도
+    // 목록에는 가계부당 한 번만 노출되도록 방어
+    const seen = new Set<number>();
+    const result: AccountBookListResponse[] = [];
+    for (const row of (data ?? []) as any[]) {
+      const id = row.account_book.id as number;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      result.push({
+        id,
+        name: row.account_book.name as string,
+        isOwner: row.authority === "OWNER",
+        canEdit: row.authority === "OWNER" || row.authority === "EDITOR",
+      });
+    }
+    return result;
   },
 
   createAccountBook: async (name: string): Promise<AccountBookCreateResponse> => {

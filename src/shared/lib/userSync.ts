@@ -19,10 +19,14 @@ const DEFAULT_CATEGORIES = [
 ];
 
 let cachedUserSeq: number | null = null;
+// syncUser 동시 호출 시(초기 로드 시 여러 API가 동시에 getUserSeq를 호출하는 경우)
+// 각 호출이 독립적으로 신규 유저 생성/초대 처리를 중복 실행하지 않도록 in-flight 요청을 공유한다.
+let syncUserPromise: Promise<number> | null = null;
 
 /** 캐시 초기화 (로그아웃 시 호출) */
 export function clearUserSeq(): void {
   cachedUserSeq = null;
+  syncUserPromise = null;
 }
 
 /** 현재 캐시된 userSeq 반환 (동기) */
@@ -136,17 +140,20 @@ async function processPendingInvites(userId: number, email: string): Promise<voi
       continue;
     }
 
-    // 멤버 추가 (이미 멤버인 경우 오류 무시)
-    await supabase.from("account_book_member").insert({
-      account_book_id: invite.account_book_id,
-      user_id: userId,
-      authority: invite.authority,
-      is_available: "Y",
-      created_at: now,
-      created_by: invite.invited_by,
-      updated_at: now,
-      updated_by: invite.invited_by,
-    });
+    // 멤버 추가 (이미 멤버인 경우 무시 — account_book_member(account_book_id, user_id) UNIQUE 제약 기준)
+    await supabase.from("account_book_member").upsert(
+      {
+        account_book_id: invite.account_book_id,
+        user_id: userId,
+        authority: invite.authority,
+        is_available: "Y",
+        created_at: now,
+        created_by: invite.invited_by,
+        updated_at: now,
+        updated_by: invite.invited_by,
+      },
+      { onConflict: "account_book_id,user_id", ignoreDuplicates: true },
+    );
 
     // 처리된 초대 삭제
     await supabase.from("pending_invites").delete().eq("id", invite.id);
@@ -159,7 +166,15 @@ async function processPendingInvites(userId: number, email: string): Promise<voi
  */
 export async function syncUser(email: string, name: string): Promise<number> {
   if (cachedUserSeq != null) return cachedUserSeq;
+  if (syncUserPromise) return syncUserPromise;
 
+  syncUserPromise = doSyncUser(email, name).finally(() => {
+    syncUserPromise = null;
+  });
+  return syncUserPromise;
+}
+
+async function doSyncUser(email: string, name: string): Promise<number> {
   // 이미 존재하는지 확인
   const { data: existing } = await supabase
     .from("users")

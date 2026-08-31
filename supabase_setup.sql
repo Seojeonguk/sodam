@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS public.account_book_member (
     created_at      VARCHAR(14) NOT NULL,
     created_by      BIGINT,
     updated_at      VARCHAR(14) NOT NULL,
-    updated_by      BIGINT
+    updated_by      BIGINT,
+    CONSTRAINT uk_account_book_member UNIQUE (account_book_id, user_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_abm_account_book_id ON public.account_book_member(account_book_id);
