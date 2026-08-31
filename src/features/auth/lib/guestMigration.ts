@@ -80,7 +80,10 @@ export async function migrateGuestData(
 
   // ── 3. 가계부 생성 ─────────────────────────────────────────────────────────
   report("accountbook");
-  const accountBook = await accountBookApi.createAccountBook("나의 가계부");
+  // 게스트가 직접 만든 카테고리를 그대로 업로드하므로 기본 카테고리는 시딩하지 않는다
+  const accountBook = await accountBookApi.createAccountBook("나의 가계부", {
+    seedDefaultCategories: false,
+  });
   assertOnline(accountBook, "가계부 생성");
   const serverAccountBookId = accountBook.id;
 
