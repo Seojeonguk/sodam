@@ -83,7 +83,6 @@ const budgetApi = {
       .from("transaction")
       .select("amount, type, category_seq")
       .eq("account_book_seq", accountBookSeq)
-      .eq("user_seq", userSeq)
       .gte("transaction_date", startDate)
       .lte("transaction_date", endDate);
 

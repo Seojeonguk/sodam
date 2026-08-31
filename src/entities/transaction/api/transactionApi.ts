@@ -35,7 +35,8 @@ const transactionApi = {
         categorySeqs, keyword, minAmount, maxAmount,
       );
 
-    const userSeq = await getUserSeq();
+    // getUserSeq() 호출로 세션 유효성 확인 (가계부 내 전체 거래 조회이므로 user_seq로 필터링하지 않음)
+    await getUserSeq();
 
     let query = supabase
       .from("transaction")
@@ -45,7 +46,6 @@ const transactionApi = {
         { count: "exact" },
       )
       .eq("account_book_seq", accountId)
-      .eq("user_seq", userSeq)
       .order("transaction_date", { ascending: false })
       .range(page * size, (page + 1) * size - 1);
 

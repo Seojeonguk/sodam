@@ -191,30 +191,59 @@ CREATE POLICY "abm_delete" ON public.account_book_member
 
 
 -- ── transaction ───────────────────────────────────────────────
+-- SELECT: 내가 속한 가계부의 거래 전체 조회 가능 (asset 테이블과 동일 패턴)
+-- INSERT/UPDATE/DELETE: 내가 등록한 거래만
 DROP POLICY IF EXISTS "transaction_own" ON public.transaction;
-CREATE POLICY "transaction_own" ON public.transaction
+DROP POLICY IF EXISTS "transaction_select" ON public.transaction;
+DROP POLICY IF EXISTS "transaction_write" ON public.transaction;
+
+CREATE POLICY "transaction_select" ON public.transaction
+  FOR SELECT
+  USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
+
+CREATE POLICY "transaction_write" ON public.transaction
   FOR ALL
   USING     (user_seq = public.get_my_user_seq())
   WITH CHECK (user_seq = public.get_my_user_seq());
 
 
 -- ── budget ────────────────────────────────────────────────────
+-- SELECT: 내가 속한 가계부의 예산 전체 조회 가능
+-- INSERT/UPDATE/DELETE: 내가 등록한 예산만
 DROP POLICY IF EXISTS "budget_own" ON public.budget;
-CREATE POLICY "budget_own" ON public.budget
+DROP POLICY IF EXISTS "budget_select" ON public.budget;
+DROP POLICY IF EXISTS "budget_write" ON public.budget;
+
+CREATE POLICY "budget_select" ON public.budget
+  FOR SELECT
+  USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
+
+CREATE POLICY "budget_write" ON public.budget
   FOR ALL
   USING     (user_seq = public.get_my_user_seq())
   WITH CHECK (user_seq = public.get_my_user_seq());
 
 
 -- ── recurring_transaction ─────────────────────────────────────
+-- SELECT: 내가 속한 가계부의 반복 거래 전체 조회 가능
+-- INSERT/UPDATE/DELETE: 내가 등록한 반복 거래만
 DROP POLICY IF EXISTS "recurring_own" ON public.recurring_transaction;
-CREATE POLICY "recurring_own" ON public.recurring_transaction
+DROP POLICY IF EXISTS "recurring_select" ON public.recurring_transaction;
+DROP POLICY IF EXISTS "recurring_write" ON public.recurring_transaction;
+
+CREATE POLICY "recurring_select" ON public.recurring_transaction
+  FOR SELECT
+  USING (account_book_seq IN (SELECT public.get_my_account_book_ids()));
+
+CREATE POLICY "recurring_write" ON public.recurring_transaction
   FOR ALL
   USING     (user_seq = public.get_my_user_seq())
   WITH CHECK (user_seq = public.get_my_user_seq());
 
 
 -- ── category ─────────────────────────────────────────────────
+-- 주의: category 테이블에는 account_book_seq 컬럼이 없어 가계부 단위 공유가 불가능함(사용자 단위 소유).
+-- 가계부 멤버 간 카테고리 공유가 필요하면 스키마 변경(account_book_seq 추가 + 데이터 마이그레이션)이 별도로 필요함.
 DROP POLICY IF EXISTS "category_own" ON public.category;
 CREATE POLICY "category_own" ON public.category
   FOR ALL

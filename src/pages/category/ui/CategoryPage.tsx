@@ -49,15 +49,12 @@ function CategoryPage() {
   useEffect(() => {
     if (!currentAccountBook || !categories || categories.length === 0) return;
     void (async () => {
-      const { getUserSeq } = await import("../../../shared/lib/userSync");
-      const userSeq = await getUserSeq();
       const entries = await Promise.all(
         categories.map(async (cat) => {
           const { count } = await supabase
             .from("transaction")
             .select("*", { count: "exact", head: true })
             .eq("account_book_seq", currentAccountBook.id)
-            .eq("user_seq", userSeq)
             .eq("category_seq", cat.id);
           return [cat.id, count ?? 0] as [number, number];
         }),

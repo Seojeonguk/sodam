@@ -20,7 +20,6 @@ import {
   ReceiptLongOutlined,
 } from "@mui/icons-material";
 import { supabase } from "../../../shared/lib/supabase";
-import { getUserSeq } from "../../../shared/lib/userSync";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
 interface TxRow {
@@ -90,14 +89,11 @@ export default function CategoryTransactionsModal({
     if (!category || !accountBookId) return;
     setLoading(true);
     try {
-      const userSeq = await getUserSeq();
-
       // 페이지 데이터
       const { data, count, error } = await supabase
         .from("transaction")
         .select("seq, amount, description, transaction_date, type", { count: "exact" })
         .eq("account_book_seq", accountBookId)
-        .eq("user_seq", userSeq)
         .eq("category_seq", category.id)
         .order("transaction_date", { ascending: false })
         .range(p * PAGE_SIZE, (p + 1) * PAGE_SIZE - 1);
@@ -119,7 +115,6 @@ export default function CategoryTransactionsModal({
           .from("transaction")
           .select("amount, type")
           .eq("account_book_seq", accountBookId)
-          .eq("user_seq", userSeq)
           .eq("category_seq", category.id);
 
         if (!sumErr && allRows) {
