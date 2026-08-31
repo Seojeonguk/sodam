@@ -3,17 +3,19 @@ import categoryApi from "../api/categoryApi";
 import type { CategoryListItemResponse } from "../../transaction/api/category.types";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
-export const useCategories = () => {
+export const useCategories = (accountBookSeq?: number | null) => {
   const [categories, setCategories] = useState<CategoryListItemResponse[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
+    if (accountBookSeq == null) { setCategories([]); return; }
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await categoryApi.getCategories();
+      const response = await categoryApi.getCategories(accountBookSeq);
       setCategories(response);
     } catch (nextError) {
       setError(
@@ -25,7 +27,7 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accountBookSeq]);
 
   const deleteCategory = useCallback(
     async (id: number, replacementId: number) => {

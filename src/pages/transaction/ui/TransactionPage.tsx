@@ -38,6 +38,7 @@ import categoryApi from "../../../entities/category/api/categoryApi";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
+import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 dayjs.locale("ko");
 
@@ -45,6 +46,7 @@ type ViewMode = "list" | "calendar";
 
 function TransactionPage() {
   const theme = useTheme();
+  const { currentAccountBook } = useAccountBookContext();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -143,10 +145,11 @@ function TransactionPage() {
   // 카테고리 목록 (필터 칩 렌더링용)
   const [filterCategories, setFilterCategories] = useState<CategoryListItemResponse[]>([]);
   useEffect(() => {
-    categoryApi.getCategories(0, 100)
+    if (!currentAccountBook?.id) { setFilterCategories([]); return; }
+    categoryApi.getCategories(currentAccountBook.id)
       .then((res) => setFilterCategories(res ?? []))
       .catch(() => { /* 조용히 실패 */ });
-  }, []);
+  }, [currentAccountBook?.id]);
 
   const handleOpenCreateModal = () => { setIsCreateModalOpen(true); };
   const handleCloseCreateModal = () => { setIsCreateModalOpen(false); };

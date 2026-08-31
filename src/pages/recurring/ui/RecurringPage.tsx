@@ -58,10 +58,11 @@ export default function RecurringPage() {
   const [editTarget, setEditTarget] = useState<RecurringTransactionResponse | null>(null);
 
   useEffect(() => {
-    categoryApi.getCategories(0, 100)
+    if (!accountBookSeq) { setCategories([]); return; }
+    categoryApi.getCategories(accountBookSeq)
       .then((res) => setCategories(res ?? []))
       .catch(() => {});
-  }, []);
+  }, [accountBookSeq]);
 
   const handleOpenCreate = () => { setEditTarget(null); setModalOpen(true); };
   const handleOpenEdit = (item: RecurringTransactionResponse) => { setEditTarget(item); setModalOpen(true); };

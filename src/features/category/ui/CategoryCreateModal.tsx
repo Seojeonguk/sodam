@@ -18,7 +18,7 @@ import {
 import { ChromePicker } from "react-color";
 import axios, { type AxiosError } from "axios";
 
-import categoryApi from "../../../entities/category/api/categoryApi";
+import categoryApi, { type CategoryCreateRequest } from "../../../entities/category/api/categoryApi";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL, TYPE_SOLID_STYLE } from "../../../entities/category/lib/classificationUtils";
 
@@ -49,6 +49,7 @@ interface CategoryCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => Promise<void>;
+  accountBookId: number | null | undefined;
 }
 
 type CreateMode = "single" | "bulk";
@@ -57,6 +58,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  accountBookId,
 }) => {
   const [mode, setMode] = useState<CreateMode>("single");
   const [categoryType, setCategoryType] = useState<string>("EXPENSE");
@@ -110,12 +112,19 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
   };
 
   const handleSingleSubmit = async () => {
-    await categoryApi.createCategory({
+    if (!accountBookId) {
+      setError("가계부를 먼저 선택해 주세요.");
+      return;
+    }
+
+    const payload: CategoryCreateRequest = {
       name,
       description: description || undefined,
       color: color || undefined,
       type: categoryType,
-    });
+      accountBookSeq: accountBookId,
+    };
+    await categoryApi.createCategory(payload);
     await onSuccess();
 
     if (keepCreating) {
@@ -133,12 +142,17 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
       setError("한 줄에 하나씩 카테고리 이름을 입력해 주세요.");
       return;
     }
+    if (!accountBookId) {
+      setError("가계부를 먼저 선택해 주세요.");
+      return;
+    }
 
     for (const categoryName of parsedBulkNames) {
       await categoryApi.createCategory({
         name: categoryName,
         color: getRandomColor(),
         type: categoryType,
+        accountBookSeq: accountBookId,
       });
     }
     await onSuccess();

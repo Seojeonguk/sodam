@@ -96,6 +96,8 @@ export async function migrateGuestData(
         name: cat.name,
         description: cat.description,
         color: cat.color ?? undefined,
+        type: cat.type as "INCOME" | "EXPENSE",
+        accountBookSeq: serverAccountBookId,
       });
       assertOnline(serverCat, "카테고리 업로드");
       categoryIdMap.set(cat.id, serverCat.id);

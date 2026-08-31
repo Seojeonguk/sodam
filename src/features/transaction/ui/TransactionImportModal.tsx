@@ -40,7 +40,7 @@ import {
 } from "@mui/icons-material";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import categoryApi, {
-  type CategoryUpsertRequest,
+  type CategoryCreateRequest,
 } from "../../../entities/category/api/categoryApi";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL } from "../../../entities/category/lib/classificationUtils";
@@ -243,7 +243,8 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
 
       // 카테고리 자동 매칭
       try {
-        const cats = await categoryApi.getCategories();
+        if (!currentAccountBook) throw new Error("가계부가 선택되지 않았습니다.");
+        const cats = await categoryApi.getCategories(currentAccountBook.id);
         const catMap = new Map(cats.map((c) => [c.name, c.id]));
         parsed.forEach((row) => {
           if (row.categoryName && catMap.has(row.categoryName)) {
@@ -311,10 +312,13 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
 
   // ── 카테고리 생성 ────────────────────────────────────────────
   const handleCreateCategory = async (name: string) => {
+    if (!currentAccountBook) return;
     const type = newCatTypes[name] ?? "EXPENSE";
     setCreatingCats((prev) => new Set(prev).add(name));
     try {
-      const req: CategoryUpsertRequest = { name, type, color: randomColor() };
+      const req: CategoryCreateRequest = {
+        name, type, color: randomColor(), accountBookSeq: currentAccountBook.id,
+      };
       const created = await categoryApi.createCategory(req);
       // rows의 해당 카테고리 자동 매칭
       setRows((prev) =>

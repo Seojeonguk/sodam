@@ -84,18 +84,18 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
     setError(null); setLoading(false);
   }, [transactionToEdit]);
 
-  // type 바뀔 때 카테고리 재조회
+  // type 또는 가계부 바뀔 때 카테고리 재조회
   useEffect(() => {
-    if (!isOpen) { setCategories([]); return; }
+    if (!isOpen || !currentAccountBook?.id) { setCategories([]); return; }
     void (async () => {
       try {
-        const res = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
+        const res = await categoryApi.getCategories(currentAccountBook.id, type as "INCOME" | "EXPENSE" | "TRANSFER");
         setCategories(res ?? []);
       } catch (e) {
         if (axios.isAxiosError(e)) setError(e.message);
       }
     })();
-  }, [isOpen, type]);
+  }, [isOpen, type, currentAccountBook?.id]);
 
   const handleClose = () => { setError(null); setLoading(false); onClose(); };
 

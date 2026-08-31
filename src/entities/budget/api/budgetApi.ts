@@ -56,7 +56,8 @@ const budgetApi = {
   ): Promise<BudgetSummaryResponse[]> => {
     if (guestMode.isActive()) return guestStore.getBudgetSummary(accountBookSeq, yearMonth);
 
-    const userSeq = await getUserSeq();
+    // getUserSeq() 호출로 세션 유효성 확인 (카테고리도 이제 가계부 단위로 조회)
+    await getUserSeq();
 
     // 해당 월 예산 조회
     const { data: budgets, error: budgetErr } = await supabase
@@ -67,11 +68,11 @@ const budgetApi = {
 
     if (budgetErr) throw new Error(budgetErr.message);
 
-    // 카테고리 전체 조회
+    // 카테고리 전체 조회 (가계부 단위 공유)
     const { data: categories, error: catErr } = await supabase
       .from("category")
       .select("id, name, color, type")
-      .eq("user_seq", userSeq);
+      .eq("account_book_seq", accountBookSeq);
 
     if (catErr) throw new Error(catErr.message);
 

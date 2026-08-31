@@ -41,7 +41,9 @@ function CategoryPage() {
   const [deleteTargetCategoryId, setDeleteTargetCategoryId] = useState<number | null>(null);
   const [txModalCategory, setTxModalCategory] = useState<CategoryListItemResponse | null>(null);
 
-  const { categories, loading, error, refetchCategories, deleteCategory } = useCategories();
+  const { categories, loading, error, refetchCategories, deleteCategory } = useCategories(
+    currentAccountBook?.id,
+  );
 
   // 카테고리별 거래 건수
   // — head:true 로 데이터 전송 없이 COUNT만 받아옴 (행 수 제한 우회)
@@ -359,6 +361,7 @@ function CategoryPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={refetchCategories}
+        accountBookId={currentAccountBook?.id}
       />
       <CategoryEditModal
         isOpen={isEditModalOpen}

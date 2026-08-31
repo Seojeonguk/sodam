@@ -27,6 +27,7 @@ import "dayjs/locale/ko";
 import { useBudget } from "../../../entities/budget/model/useBudget";
 import BudgetSetModal from "../../../features/budget/ui/BudgetSetModal";
 import categoryApi from "../../../entities/category/api/categoryApi";
+import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 import type { BudgetSummaryResponse } from "../../../entities/budget/api/budget.types";
 
@@ -46,6 +47,7 @@ function progressColor(ratio: number, isOver: boolean, theme: ReturnType<typeof 
 
 export default function BudgetPage() {
   const theme = useTheme();
+  const { currentAccountBook } = useAccountBookContext();
   const {
     yearMonth, setYearMonth,
     summary, loading, error,
@@ -73,10 +75,11 @@ export default function BudgetPage() {
   const [editTarget, setEditTarget] = useState<BudgetSummaryResponse | null>(null);
 
   useEffect(() => {
-    categoryApi.getCategories(0, 100)
+    if (!currentAccountBook?.id) { setAllCategories([]); return; }
+    categoryApi.getCategories(currentAccountBook.id)
       .then((res) => setAllCategories(res ?? []))
       .catch(() => {});
-  }, []);
+  }, [currentAccountBook?.id]);
 
   const budgetedCatIds = new Set(
     summary.filter((s) => s.hasBudget).map((s) => s.categorySeq).filter(Boolean),

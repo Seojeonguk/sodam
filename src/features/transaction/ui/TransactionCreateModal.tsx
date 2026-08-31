@@ -115,8 +115,9 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
   useEffect(() => {
     if (!isOpen) { setCategories([]); return; }
     const fetch = async () => {
+      if (!currentAccountBook?.id) { setCategories([]); return; }
       try {
-        const res = await categoryApi.getCategories(undefined, undefined, type as "INCOME" | "EXPENSE" | "TRANSFER");
+        const res = await categoryApi.getCategories(currentAccountBook.id, type as "INCOME" | "EXPENSE" | "TRANSFER");
         setCategories(res ?? []);
         setCategory("");
       } catch (err) {
@@ -126,7 +127,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       }
     };
     void fetch();
-  }, [isOpen, type]);
+  }, [isOpen, type, currentAccountBook?.id]);
 
   const handleClose = () => {
     setType("EXPENSE");

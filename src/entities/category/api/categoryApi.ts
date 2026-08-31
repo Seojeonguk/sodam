@@ -12,13 +12,16 @@ export interface CategoryUpsertRequest {
   type: "INCOME" | "EXPENSE";
 }
 
+export interface CategoryCreateRequest extends CategoryUpsertRequest {
+  accountBookSeq: number;
+}
+
 const now = () => dayjs().format("YYYYMMDDHHmmss");
 
 const categoryApi = {
-  /** 카테고리 전체 목록 (배열 직접 반환) */
+  /** 가계부 내 카테고리 전체 목록 (배열 직접 반환) */
   getCategories: async (
-    _page?: number,
-    _size?: number,
+    accountBookSeq: number,
     type?: "INCOME" | "EXPENSE" | "TRANSFER",
   ): Promise<CategoryListItemResponse[]> => {
     if (guestMode.isActive()) {
@@ -26,12 +29,13 @@ const categoryApi = {
       return res.categories ?? [];
     }
 
-    // getUserSeq() 호출로 세션 유효성 확인 (RLS가 user_seq 필터링 담당)
+    // getUserSeq() 호출로 세션 유효성 확인 (RLS가 가계부 멤버십 기준으로 필터링)
     await getUserSeq();
 
     let query = supabase
       .from("category")
       .select("id, name, description, color, type")
+      .eq("account_book_seq", accountBookSeq)
       .order("name");
 
     if (type) query = query.eq("type", type);
@@ -49,7 +53,7 @@ const categoryApi = {
   },
 
   createCategory: async (
-    data: CategoryUpsertRequest,
+    data: CategoryCreateRequest,
   ): Promise<CategoryListItemResponse> => {
     if (guestMode.isActive()) return guestStore.createCategory(data);
 
@@ -64,6 +68,7 @@ const categoryApi = {
         color: data.color ?? null,
         type: data.type,
         user_seq: userSeq,
+        account_book_seq: data.accountBookSeq,
         created_at: ts,
         updated_at: ts,
       })
