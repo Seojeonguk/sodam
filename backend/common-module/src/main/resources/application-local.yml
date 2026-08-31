@@ -1,8 +1,0 @@
-sodam:
-  feign:
-    logger-level: FULL
-
-management:
-  tracing:
-    sampling:
-      probability: 1.0
