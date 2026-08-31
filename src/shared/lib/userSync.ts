@@ -35,6 +35,43 @@ export function getCachedUserSeq(): number | null {
 }
 
 /**
+ * 신규 가계부에 기본 분류(INCOME/EXPENSE/TRANSFER)와, 옵션에 따라 기본
+ * 카테고리 9종을 시딩한다. 이미 데이터가 있는 가계부에 대한 "보완"이
+ * 아니라 방금 만든 빈 가계부를 채우는 용도이므로 존재 여부를 확인하지
+ * 않고 바로 insert한다.
+ */
+export async function seedAccountBookDefaults(
+  accountBookId: number,
+  userId: number,
+  options?: { includeCategories?: boolean },
+): Promise<void> {
+  const now = dayjs().format("YYYYMMDDHHmmss");
+
+  const { error: classErr } = await supabase.from("classification").insert(
+    (["INCOME", "EXPENSE", "TRANSFER"] as const).map((name) => ({
+      name,
+      account_book_seq: accountBookId,
+      created_at: now,
+      updated_at: now,
+    })),
+  );
+  if (classErr) throw new Error("분류 생성 실패: " + classErr.message);
+
+  if (options?.includeCategories === false) return;
+
+  const { error: catErr } = await supabase.from("category").insert(
+    DEFAULT_CATEGORIES.map((c) => ({
+      ...c,
+      user_seq: userId,
+      account_book_seq: accountBookId,
+      created_at: now,
+      updated_at: now,
+    })),
+  );
+  if (catErr) throw new Error("카테고리 생성 실패: " + catErr.message);
+}
+
+/**
  * 기존 유저의 기본 데이터(가계부, 분류, 카테고리)가 빠진 경우 보완.
  * - 가계부 없으면 생성
  * - classification(INCOME/EXPENSE) 없으면 생성
@@ -106,15 +143,17 @@ export async function ensureDefaultData(userId: number): Promise<void> {
     await supabase.from("classification").insert(toInsert);
   }
 
-  // 기본 카테고리 보완 — 카테고리가 하나라도 있으면 스킵 (사용자 커스텀 보호)
+  // 기본 카테고리 보완 — 해당 가계부에 카테고리가 하나라도 있으면 스킵 (커스텀 보호)
   const { count: catCount } = await supabase
     .from("category")
     .select("*", { count: "exact", head: true })
-    .eq("user_seq", userId);
+    .eq("account_book_seq", accountBookId);
 
   if ((catCount ?? 0) === 0) {
     await supabase.from("category").insert(
-      DEFAULT_CATEGORIES.map((c) => ({ ...c, user_seq: userId, created_at: now, updated_at: now })),
+      DEFAULT_CATEGORIES.map((c) => ({
+        ...c, user_seq: userId, account_book_seq: accountBookId, created_at: now, updated_at: now,
+      })),
     );
   }
 }
@@ -236,41 +275,8 @@ async function doSyncUser(email: string, name: string): Promise<number> {
 
   if (memberErr) throw new Error("멤버 등록 실패: " + memberErr.message);
 
-  // 기본 분류 생성 (INCOME / EXPENSE / TRANSFER)
-  const { error: classErr } = await supabase.from("classification").insert([
-    {
-      name: "INCOME",
-      account_book_seq: book.id,
-      created_at: now,
-      updated_at: now,
-    },
-    {
-      name: "EXPENSE",
-      account_book_seq: book.id,
-      created_at: now,
-      updated_at: now,
-    },
-    {
-      name: "TRANSFER",
-      account_book_seq: book.id,
-      created_at: now,
-      updated_at: now,
-    },
-  ]);
-
-  if (classErr) throw new Error("분류 생성 실패: " + classErr.message);
-
-  // 기본 카테고리 생성
-  const { error: catErr } = await supabase.from("category").insert(
-    DEFAULT_CATEGORIES.map((c) => ({
-      ...c,
-      user_seq: userId,
-      created_at: now,
-      updated_at: now,
-    })),
-  );
-
-  if (catErr) throw new Error("카테고리 생성 실패: " + catErr.message);
+  // 기본 분류 + 기본 카테고리 생성
+  await seedAccountBookDefaults(book.id as number, userId);
 
   cachedUserSeq = userId;
 

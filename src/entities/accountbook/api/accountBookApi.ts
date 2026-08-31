@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { supabase } from "../../../shared/lib/supabase";
-import { getUserSeq } from "../../../shared/lib/userSync";
+import { getUserSeq, seedAccountBookDefaults } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
 import type { AccountBookListResponse } from "./accountbook.types";
@@ -48,7 +48,10 @@ const accountBookApi = {
     return result;
   },
 
-  createAccountBook: async (name: string): Promise<AccountBookCreateResponse> => {
+  createAccountBook: async (
+    name: string,
+    opts?: { seedDefaultCategories?: boolean },
+  ): Promise<AccountBookCreateResponse> => {
     const userSeq = await getUserSeq();
     const now = dayjs().format("YYYYMMDDHHmmss");
 
@@ -75,6 +78,10 @@ const accountBookApi = {
       created_by: userSeq,
       updated_at: now,
       updated_by: userSeq,
+    });
+
+    await seedAccountBookDefaults(book.id as number, userSeq, {
+      includeCategories: opts?.seedDefaultCategories ?? true,
     });
 
     return {
