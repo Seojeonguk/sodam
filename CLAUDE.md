@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - React 19 + TypeScript + Vite로 구현된 SPA
 - 별도 백엔드 서버 없이 **Supabase를 단일 백엔드로 사용** (Auth + Postgres). 인증/세션과 도메인 데이터(거래·카테고리·예산·자산 등) 모두 `@supabase/supabase-js` 클라이언트로 직접 접근하며, 접근 제어는 Row Level Security(`supabase_rls.sql`, `supabase_setup.sql`)로 처리
-- 오프라인 사용을 지원: 네트워크 요청 실패 시 로컬 큐에 저장했다가 재접속 시 동기화하며, 로그인 없이 쓸 수 있는 "게스트 모드"도 존재
+- 오프라인 상태를 감지해 배너로 알리며, 로그인 없이 쓸 수 있는 "게스트 모드"도 존재
 - UI는 MUI(Material UI) 기반, 모바일 반응형 레이아웃을 우선 고려
 
 ## 빌드 및 실행 명령어
@@ -43,23 +43,20 @@ shared/    공통 api 클라이언트, lib, ui, config
 
 ### 인증 & 세션 (`shared/api/api.ts`, `shared/lib/supabase.ts`)
 
-- Supabase 세션의 `access_token`을 모듈 전역 변수로 들고 있다가 axios 인스턴스(`http`)의 `Authorization` 헤더에 주입.
+- `shared/api/api.ts`는 Supabase 세션 토큰만 다루는 모듈: `access_token`을 모듈 전역 변수로 들고 `getAccessToken`/`setAccessToken`/`clearAccessToken`으로 노출.
 - `supabase.auth.onAuthStateChange`로 세션 변경을 감지해 토큰을 자동 동기화.
-- 401 응답 시 `refreshSupabaseToken()`으로 세션을 갱신한 뒤 원 요청을 재시도 (동시 다발 401은 `refreshSubscribers` 큐로 직렬화).
-- 앱 시작 시 `restoreSession()`으로 세션 복구; 오프라인 상태에서 이전 세션 캐시(`sessionCache`)가 있으면 `OFFLINE_TOKEN` 플레이스홀더로 오프라인 접속을 허용.
+- 앱 시작 시 `restoreSession()`으로 세션 복구; 오프라인 상태에서 이전 세션 캐시(`sessionCache`)가 있으면 `OFFLINE_TOKEN` 플레이스홀더로 오프라인 접속을 허용. 재접속 시 `refreshSupabaseToken()`으로 실제 토큰으로 교체.
 - `app/App.tsx`의 `ProtectedRoute`는 `getAccessToken()` 또는 `guestMode.isActive()` 중 하나라도 참이면 인증된 것으로 간주.
 
 ### 오프라인 지원 & 게스트 모드
 
-- `shared/lib/offlineQueue.ts`: POST/PUT/DELETE 요청이 네트워크 에러로 실패하면 큐에 적재. `api.syncOfflineQueue()`가 재접속 시 순차 재전송.
-- `shared/lib/localCache.ts`: GET 응답을 캐싱해 오프라인일 때 최근 데이터를 재사용.
-- `shared/lib/useOfflineSync.ts` + `shared/ui/OfflineBanner.tsx`: 온라인 상태 감지 및 동기화 트리거, 대기 중 요청 수 배너 표시.
+- `shared/lib/useOfflineSync.ts` + `shared/ui/OfflineBanner.tsx`: `navigator.onLine` 기반으로 온라인/오프라인 상태만 감지해 배너로 표시. 별도의 쓰기 요청 큐잉/재시도는 없음(도메인 쓰기가 모두 `supabase.from()`을 직접 호출하므로 오프라인 중 쓰기는 그냥 실패함).
 - `shared/lib/guestMode.ts` / `guestStore.ts`: 로그인 없이 로컬 스토리지(`sodam_guest_*` 키)만으로 앱을 사용할 수 있는 모드. 실제 로그인 시 `userSync.ts`가 게스트 데이터를 서버로 이관하는 역할을 담당.
 
 ### 도메인 데이터 접근 (`entities/*/api/*Api.ts`)
 
 - 모든 도메인 엔티티(거래·카테고리·예산·자산·반복거래·가계부)는 `supabase.from(...)` 쿼리로 직접 Supabase 테이블에 접근함. 별도 REST 백엔드는 없음.
-- `shared/api/api.ts`의 axios `http` 인스턴스(`api.get/post/put/delete`)는 토큰 갱신·오프라인 큐잉 인프라로 남아 있지만, 현재 이를 실제로 호출하는 도메인 코드는 없음(과거 백엔드용이었던 `LoginApi`/`SignupApi`는 제거됨). 향후 REST 연동이 다시 필요할 때를 위한 기반 코드로 이해할 것.
+- 과거 REST 백엔드를 겨냥했던 axios 기반 `http` 클라이언트(`api.get/post/put/delete`)와 오프라인 쓰기 큐는 어떤 도메인 코드도 호출하지 않는 죽은 코드였기 때문에 삭제함(`shared/lib/offlineQueue.ts`도 함께 제거). `shared/api/api.ts`에는 세션/토큰 관련 함수만 남아 있음.
 
 ## 주의사항
 

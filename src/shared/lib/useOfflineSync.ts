@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
-import api from "../api/api";
 import { isOfflineToken, refreshSupabaseToken } from "../api/api";
-import { offlineQueue } from "./offlineQueue";
 
 export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [pendingCount, setPendingCount] = useState(offlineQueue.size());
 
   useEffect(() => {
     const handleOnline = async () => {
@@ -19,15 +16,6 @@ export function useOfflineSync() {
         } catch {
           console.warn("[Offline] 재연결 후 세션 복구 실패 — 로그인 필요");
         }
-      }
-
-      // 오프라인 큐 동기화
-      const queueSize = offlineQueue.size();
-      if (queueSize > 0) {
-        console.log(`[Offline] 큐 동기화 시작 (${queueSize}건)`);
-        const { synced, failed } = await api.syncOfflineQueue();
-        console.log(`[Offline] 동기화 완료: 성공 ${synced}, 실패 ${failed}`);
-        setPendingCount(offlineQueue.size());
       }
     };
 
@@ -44,13 +32,5 @@ export function useOfflineSync() {
     };
   }, []);
 
-  // pendingCount 주기적 갱신
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPendingCount(offlineQueue.size());
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { isOnline, pendingCount };
+  return { isOnline };
 }

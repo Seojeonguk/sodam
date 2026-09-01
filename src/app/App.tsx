@@ -112,11 +112,11 @@ const AppRoutes = memo(function AppRoutes() {
 });
 
 function App() {
-  const { isOnline, pendingCount } = useOfflineSync();
+  const { isOnline } = useOfflineSync();
 
   return (
     <AccountBookProvider>
-      {!isOnline && <OfflineBanner pendingCount={pendingCount} />}
+      {!isOnline && <OfflineBanner />}
       <AppRoutes />
     </AccountBookProvider>
   );

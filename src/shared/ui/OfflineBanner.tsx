@@ -1,11 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 
-interface OfflineBannerProps {
-  pendingCount: number;
-}
-
-export function OfflineBanner({ pendingCount }: OfflineBannerProps) {
+export function OfflineBanner() {
   return (
     <Box
       sx={{
@@ -29,11 +25,6 @@ export function OfflineBanner({ pendingCount }: OfflineBannerProps) {
       <Typography variant="body2" fontWeight={600} component="span">
         오프라인 상태
       </Typography>
-      {pendingCount > 0 && (
-        <Typography variant="body2" component="span">
-          — 대기 중인 작업 {pendingCount}건
-        </Typography>
-      )}
     </Box>
   );
 }

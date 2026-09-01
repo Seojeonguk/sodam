@@ -15,7 +15,7 @@ import accountBookApi from "../../../entities/accountbook/api/accountBookApi";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import { supabase } from "../../../shared/lib/supabase";
-import { OFFLINE_QUEUED, setAccessToken } from "../../../shared/api/api";
+import { setAccessToken } from "../../../shared/api/api";
 import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../../shared/lib/guestStore";
 import { sessionCache } from "../../../shared/lib/localCache";
@@ -31,14 +31,6 @@ export type ProgressCallback = (progress: MigrationProgress) => void;
 export interface MigrationResult {
   categories: number;
   transactions: number;
-}
-
-/** 결과가 오프라인 큐 처리된 경우 에러로 전환 */
-function assertOnline<T>(result: T, label: string): T {
-  if ((result as unknown) === OFFLINE_QUEUED) {
-    throw new Error(`서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해 주세요. (${label})`);
-  }
-  return result;
 }
 
 export async function migrateGuestData(
@@ -87,7 +79,6 @@ export async function migrateGuestData(
   const accountBook = await accountBookApi.createAccountBook("나의 가계부", {
     seedDefaultCategories: false,
   });
-  assertOnline(accountBook, "가계부 생성");
   const serverAccountBookId = accountBook.id;
 
   // ── 4. 카테고리 업로드 ─────────────────────────────────────────────────────
@@ -105,10 +96,9 @@ export async function migrateGuestData(
         type: cat.type as "INCOME" | "EXPENSE",
         accountBookSeq: serverAccountBookId,
       });
-      assertOnline(serverCat, "카테고리 업로드");
       categoryIdMap.set(cat.id, serverCat.id);
-    } catch (err) {
-      if (err instanceof Error && err.message.includes("서버에 연결")) throw err;
+    } catch {
+      // 개별 카테고리 업로드 실패는 건너뛰고 나머지 항목 계속 진행
     }
   }
 
@@ -122,7 +112,7 @@ export async function migrateGuestData(
       const serverCategoryId =
         tx.categorySeq != null ? (categoryIdMap.get(tx.categorySeq) ?? null) : null;
 
-      const created = await transactionApi.createTransaction({
+      await transactionApi.createTransaction({
         accountBookSeq: serverAccountBookId,
         type: tx.type,
         amount: tx.amount,
@@ -130,9 +120,8 @@ export async function migrateGuestData(
         description: tx.description,
         transactionDate: tx.transactionDate,
       });
-      assertOnline(created, "거래 업로드");
-    } catch (err) {
-      if (err instanceof Error && err.message.includes("서버에 연결")) throw err;
+    } catch {
+      // 개별 거래 업로드 실패는 건너뛰고 나머지 항목 계속 진행
     }
   }
 
