@@ -22,7 +22,6 @@
     "@mui/x-data-grid": "^8.5.1",
     "@mui/x-date-pickers": "^8.5.1",
     "@supabase/supabase-js": "^2.111.0",
-    "axios": "^1.9.0",
     "dayjs": "^1.11.13",
     "react": "^19.1.0",
     "react-color": "^2.19.3",

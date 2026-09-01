@@ -15,7 +15,7 @@ import { ChromePicker } from "react-color";
 import categoryApi from "../../../entities/category/api/categoryApi";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL, TYPE_SOLID_STYLE } from "../../../entities/category/lib/classificationUtils";
-import axios, { type AxiosError } from "axios";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 import type { CategoryListItemResponse } from "../../../entities/transaction/api/category.types";
 
 const style = {
@@ -96,12 +96,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       setSuccess("카테고리가 성공적으로 수정되었습니다.");
       handleClose();
     } catch (err) {
-      const axiosError = err as AxiosError<{ message?: string }>;
-      if (axios.isAxiosError(axiosError) && axiosError.response) {
-        setError(`카테고리 수정 실패: ${axiosError.response.data?.message ?? axiosError.message}`);
-      } else {
-        setError("카테고리 수정 중 예상치 못한 오류가 발생했습니다.");
-      }
+      setError(getServerErrorMessage(err, "카테고리 수정 중 예상치 못한 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }

@@ -21,7 +21,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs, { type Dayjs } from "dayjs";
-import axios from "axios";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 import classificationApi from "../../../entities/category/api/classificationApi";
 import type { ClassificationResponse } from "../../../entities/category/api/classification.types";
 import categoryApi from "../../../entities/category/api/categoryApi";
@@ -92,7 +92,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         const res = await categoryApi.getCategories(currentAccountBook.id, type as "INCOME" | "EXPENSE" | "TRANSFER");
         setCategories(res ?? []);
       } catch (e) {
-        if (axios.isAxiosError(e)) setError(e.message);
+        setError(getServerErrorMessage(e, "카테고리 목록을 불러오지 못했습니다."));
       }
     })();
   }, [isOpen, type, currentAccountBook?.id]);
@@ -121,7 +121,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       await onSuccess();
       handleClose();
     } catch (e) {
-      setError(axios.isAxiosError(e) ? e.message : "거래 수정 중 오류가 발생했습니다.");
+      setError(getServerErrorMessage(e, "거래 수정 중 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }

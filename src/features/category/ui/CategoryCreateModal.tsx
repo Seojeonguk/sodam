@@ -16,11 +16,11 @@ import {
   Typography,
 } from "@mui/material";
 import { ChromePicker } from "react-color";
-import axios, { type AxiosError } from "axios";
 
 import categoryApi, { type CategoryCreateRequest } from "../../../entities/category/api/categoryApi";
 import { useClassifications } from "../../../entities/category/model/useClassifications";
 import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL, TYPE_SOLID_STYLE } from "../../../entities/category/lib/classificationUtils";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 
 const getRandomColor = () =>
   `#${Math.floor(Math.random() * 16777215)
@@ -174,12 +174,7 @@ const CategoryCreateModal: React.FC<CategoryCreateModalProps> = ({
         await handleBulkSubmit();
       }
     } catch (err) {
-      const axiosError = err as AxiosError<{ message?: string }>;
-      if (axios.isAxiosError(axiosError) && axiosError.response) {
-        setError(`카테고리 추가 실패: ${axiosError.response.data?.message ?? axiosError.message}`);
-      } else {
-        setError("카테고리 추가 중 예상치 못한 오류가 발생했습니다.");
-      }
+      setError(getServerErrorMessage(err, "카테고리 추가 중 예상치 못한 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }

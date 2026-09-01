@@ -21,11 +21,11 @@ import {
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/ko";
 import { alpha, useTheme } from "@mui/material/styles";
 
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 import { useAssets } from "../../../entities/asset/model/useAssets";
 import classificationApi from "../../../entities/category/api/classificationApi";
@@ -58,18 +58,6 @@ const QUICK_AMOUNTS = [
   { label: "+5만", value: 50_000 },
   { label: "+10만", value: 100_000 },
 ];
-
-const getApiErrorMessage = (payload: unknown): string | null => {
-  if (
-    typeof payload === "object" &&
-    payload !== null &&
-    "message" in payload &&
-    typeof payload.message === "string"
-  ) {
-    return payload.message;
-  }
-  return null;
-};
 
 interface TransactionCreateModalProps {
   isOpen: boolean;
@@ -121,9 +109,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
         setCategories(res ?? []);
         setCategory("");
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response) {
-          setError(`카테고리 조회 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
-        }
+        setError(getServerErrorMessage(err, "카테고리 조회에 실패했습니다."));
       }
     };
     void fetch();
@@ -182,11 +168,7 @@ const TransactionCreateModal: React.FC<TransactionCreateModalProps> = ({
       await onSuccess();
       handleClose();
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        setError(`거래 추가 실패: ${getApiErrorMessage(err.response.data) ?? err.message}`);
-      } else {
-        setError("거래를 추가하는 중 오류가 발생했습니다.");
-      }
+      setError(getServerErrorMessage(err, "거래를 추가하는 중 오류가 발생했습니다."));
     } finally {
       setLoading(false);
     }

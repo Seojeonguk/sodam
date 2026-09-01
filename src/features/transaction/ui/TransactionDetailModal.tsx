@@ -18,10 +18,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { TransactionResponseDto } from "../../../entities/transaction/api/transaction.types";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import transactionApi from "../../../entities/transaction/api/transactionApi";
 import dayjs from "dayjs";
 import { formatCurrency } from "../../../shared/lib/format";
+import { getServerErrorMessage } from "../../../shared/lib/serverState";
 import { TYPE_LABEL, TYPE_MUI_COLOR } from "../../../entities/category/lib/classificationUtils";
 
 interface TransactionDetailModalProps {
@@ -54,14 +54,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         const data = await transactionApi.getTransactionBySeq(transactionSeq);
         setTransaction(data);
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response) {
-          const d = err.response.data && typeof err.response.data === "object"
-            ? (err.response.data as { message?: string })
-            : undefined;
-          setError(`거래 상세 조회 실패: ${d?.message ?? err.message}`);
-        } else {
-          setError("거래 상세 조회 중 예상치 못한 오류가 발생했습니다.");
-        }
+        setError(getServerErrorMessage(err, "거래 상세 조회 중 예상치 못한 오류가 발생했습니다."));
       } finally {
         setLoading(false);
       }
