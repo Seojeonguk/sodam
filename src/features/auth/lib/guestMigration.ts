@@ -77,6 +77,9 @@ export async function migrateGuestData(
   }
   setAccessToken(loginData.session.access_token);
   sessionCache.set(email, name);
+  // 이후 단계(가계부/카테고리/거래 업로드)가 게스트 로컬 저장소가 아닌 실제
+  // 서버로 반영되도록, 로그인 성공 직후 게스트 모드를 해제한다.
+  guestMode.disable();
 
   // ── 3. 가계부 생성 ─────────────────────────────────────────────────────────
   report("accountbook");

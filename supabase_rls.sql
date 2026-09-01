@@ -57,6 +57,7 @@ BEGIN
   DELETE FROM public.budget                WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.transaction           WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.asset                 WHERE account_book_seq = p_account_book_id;
+  DELETE FROM public.category              WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.classification        WHERE account_book_seq = p_account_book_id;
   DELETE FROM public.account_book_member   WHERE account_book_id  = p_account_book_id;
   DELETE FROM public.account_book          WHERE id               = p_account_book_id;

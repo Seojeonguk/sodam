@@ -84,7 +84,7 @@ export async function ensureDefaultData(userId: number): Promise<void> {
   // 가계부 멤버십 조회
   const { data: memberships } = await supabase
     .from("account_book_member")
-    .select("account_book_id")
+    .select("account_book_id, authority")
     .eq("user_id", userId);
 
   let accountBookId: number;
@@ -118,7 +118,9 @@ export async function ensureDefaultData(userId: number): Promise<void> {
       updated_by: userId,
     });
   } else {
-    accountBookId = memberships[0].account_book_id as number;
+    const owned = memberships.find((m) => m.authority === "OWNER");
+    if (!owned) return; // 소유한 가계부가 없으면(초대받은 가계부만 있음) 기본 데이터 보완을 건너뜀
+    accountBookId = owned.account_book_id as number;
   }
 
   // classification 누락 보완

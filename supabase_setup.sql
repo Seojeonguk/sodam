@@ -49,12 +49,51 @@ CREATE INDEX IF NOT EXISTS idx_abm_account_book_id ON public.account_book_member
 CREATE INDEX IF NOT EXISTS idx_abm_user_id         ON public.account_book_member(user_id);
 
 
+-- ── asset ─────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.asset (
+    seq              BIGSERIAL PRIMARY KEY,
+    account_book_seq BIGINT        NOT NULL,
+    user_seq         BIGINT        NOT NULL,
+    name             VARCHAR(255)  NOT NULL,
+    type             VARCHAR(20)   NOT NULL DEFAULT 'BANK',  -- BANK | CARD | CASH | INVESTMENT | POINT
+    balance          BIGINT        NOT NULL DEFAULT 0,
+    note             VARCHAR(255),
+    color            VARCHAR(50),
+    is_available     CHAR(1)       NOT NULL DEFAULT 'Y',
+    created_at       VARCHAR(14)   NOT NULL,
+    updated_at       VARCHAR(14)   NOT NULL,
+    created_by       BIGINT        NOT NULL,
+    updated_by       BIGINT        NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_asset_account_book ON public.asset(account_book_seq);
+CREATE INDEX IF NOT EXISTS idx_asset_user         ON public.asset(user_seq);
+
+
+-- ── asset_history ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.asset_history (
+    seq             BIGSERIAL PRIMARY KEY,
+    asset_seq       BIGINT        NOT NULL REFERENCES public.asset(seq) ON DELETE CASCADE,
+    balance         BIGINT        NOT NULL,
+    delta           BIGINT        NOT NULL DEFAULT 0,
+    source          VARCHAR(20)   NOT NULL DEFAULT 'MANUAL',  -- MANUAL | TRANSACTION
+    transaction_seq BIGINT,
+    note            VARCHAR(255),
+    recorded_at     VARCHAR(14)   NOT NULL,
+    created_at      VARCHAR(14)   NOT NULL,
+    created_by      BIGINT        NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_asset_history_asset_seq ON public.asset_history(asset_seq);
+
+
 -- ── transaction ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.transaction (
     seq              BIGSERIAL PRIMARY KEY,
     account_book_seq BIGINT,
     user_seq         BIGINT,
     category_seq     BIGINT,
+    asset_seq        BIGINT REFERENCES public.asset(seq) ON DELETE SET NULL,
     amount           DECIMAL(19,2) NOT NULL,
     description      VARCHAR(255),
     transaction_date VARCHAR(14)   NOT NULL,  -- YYYYMMDDHHmmss
@@ -77,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.category (
     name             VARCHAR(255),
     description      VARCHAR(255),
     user_seq         BIGINT,
-    account_book_seq BIGINT,
+    account_book_seq BIGINT      NOT NULL,
     color            VARCHAR(255),
     type             VARCHAR(10) NOT NULL DEFAULT 'EXPENSE',  -- INCOME | EXPENSE
     created_at       VARCHAR(14) NOT NULL,
@@ -152,49 +191,6 @@ CREATE TABLE IF NOT EXISTS public.pending_invites (
 
 CREATE INDEX IF NOT EXISTS idx_pending_invites_email   ON public.pending_invites(invited_email);
 CREATE INDEX IF NOT EXISTS idx_pending_invites_book    ON public.pending_invites(account_book_id);
-
-
--- ── asset ─────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS public.asset (
-    seq              BIGSERIAL PRIMARY KEY,
-    account_book_seq BIGINT        NOT NULL,
-    user_seq         BIGINT        NOT NULL,
-    name             VARCHAR(255)  NOT NULL,
-    type             VARCHAR(20)   NOT NULL DEFAULT 'BANK',  -- BANK | CARD | CASH | INVESTMENT | POINT
-    balance          BIGINT        NOT NULL DEFAULT 0,
-    note             VARCHAR(255),
-    color            VARCHAR(50),
-    is_available     CHAR(1)       NOT NULL DEFAULT 'Y',
-    created_at       VARCHAR(14)   NOT NULL,
-    updated_at       VARCHAR(14)   NOT NULL,
-    created_by       BIGINT        NOT NULL,
-    updated_by       BIGINT        NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_asset_account_book ON public.asset(account_book_seq);
-CREATE INDEX IF NOT EXISTS idx_asset_user         ON public.asset(user_seq);
-
-
--- ── asset_history ─────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS public.asset_history (
-    seq             BIGSERIAL PRIMARY KEY,
-    asset_seq       BIGINT        NOT NULL REFERENCES public.asset(seq) ON DELETE CASCADE,
-    balance         BIGINT        NOT NULL,
-    delta           BIGINT        NOT NULL DEFAULT 0,
-    source          VARCHAR(20)   NOT NULL DEFAULT 'MANUAL',  -- MANUAL | TRANSACTION
-    transaction_seq BIGINT,
-    note            VARCHAR(255),
-    recorded_at     VARCHAR(14)   NOT NULL,
-    created_at      VARCHAR(14)   NOT NULL,
-    created_by      BIGINT        NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_asset_history_asset_seq ON public.asset_history(asset_seq);
-
-
--- ── transaction.asset_seq 컬럼 추가 ──────────────────────────
-ALTER TABLE public.transaction
-  ADD COLUMN IF NOT EXISTS asset_seq BIGINT REFERENCES public.asset(seq) ON DELETE SET NULL;
 
 
 -- ══════════════════════════════════════════════════════════════

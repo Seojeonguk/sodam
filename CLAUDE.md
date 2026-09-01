@@ -66,3 +66,32 @@ shared/    공통 api 클라이언트, lib, ui, config
 - ESLint는 `--max-warnings 0`으로 실행되므로 커밋 전 `npm run lint` 통과 필수.
 - `entities/accountbook/model/AccountBookContext.tsx`는 Context+훅을 한 파일에서 export하기 때문에 `react-refresh/only-export-components` 규칙이 예외 처리되어 있음 (`eslint.config.js` 참고). 유사한 패턴을 다른 파일에 추가할 때 규칙 예외가 필요한지 확인할 것.
 - 새 도메인을 추가할 때는 `entities`(데이터/훅) → `features`(액션 UI) → `pages`(화면 조립) 순서의 기존 레이어 구조를 따를 것.
+
+## SUPABASE
+
+- 테이블 관련 SQL은 supabase_setup.sql 하나의 파일에서 관리한다.
+  - 해당 파일에서는 오직 테이블, 인덱스의 create 구문만 작성한다.
+- RLS 관련 SQL은 supabase_rls.sql 하나의 파일에서 관리한다.
+
+## Github
+
+- 커밋 메시지는 커밋 컨벤션을 지켜야한다.
+- Subject Rule
+  1. 제목은 최대 50글자 넘지 않기
+  2. 마침표 및 특수기호 사용x
+  3. 첫 글자 대문자, 명령문 사용
+  4. 개조식 구문으로 작성(간결하고 요점적인 서술)
+- Body Rule
+  1. 한 줄당 72자 내로 작성
+  2. 최대한 상세히 작성
+  3. 어떻게 보다는 '무엇을', '왜' 변경했는지에 대해 작성
+- Footer Rule
+  1. 유형: #이슈 번호의 형식으로 작성
+  2. 이슈 트래커 ID를 작성
+  3. 여러개의 이슈 번호는 ,로 구분
+  4. 이슈 트래커 유형은 아래와 같다
+    1) Fixes : 이슈 수정중(아직 해결되지 않은 경우)
+    2) Resolves : 이슈를 해결한 경우
+    3) Ref : 참조할 이슈가 있을 때 사용
+    4) Related to : 해당 커밋에 관련된 이슈 번호(아직 해결되지 않은 경우)
+- signed-off commit 을 필수로 작성한다.
