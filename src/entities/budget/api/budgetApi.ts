@@ -96,21 +96,28 @@ const budgetApi = {
       actualMap.set(key, (actualMap.get(key) ?? 0) + Number(tx.amount));
     }
 
-    const catMap = new Map((categories ?? []).map((c: any) => [c.id as number, c]));
+    const catMap = new Map(
+      (categories ?? []).map((row) => {
+        const c = row as Record<string, unknown>;
+        return [c.id as number, c];
+      }),
+    );
 
     // 예산이 있는 카테고리 먼저
-    const result: BudgetSummaryResponse[] = (budgets ?? []).map((b: any) => {
-      const cat = catMap.get(b.category_seq as number) as any;
+    const result: BudgetSummaryResponse[] = (budgets ?? []).map((row) => {
+      const b = row as Record<string, unknown>;
+      const categorySeq = b.category_seq as number;
+      const cat = catMap.get(categorySeq);
       const budgetAmount = Number(b.amount);
-      const actualAmount = actualMap.get(b.category_seq as number) ?? 0;
+      const actualAmount = actualMap.get(categorySeq) ?? 0;
       const ratio = budgetAmount > 0 ? Math.round((actualAmount / budgetAmount) * 100) : -1;
 
       return {
         budgetId: b.id as number,
-        categorySeq: b.category_seq as number,
-        categoryName: cat?.name ?? "미분류",
-        categoryColor: cat?.color ?? null,
-        categoryType: cat?.type ?? "EXPENSE",
+        categorySeq,
+        categoryName: (cat?.name as string | undefined) ?? "미분류",
+        categoryColor: (cat?.color as string | null | undefined) ?? null,
+        categoryType: (cat?.type as string | undefined) ?? "EXPENSE",
         budgetAmount,
         actualAmount,
         ratio,
@@ -141,15 +148,18 @@ const budgetApi = {
     if (!source || source.length === 0) return 0;
 
     const ts = now();
-    const rows = source.map((b: any) => ({
-      account_book_seq: accountBookSeq,
-      user_seq: userSeq,
-      category_seq: b.category_seq,
-      setting_day: toYearMonth,
-      amount: b.amount,
-      created_at: ts,
-      updated_at: ts,
-    }));
+    const rows = source.map((row) => {
+      const b = row as Record<string, unknown>;
+      return {
+        account_book_seq: accountBookSeq,
+        user_seq: userSeq,
+        category_seq: b.category_seq,
+        setting_day: toYearMonth,
+        amount: b.amount,
+        created_at: ts,
+        updated_at: ts,
+      };
+    });
 
     const { error: upsertErr } = await supabase
       .from("budget")

@@ -53,14 +53,17 @@ const statApi = {
 
     // GROUP BY (category_seq, type) → StatResponse[]
     const map = new Map<string, StatResponse>();
-    for (const row of rows) {
-      const catName = (row.category as any)?.name ?? "미분류";
-      const key = `${row.type}::${row.category_seq ?? "null"}`;
+    for (const raw of rows) {
+      const row = raw as Record<string, unknown>;
+      const category = row.category as Record<string, unknown> | null;
+      const catName = (category?.name as string | undefined) ?? "미분류";
+      const type = row.type as string;
+      const key = `${type}::${(row.category_seq as number | null) ?? "null"}`;
       const existing = map.get(key);
       if (existing) {
         existing.total += Number(row.amount);
       } else {
-        map.set(key, { total: Number(row.amount), type: row.type as string, name: catName });
+        map.set(key, { total: Number(row.amount), type, name: catName });
       }
     }
 

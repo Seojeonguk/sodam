@@ -8,6 +8,18 @@ import type {
   MemberResponse,
 } from "./member.types";
 
+function mapMember(row: Record<string, unknown>): MemberResponse {
+  const user = row.user as Record<string, unknown>;
+  return {
+    userId: row.user_id as number,
+    email: user.email as string,
+    name: user.name as string,
+    imageUrl: user.image_url as string | undefined,
+    authority: row.authority as MemberResponse["authority"],
+    joinedAt: row.created_at as string,
+  };
+}
+
 const memberApi = {
   getMembers: async (accountBookId: number): Promise<MemberResponse[]> => {
     const { data, error } = await supabase
@@ -28,14 +40,7 @@ const memberApi = {
 
     if (error) throw new Error(error.message);
 
-    return (data ?? []).map((row: any) => ({
-      userId: row.user_id as number,
-      email: row.user.email as string,
-      name: row.user.name as string,
-      imageUrl: row.user.image_url as string | undefined,
-      authority: row.authority as MemberResponse["authority"],
-      joinedAt: row.created_at as string,
-    }));
+    return (data ?? []).map((row) => mapMember(row as Record<string, unknown>));
   },
 
   invite: async (

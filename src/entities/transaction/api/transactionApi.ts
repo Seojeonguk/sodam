@@ -6,6 +6,7 @@ import { guestStore } from "../../guest/lib/guestStore";
 import assetApi from "../../asset/api/assetApi";
 import type {
   TransactionCreateRequestDto,
+  TransactionListItemResponse,
   TransactionListResponse,
   TransactionResponseDto,
   TransactionUpdateRequestDto,
@@ -15,6 +16,32 @@ const now = () => dayjs().format("YYYYMMDDHHmmss");
 
 /** ISO 날짜 → DB 포맷 (YYYYMMDDHHmmss) */
 const toDbDate = (iso: string) => dayjs(iso).format("YYYYMMDDHHmmss");
+
+function mapTransactionListItem(row: Record<string, unknown>): TransactionListItemResponse {
+  const category = row.category as Record<string, unknown> | null;
+  return {
+    seq: row.seq as number,
+    amount: Number(row.amount),
+    description: row.description as string,
+    transactionDate: row.transaction_date as string,
+    type: row.type as "INCOME" | "EXPENSE",
+    categoryName: (category?.name as string | undefined) ?? null,
+  };
+}
+
+function mapTransactionResponse(row: Record<string, unknown>): TransactionResponseDto {
+  return {
+    seq: row.seq as number,
+    accountBookSeq: row.account_book_seq as number,
+    userSeq: row.user_seq as number,
+    categorySeq: row.category_seq as number | undefined,
+    amount: Number(row.amount),
+    description: row.description as string,
+    transactionDate: row.transaction_date as string,
+    type: row.type as "INCOME" | "EXPENSE",
+    satisfactionRating: row.satisfaction_rating as number,
+  };
+}
 
 const transactionApi = {
   getTransactions: async (
@@ -62,14 +89,9 @@ const transactionApi = {
     const { data, error, count } = await query;
     if (error) throw new Error(error.message);
 
-    const transactions = (data ?? []).map((row: any) => ({
-      seq: row.seq as number,
-      amount: Number(row.amount),
-      description: row.description as string,
-      transactionDate: row.transaction_date as string,
-      type: row.type as "INCOME" | "EXPENSE",
-      categoryName: (row.category as any)?.name ?? null,
-    }));
+    const transactions = (data ?? []).map((row) =>
+      mapTransactionListItem(row as Record<string, unknown>),
+    );
 
     const totalElements = count ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalElements / size));
@@ -116,17 +138,7 @@ const transactionApi = {
       }
     }
 
-    return {
-      seq: row.seq as number,
-      accountBookSeq: row.account_book_seq as number,
-      userSeq: row.user_seq as number,
-      categorySeq: row.category_seq as number | undefined,
-      amount: Number(row.amount),
-      description: row.description as string,
-      transactionDate: row.transaction_date as string,
-      type: row.type as "INCOME" | "EXPENSE",
-      satisfactionRating: row.satisfaction_rating as number,
-    };
+    return mapTransactionResponse(row as Record<string, unknown>);
   },
 
   getTransactionBySeq: async (seq: number | null): Promise<TransactionResponseDto> => {
@@ -144,17 +156,11 @@ const transactionApi = {
 
     if (error || !row) throw new Error(error?.message ?? "거래를 찾을 수 없습니다.");
 
+    const typedRow = row as Record<string, unknown>;
+    const category = typedRow.category as Record<string, unknown> | null;
     return {
-      seq: row.seq as number,
-      accountBookSeq: row.account_book_seq as number,
-      userSeq: row.user_seq as number,
-      categorySeq: row.category_seq as number | undefined,
-      categoryName: (row.category as any)?.name ?? undefined,
-      amount: Number(row.amount),
-      description: row.description as string,
-      transactionDate: row.transaction_date as string,
-      type: row.type as "INCOME" | "EXPENSE",
-      satisfactionRating: row.satisfaction_rating as number,
+      ...mapTransactionResponse(typedRow),
+      categoryName: (category?.name as string | undefined) ?? undefined,
     };
   },
 
@@ -206,17 +212,7 @@ const transactionApi = {
       }
     }
 
-    return {
-      seq: row.seq as number,
-      accountBookSeq: row.account_book_seq as number,
-      userSeq: row.user_seq as number,
-      categorySeq: row.category_seq as number | undefined,
-      amount: Number(row.amount),
-      description: row.description as string,
-      transactionDate: row.transaction_date as string,
-      type: row.type as "INCOME" | "EXPENSE",
-      satisfactionRating: row.satisfaction_rating as number,
-    };
+    return mapTransactionResponse(row as Record<string, unknown>);
   },
 
   deleteTransaction: async (seq: number): Promise<void> => {

@@ -275,9 +275,13 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
 
           if (existing && existing.length > 0) {
             const dupSet = new Set(
-              existing.map((e: any) =>
-                `${e.amount}|${e.transaction_date}|${e.type}|${String(e.description ?? "").trim()}`
-              )
+              existing.map((row) => {
+                const e = row as Record<string, unknown>;
+                const amount = e.amount as number;
+                const transactionDate = e.transaction_date as string;
+                const type = e.type as string;
+                return `${amount}|${transactionDate}|${type}|${String(e.description ?? "").trim()}`;
+              })
             );
             // ref에 저장 → import 직전 재검증에 사용
             dupSetRef.current = dupSet;

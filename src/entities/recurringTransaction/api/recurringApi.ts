@@ -7,18 +7,24 @@ import type { RecurringTransactionRequest, RecurringTransactionResponse } from "
 
 const now = () => dayjs().format("YYYYMMDDHHmmss");
 
-const toResponse = (row: any, catName?: string): RecurringTransactionResponse => ({
-  id: row.id as number,
-  accountBookSeq: row.account_book_seq as number,
-  categorySeq: row.category_seq as number | null,
-  categoryName: catName ?? (row.category?.name as string | undefined) ?? "",
-  amount: Number(row.amount),
-  description: row.description as string | undefined,
-  type: row.type as "INCOME" | "EXPENSE",
-  dayOfMonth: row.day_of_month as number,
-  isActive: row.is_active as boolean,
-  createdAt: row.created_at as string,
-});
+const toResponse = (
+  raw: Record<string, unknown>,
+  catName?: string,
+): RecurringTransactionResponse => {
+  const category = raw.category as Record<string, unknown> | null;
+  return {
+    id: raw.id as number,
+    accountBookSeq: raw.account_book_seq as number,
+    categorySeq: raw.category_seq as number | null,
+    categoryName: catName ?? (category?.name as string | undefined) ?? "",
+    amount: Number(raw.amount),
+    description: raw.description as string | undefined,
+    type: raw.type as "INCOME" | "EXPENSE",
+    dayOfMonth: raw.day_of_month as number,
+    isActive: raw.is_active as boolean,
+    createdAt: raw.created_at as string,
+  };
+};
 
 const recurringApi = {
   getList: async (accountBookSeq: number): Promise<RecurringTransactionResponse[]> => {
@@ -35,7 +41,7 @@ const recurringApi = {
       .order("id");
 
     if (error) throw new Error(error.message);
-    return (data ?? []).map((row: any) => toResponse(row));
+    return (data ?? []).map((row) => toResponse(row as Record<string, unknown>));
   },
 
   create: async (data: RecurringTransactionRequest): Promise<RecurringTransactionResponse> => {
@@ -62,7 +68,7 @@ const recurringApi = {
       .single();
 
     if (error || !row) throw new Error(error?.message ?? "반복 거래 생성 실패");
-    return toResponse(row);
+    return toResponse(row as Record<string, unknown>);
   },
 
   update: async (id: number, data: RecurringTransactionRequest): Promise<RecurringTransactionResponse> => {
@@ -83,7 +89,7 @@ const recurringApi = {
       .single();
 
     if (error || !row) throw new Error(error?.message ?? "반복 거래 수정 실패");
-    return toResponse(row);
+    return toResponse(row as Record<string, unknown>);
   },
 
   toggle: async (id: number): Promise<RecurringTransactionResponse> => {
@@ -106,7 +112,7 @@ const recurringApi = {
       .single();
 
     if (error || !row) throw new Error(error?.message ?? "토글 실패");
-    return toResponse(row);
+    return toResponse(row as Record<string, unknown>);
   },
 
   delete: async (id: number): Promise<void> => {

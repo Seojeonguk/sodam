@@ -30,6 +30,16 @@ interface TxRow {
   type: "INCOME" | "EXPENSE";
 }
 
+function mapTxRow(row: Record<string, unknown>): TxRow {
+  return {
+    seq: row.seq as number,
+    amount: row.amount as number,
+    description: row.description as string,
+    transactionDate: row.transaction_date as string,
+    type: row.type as "INCOME" | "EXPENSE",
+  };
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -100,13 +110,7 @@ export default function CategoryTransactionsModal({
 
       if (error) throw error;
 
-      setRows((data ?? []).map((r: any) => ({
-        seq: r.seq as number,
-        amount: r.amount as number,
-        description: r.description as string,
-        transactionDate: r.transaction_date as string,
-        type: r.type as "INCOME" | "EXPENSE",
-      })));
+      setRows((data ?? []).map((row) => mapTxRow(row as Record<string, unknown>)));
       setTotal(count ?? 0);
 
       // 첫 로드 시: 카테고리 전체 합계 계산 (개별 카테고리는 건수가 많지 않음)

@@ -5,6 +5,16 @@ import { guestMode } from "../../../shared/lib/guestMode";
 import { guestStore } from "../../guest/lib/guestStore";
 import type { CategoryListItemResponse } from "../../transaction/api/category.types";
 
+function mapCategory(row: Record<string, unknown>): CategoryListItemResponse {
+  return {
+    id: row.id as number,
+    name: row.name as string,
+    description: (row.description as string | null) ?? "",
+    color: row.color as string | null,
+    type: row.type as "INCOME" | "EXPENSE",
+  };
+}
+
 export interface CategoryUpsertRequest {
   name: string;
   description?: string;
@@ -43,13 +53,7 @@ const categoryApi = {
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    return (data ?? []).map((row: any) => ({
-      id: row.id as number,
-      name: row.name as string,
-      description: row.description as string | undefined,
-      color: row.color as string | undefined,
-      type: row.type as "INCOME" | "EXPENSE",
-    }));
+    return (data ?? []).map((row) => mapCategory(row as Record<string, unknown>));
   },
 
   createCategory: async (
@@ -77,13 +81,7 @@ const categoryApi = {
 
     if (error || !row) throw new Error(error?.message ?? "카테고리 생성 실패");
 
-    return {
-      id: row.id as number,
-      name: row.name as string,
-      description: row.description as string | undefined,
-      color: row.color as string | undefined,
-      type: row.type as "INCOME" | "EXPENSE",
-    };
+    return mapCategory(row as Record<string, unknown>);
   },
 
   updateCategory: async (
@@ -107,13 +105,7 @@ const categoryApi = {
 
     if (error || !row) throw new Error(error?.message ?? "카테고리 수정 실패");
 
-    return {
-      id: row.id as number,
-      name: row.name as string,
-      description: row.description as string | undefined,
-      color: row.color as string | undefined,
-      type: row.type as "INCOME" | "EXPENSE",
-    };
+    return mapCategory(row as Record<string, unknown>);
   },
 
   deleteCategory: async (id: number, replacementId: number): Promise<void> => {
