@@ -105,6 +105,7 @@ function TransactionPage() {
   const [keywordInput, setKeywordInput] = useState("");
   const [minAmountInput, setMinAmountInput] = useState("");
   const [maxAmountInput, setMaxAmountInput] = useState("");
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [showAmountFilter, setShowAmountFilter] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -118,6 +119,16 @@ function TransactionPage() {
   const handleAmountApply = () => {
     const min = minAmountInput ? Number(minAmountInput.replace(/,/g, "")) : undefined;
     const max = maxAmountInput ? Number(maxAmountInput.replace(/,/g, "")) : undefined;
+
+    if (
+      (min !== undefined && !Number.isSafeInteger(min)) ||
+      (max !== undefined && !Number.isSafeInteger(max))
+    ) {
+      setAmountError("금액이 너무 큽니다. 다시 입력해주세요.");
+      return;
+    }
+
+    setAmountError(null);
     setMinAmount(min);
     setMaxAmount(max);
   };
@@ -125,6 +136,7 @@ function TransactionPage() {
   const handleAmountReset = () => {
     setMinAmountInput("");
     setMaxAmountInput("");
+    setAmountError(null);
     setMinAmount(undefined);
     setMaxAmount(undefined);
   };
@@ -134,6 +146,7 @@ function TransactionPage() {
     setKeyword("");
     setMinAmountInput("");
     setMaxAmountInput("");
+    setAmountError(null);
     setMinAmount(undefined);
     setMaxAmount(undefined);
     setCategoryFilter([]);
@@ -487,6 +500,8 @@ function TransactionPage() {
                 value={minAmountInput}
                 onChange={(e) => setMinAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="0"
+                error={!!amountError}
+                inputProps={{ maxLength: 15, inputMode: "numeric" }}
                 sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
                 slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
               />
@@ -497,10 +512,17 @@ function TransactionPage() {
                 value={maxAmountInput}
                 onChange={(e) => setMaxAmountInput(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="제한 없음"
+                error={!!amountError}
+                inputProps={{ maxLength: 15, inputMode: "numeric" }}
                 sx={{ flex: 1, "& fieldset": { borderRadius: 1.5 } }}
                 slotProps={{ input: { endAdornment: <InputAdornment position="end">원</InputAdornment> } }}
               />
             </Stack>
+            {amountError && (
+              <Typography color="error" variant="caption" sx={{ display: "block", mt: 0.5 }}>
+                {amountError}
+              </Typography>
+            )}
             <Stack direction="row" spacing={1} mt={1} justifyContent="flex-end">
               <Button size="small" variant="outlined" onClick={handleAmountReset}
                 sx={{ textTransform: "none", fontSize: "0.78rem", borderRadius: 1.5 }}>
