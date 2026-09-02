@@ -4,6 +4,7 @@ import transactionApi from "../api/transactionApi";
 import type { TransactionListItemResponse } from "../api/transaction.types";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
+import { toDateKey } from "../../../shared/lib/date";
 
 export interface CalendarDayData {
   /** 분류 타입별 합계 금액 (동적 분류 지원) */
@@ -44,8 +45,8 @@ export const useCalendarTransactions = (options?: UseCalendarTransactionsOptions
     setLoading(true);
     setError(null);
     try {
-      const startDate = month.startOf("month").format("YYYYMMDD");
-      const endDate = month.endOf("month").format("YYYYMMDD");
+      const startDate = toDateKey(month.startOf("month"));
+      const endDate = toDateKey(month.endOf("month"));
       // 캘린더는 페이지네이션 없이 한 달 전체를 가져옴 (최대 500건)
       const result = await transactionApi.getTransactions(
         currentAccountBookId,

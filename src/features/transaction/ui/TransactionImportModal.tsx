@@ -46,6 +46,7 @@ import { useClassifications } from "../../../entities/category/model/useClassifi
 import { FALLBACK_CLASSIFICATIONS, TYPE_LABEL } from "../../../entities/category/lib/classificationUtils";
 import { getUserSeq } from "../../../shared/lib/userSync";
 import { supabase } from "../../../shared/lib/supabase";
+import { toDateKey } from "../../../shared/lib/date";
 
 interface Props {
   open: boolean;
@@ -122,7 +123,7 @@ function parseExcelRows(sheet: XLSX.WorkSheet): ParsedRow[] {
       const combined = dayjs(`${dateStr} ${timeStr || "00:00"}`);
       const datetime = combined.isValid()
         ? combined.format("YYYYMMDDHHmmss")
-        : dayjs(dateStr).format("YYYYMMDD") + "000000";
+        : toDateKey(dayjs(dateStr)) + "000000";
 
       // 타입 매핑
       const type: "INCOME" | "EXPENSE" | null =

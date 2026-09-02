@@ -11,6 +11,7 @@ import type {
 } from "../api/stat.types";
 import { useAccountBookContext } from "../../accountbook/model/AccountBookContext";
 import { getServerErrorMessage } from "../../../shared/lib/serverState";
+import { toDateKey } from "../../../shared/lib/date";
 
 interface StatPeriodDatasetEntry {
   [key: string]: string | number;
@@ -109,12 +110,12 @@ export const useTransactions = (options?: UseTransactionsOptions) => {
    * 불필요하게 재생성됨. 날짜 문자열로 메모화하여 같은 날짜면 re-fetch 방지.
    */
   const startDateStr = useMemo(
-    () => dateRange.startDate.format("YYYYMMDD"),
+    () => toDateKey(dateRange.startDate),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dateRange.startDate.valueOf()],
   );
   const endDateStr = useMemo(
-    () => dateRange.endDate.format("YYYYMMDD"),
+    () => toDateKey(dateRange.endDate),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dateRange.endDate.valueOf()],
   );
