@@ -12,7 +12,9 @@ export function useOfflineSync() {
       if (isOfflineToken()) {
         try {
           await refreshSupabaseToken();
-          console.log("[Offline] 재연결 후 세션 복구 성공");
+          if (import.meta.env.DEV) {
+            console.warn("[Offline] 재연결 후 세션 복구 성공");
+          }
         } catch {
           console.warn("[Offline] 재연결 후 세션 복구 실패 — 로그인 필요");
         }
