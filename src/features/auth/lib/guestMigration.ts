@@ -17,7 +17,7 @@ import transactionApi from "../../../entities/transaction/api/transactionApi";
 import { supabase } from "../../../shared/lib/supabase";
 import { setAccessToken } from "../../../shared/api/api";
 import { guestMode } from "../../../shared/lib/guestMode";
-import { guestStore } from "../../../shared/lib/guestStore";
+import { guestStore } from "../../../entities/guest/lib/guestStore";
 import { sessionCache } from "../../../shared/lib/localCache";
 
 export interface MigrationProgress {

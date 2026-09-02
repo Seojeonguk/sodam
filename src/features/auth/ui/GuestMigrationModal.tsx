@@ -15,7 +15,7 @@ import { alpha } from "@mui/material/styles";
 import { CheckCircle, CloudUpload, Person } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { migrateGuestData, type MigrationProgress } from "../lib/guestMigration";
-import { guestStore } from "../../../shared/lib/guestStore";
+import { guestStore } from "../../../entities/guest/lib/guestStore";
 import { useAccountBookContext } from "../../../entities/accountbook/model/AccountBookContext";
 
 interface GuestMigrationModalProps {

@@ -3,31 +3,31 @@
  * 실제 API 응답과 동일한 shape을 반환합니다.
  */
 
-import type { AccountBookListResponse } from "../../entities/accountbook/api/accountbook.types";
+import type { AccountBookListResponse } from "../../accountbook/api/accountbook.types";
 import type {
   TransactionCreateRequestDto,
   TransactionListItemResponse,
   TransactionListResponse,
   TransactionResponseDto,
   TransactionUpdateRequestDto,
-} from "../../entities/transaction/api/transaction.types";
+} from "../../transaction/api/transaction.types";
 import type {
   CategoryListItemResponse,
   CategoryListResponse,
-} from "../../entities/transaction/api/category.types";
+} from "../../transaction/api/category.types";
 import type {
   StatPeriodResponse,
   StatResponse,
-} from "../../entities/transaction/api/stat.types";
+} from "../../transaction/api/stat.types";
 import type {
   BudgetRequest,
   BudgetResponse,
   BudgetSummaryResponse,
-} from "../../entities/budget/api/budget.types";
+} from "../../budget/api/budget.types";
 import type {
   RecurringTransactionRequest,
   RecurringTransactionResponse,
-} from "../../entities/recurringTransaction/api/recurring.types";
+} from "../../recurringTransaction/api/recurring.types";
 
 // ─── 키 ──────────────────────────────────────────────────────────────────────
 const KEYS = {

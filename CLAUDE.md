@@ -51,7 +51,7 @@ shared/    공통 api 클라이언트, lib, ui, config
 ### 오프라인 지원 & 게스트 모드
 
 - `shared/lib/useOfflineSync.ts` + `shared/ui/OfflineBanner.tsx`: `navigator.onLine` 기반으로 온라인/오프라인 상태만 감지해 배너로 표시. 별도의 쓰기 요청 큐잉/재시도는 없음(도메인 쓰기가 모두 `supabase.from()`을 직접 호출하므로 오프라인 중 쓰기는 그냥 실패함).
-- `shared/lib/guestMode.ts` / `guestStore.ts`: 로그인 없이 로컬 스토리지(`sodam_guest_*` 키)만으로 앱을 사용할 수 있는 모드. 실제 로그인 시 `userSync.ts`가 게스트 데이터를 서버로 이관하는 역할을 담당.
+- `shared/lib/guestMode.ts` / `entities/guest/lib/guestStore.ts`: 로그인 없이 로컬 스토리지(`sodam_guest_*` 키)만으로 앱을 사용할 수 있는 모드. 실제 로그인 시 `userSync.ts`가 게스트 데이터를 서버로 이관하는 역할을 담당. `guestStore.ts`는 여러 엔티티의 응답 타입을 그대로 사용해야 해서 `entities/guest`에 위치함(`shared`는 상위 레이어를 참조할 수 없음).
 
 ### 도메인 데이터 접근 (`entities/*/api/*Api.ts`)
 

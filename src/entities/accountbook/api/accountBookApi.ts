@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { supabase } from "../../../shared/lib/supabase";
 import { getUserSeq, seedAccountBookDefaults } from "../../../shared/lib/userSync";
 import { guestMode } from "../../../shared/lib/guestMode";
-import { guestStore } from "../../../shared/lib/guestStore";
+import { guestStore } from "../../guest/lib/guestStore";
 import type { AccountBookListResponse } from "./accountbook.types";
 
 export interface AccountBookCreateResponse {
