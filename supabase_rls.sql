@@ -25,7 +25,10 @@ $$;
 
 -- 비로그인 상태의 무제한 이메일 조회(enumeration)를 막기 위해
 -- 로그인된 사용자만 호출 가능하도록 실행 권한 제한
+-- (Supabase는 함수 생성 시 anon/authenticated/service_role에 기본으로
+--  EXECUTE를 부여하므로, PUBLIC뿐 아니라 anon에서도 명시적으로 회수해야 함)
 REVOKE EXECUTE ON FUNCTION public.check_auth_user_exists(TEXT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.check_auth_user_exists(TEXT) FROM anon;
 GRANT EXECUTE ON FUNCTION public.check_auth_user_exists(TEXT) TO authenticated;
 
 -- 가계부 및 관련 데이터 전체 삭제
