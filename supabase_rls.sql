@@ -23,6 +23,11 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = p_email)
 $$;
 
+-- 비로그인 상태의 무제한 이메일 조회(enumeration)를 막기 위해
+-- 로그인된 사용자만 호출 가능하도록 실행 권한 제한
+REVOKE EXECUTE ON FUNCTION public.check_auth_user_exists(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_auth_user_exists(TEXT) TO authenticated;
+
 -- 가계부 및 관련 데이터 전체 삭제
 -- RLS 상 transaction은 작성자 본인만 삭제 가능하므로 SECURITY DEFINER로 우회
 -- OWNER 권한 검증 후 모든 관련 테이블을 순서대로 삭제
