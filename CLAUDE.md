@@ -72,7 +72,7 @@ shared/    공통 api 클라이언트, lib, ui, config
 
 ## Github
 
-- 커밋 메시지는 커밋 컨벤션을 지켜야한다.
+- 커밋 메시지는 커밋 컨벤션(feat: 커밋제목, refactor: 커밋제목 등)을 지켜야한다.
 - Subject Rule
   1. 제목은 최대 50글자 넘지 않기
   2. 마침표 및 특수기호 사용x
