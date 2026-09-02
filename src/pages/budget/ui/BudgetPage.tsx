@@ -155,6 +155,7 @@ export default function BudgetPage() {
             disabled={copying || loading}
             sx={{ display: { xs: "flex", sm: "none" }, border: "1px solid", borderColor: "divider" }}
             title="이전 달 예산 복사"
+            aria-label="이전 달 예산 복사"
           >
             <ContentCopy fontSize="small" />
           </IconButton>
@@ -175,11 +176,11 @@ export default function BudgetPage() {
       {/* ── 월 선택 ── */}
       <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, mb: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <IconButton size="small" onClick={handlePrevMonth} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <IconButton size="small" onClick={handlePrevMonth} sx={{ border: "1px solid", borderColor: "divider" }} aria-label="이전 달">
             <ChevronLeft fontSize="small" />
           </IconButton>
           <Typography variant="subtitle1" fontWeight={700}>{formatYearMonth(yearMonth)}</Typography>
-          <IconButton size="small" onClick={handleNextMonth} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <IconButton size="small" onClick={handleNextMonth} sx={{ border: "1px solid", borderColor: "divider" }} aria-label="다음 달">
             <ChevronRight fontSize="small" />
           </IconButton>
         </Stack>
@@ -538,17 +539,17 @@ function BudgetItem({
           )}
           {item.over && <Warning sx={{ fontSize: "0.9rem", color: "error.main" }} />}
           {item.hasBudget && (
-            <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "text.secondary" }}>
+            <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "text.secondary" }} aria-label="예산 수정">
               <Edit sx={{ fontSize: "0.95rem" }} />
             </IconButton>
           )}
           {item.hasBudget && (
-            <IconButton size="small" onClick={() => void onDelete(item)} sx={{ color: "text.secondary" }}>
+            <IconButton size="small" onClick={() => void onDelete(item)} sx={{ color: "text.secondary" }} aria-label="예산 삭제">
               <Delete sx={{ fontSize: "0.95rem" }} />
             </IconButton>
           )}
           {!item.hasBudget && isExpense && (
-            <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "primary.main" }}>
+            <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: "primary.main" }} aria-label="예산 추가">
               <Add sx={{ fontSize: "0.95rem" }} />
             </IconButton>
           )}

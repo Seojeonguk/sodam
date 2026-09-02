@@ -85,7 +85,7 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
         sx={{ p: { xs: 2, sm: 2.5 }, mb: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-          <IconButton size="small" onClick={handlePrevMonth} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <IconButton size="small" onClick={handlePrevMonth} sx={{ border: "1px solid", borderColor: "divider" }} aria-label="이전 달">
             <ChevronLeft fontSize="small" />
           </IconButton>
           <Stack alignItems="center">
@@ -116,7 +116,7 @@ export default function CalendarView({ onViewDetail, categoryFilter }: CalendarV
               </Typography>
             )}
           </Stack>
-          <IconButton size="small" onClick={handleNextMonth} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <IconButton size="small" onClick={handleNextMonth} sx={{ border: "1px solid", borderColor: "divider" }} aria-label="다음 달">
             <ChevronRight fontSize="small" />
           </IconButton>
         </Stack>

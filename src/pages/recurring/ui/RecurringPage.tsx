@@ -317,10 +317,10 @@ export default function RecurringPage() {
                     onChange={() => void toggle(item.id)}
                     color={isExpense ? "error" : "success"}
                   />
-                  <IconButton size="small" onClick={() => handleOpenEdit(item)}>
+                  <IconButton size="small" onClick={() => handleOpenEdit(item)} aria-label="수정">
                     <EditOutlined fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => void handleDelete(item.id)} color="error">
+                  <IconButton size="small" onClick={() => void handleDelete(item.id)} color="error" aria-label="삭제">
                     <DeleteOutline fontSize="small" />
                   </IconButton>
                 </Stack>

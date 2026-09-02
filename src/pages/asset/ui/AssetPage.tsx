@@ -115,7 +115,7 @@ function AssetCard({ asset, isOwn, onRecord, onHistory, onDelete }: AssetCardPro
 
           {isOwn && (
             <>
-              <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+              <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)} aria-label="자산 메뉴 열기">
                 <MoreVertIcon fontSize="small" />
               </IconButton>
               <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
@@ -130,7 +130,7 @@ function AssetCard({ asset, isOwn, onRecord, onHistory, onDelete }: AssetCardPro
             </>
           )}
           {!isOwn && (
-            <IconButton size="small" onClick={() => onHistory(asset)}>
+            <IconButton size="small" onClick={() => onHistory(asset)} aria-label="잔액 내역 보기">
               <MoreVertIcon fontSize="small" />
             </IconButton>
           )}

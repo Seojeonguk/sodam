@@ -94,6 +94,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           onClick={onClose}
           size="small"
           sx={{ position: "absolute", right: 12, top: 12 }}
+          aria-label="닫기"
         >
           <CloseIcon fontSize="small" />
         </IconButton>

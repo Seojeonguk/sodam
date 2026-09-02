@@ -66,7 +66,7 @@ const AssetHistoryModal: React.FC<Props> = ({ open, asset, onClose }) => {
           <Typography variant="h6" fontWeight={800}>{asset.name}</Typography>
           <Typography variant="caption" color="text.secondary">잔액 변화 내역</Typography>
         </Box>
-        <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
+        <IconButton onClick={onClose} size="small" aria-label="닫기"><CloseIcon /></IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 0 }}>

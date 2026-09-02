@@ -473,7 +473,7 @@ export default function TransactionImportModal({ open, onClose, onSuccess }: Pro
         sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between", pb: 0.5 }}
       >
         엑셀 파일 가져오기
-        <IconButton size="small" onClick={handleClose} disabled={importing}>
+        <IconButton size="small" onClick={handleClose} disabled={importing} aria-label="닫기">
           <Close fontSize="small" />
         </IconButton>
       </DialogTitle>

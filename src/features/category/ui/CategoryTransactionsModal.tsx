@@ -236,7 +236,7 @@ export default function CategoryTransactionsModal({
             </Stack>
           </Stack>
 
-          <IconButton size="small" onClick={onClose} sx={{ mt: -0.5 }}>
+          <IconButton size="small" onClick={onClose} sx={{ mt: -0.5 }} aria-label="닫기">
             <Close fontSize="small" />
           </IconButton>
         </Stack>
@@ -407,6 +407,7 @@ export default function CategoryTransactionsModal({
             disabled={page === 0 || loading}
             onClick={() => setPage((p) => p - 1)}
             sx={{ borderRadius: 1.5 }}
+            aria-label="이전 페이지"
           >
             <ChevronLeft fontSize="small" />
           </IconButton>
@@ -425,6 +426,7 @@ export default function CategoryTransactionsModal({
             disabled={page >= totalPages - 1 || loading}
             onClick={() => setPage((p) => p + 1)}
             sx={{ borderRadius: 1.5 }}
+            aria-label="다음 페이지"
           >
             <ChevronRight fontSize="small" />
           </IconButton>

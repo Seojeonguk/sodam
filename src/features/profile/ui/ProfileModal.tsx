@@ -174,7 +174,7 @@ export default function ProfileModal({ open, onClose }: Props) {
         }}
       >
         내 정보
-        <IconButton size="small" onClick={onClose}>
+        <IconButton size="small" onClick={onClose} aria-label="닫기">
           <Close fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -261,7 +261,11 @@ export default function ProfileModal({ open, onClose }: Props) {
                         endAdornment: (
                           <InputAdornment position="end">
                             <Tooltip title={showCurrent ? "숨기기" : "보기"}>
-                              <IconButton size="small" onClick={() => setShowCurrent((v) => !v)}>
+                              <IconButton
+                                size="small"
+                                onClick={() => setShowCurrent((v) => !v)}
+                                aria-label={showCurrent ? "비밀번호 숨기기" : "비밀번호 표시"}
+                              >
                                 {showCurrent ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                               </IconButton>
                             </Tooltip>
@@ -281,7 +285,11 @@ export default function ProfileModal({ open, onClose }: Props) {
                         endAdornment: (
                           <InputAdornment position="end">
                             <Tooltip title={showNew ? "숨기기" : "보기"}>
-                              <IconButton size="small" onClick={() => setShowNew((v) => !v)}>
+                              <IconButton
+                                size="small"
+                                onClick={() => setShowNew((v) => !v)}
+                                aria-label={showNew ? "비밀번호 숨기기" : "비밀번호 표시"}
+                              >
                                 {showNew ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                               </IconButton>
                             </Tooltip>
@@ -302,7 +310,11 @@ export default function ProfileModal({ open, onClose }: Props) {
                         endAdornment: (
                           <InputAdornment position="end">
                             <Tooltip title={showConfirm ? "숨기기" : "보기"}>
-                              <IconButton size="small" onClick={() => setShowConfirm((v) => !v)}>
+                              <IconButton
+                                size="small"
+                                onClick={() => setShowConfirm((v) => !v)}
+                                aria-label={showConfirm ? "비밀번호 숨기기" : "비밀번호 표시"}
+                              >
                                 {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                               </IconButton>
                             </Tooltip>
